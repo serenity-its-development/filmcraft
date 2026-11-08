@@ -777,3 +777,67 @@ fn oneos_film_writes_the_file_cut_reads() {
     let golden = std::fs::read(path).expect("the golden Film-written file (FILMCRAFT_BLESS=1 writes it)");
     assert_eq!(serde_json::from_slice::<Value>(&golden).unwrap(), serde_json::from_slice::<Value>(&bytes).unwrap(), "Film writes the shared file as it is pinned");
 }
+
+/// files/989 step 2 (Mona 2026-11-09: "yes, so this becomes a tool choice not a file type choicer"): Film's own clips ANIMATED, in Film's
+/// shape, the file the OpenCut fork's `oneos-tests/film-keys.test.ts` opens in Cut and edits there (pinned there as
+/// `fixtures/film-keyed.otio`). One video clip whose Motion position (Linear, then an Ease Out), uniform scale (Bezier both ways), rotation
+/// (static), Opacity (a Hold, then Linear) and a Gaussian Blur's blurriness (Linear) are keyframed, and an audio clip whose Volume level is.
+/// `FILMCRAFT_BLESS=1` writes the golden file; otherwise the writer must give it again, value for value.
+#[test]
+fn oneos_film_writes_its_keyframes_for_cut() {
+    use filmcraft_project::{Interpolation, find_effect};
+    use filmcraft_geom::Vec2;
+    use serde_json::Value;
+    let r = FrameRate::FPS_24;
+    let mut p = Project::new("Keys");
+    let a = media(&mut p, "oneos:file/01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1", true, true, r);
+    let s = sequence(&mut p, "Edit", r, false);
+    let v = clip(&mut p, s, TrackKind::Video, 0, a, 0..48, 24);
+    let au = clip(&mut p, s, TrackKind::Audio, 0, a, 0..48, 24);
+    let (w, h) = { let q = p.sequence(s).unwrap(); (q.settings.width as f64, q.settings.height as f64) };
+    let key = |f: i64, value: ParamValue, interp: Interpolation, out_influence: f64, in_influence: f64| Keyframe { time: r.tick_of(f), value, interp, out_influence, in_influence };
+    let third = 1.0 / 3.0;
+    {
+        let q = p.sequence_mut(s).unwrap();
+        let ti = q.video_tracks[0].items.iter_mut().find(|i| i.id == v).unwrap();
+        ti.name = "Keyed".into();
+        let motion = ti.effects.iter_mut().find(|e| e.effect == "motion").unwrap();
+        motion.params.insert("position".into(), Param { value: ParamValue::Vec2(Vec2::new(w / 2.0 + 100.0, h / 2.0)), keyframes: vec![
+            key(0, ParamValue::Vec2(Vec2::new(w / 2.0 + 100.0, h / 2.0)), Interpolation::Linear, third, third),
+            key(12, ParamValue::Vec2(Vec2::new(w / 2.0 + 40.0, h / 2.0 - 40.0)), Interpolation::EaseOut, 0.5, third),
+            key(24, ParamValue::Vec2(Vec2::new(w / 2.0, h / 2.0)), Interpolation::Linear, third, third),
+        ] });
+        motion.params.insert("scale".into(), Param { value: ParamValue::Float(100.0), keyframes: vec![
+            key(0, ParamValue::Float(100.0), Interpolation::Bezier, 0.25, third),
+            key(24, ParamValue::Float(150.0), Interpolation::Bezier, third, 0.75),
+        ] });
+        motion.params.insert("rotation".into(), Param::new(ParamValue::Float(15.0)));
+        let opacity = ti.effects.iter_mut().find(|e| e.effect == "opacity").unwrap();
+        opacity.params.insert("opacity".into(), Param { value: ParamValue::Float(100.0), keyframes: vec![
+            key(0, ParamValue::Float(0.0), Interpolation::Hold, third, third),
+            key(6, ParamValue::Float(50.0), Interpolation::Linear, third, third),
+            key(18, ParamValue::Float(100.0), Interpolation::Linear, third, third),
+        ] });
+        let mut blur = find_effect("gaussian_blur").unwrap().instance();
+        blur.params.insert("blurriness".into(), Param { value: ParamValue::Float(10.0), keyframes: vec![
+            key(0, ParamValue::Float(0.0), Interpolation::Linear, third, third),
+            key(24, ParamValue::Float(20.0), Interpolation::Linear, third, third),
+        ] });
+        ti.effects.push(blur);
+        let ta = q.audio_tracks[0].items.iter_mut().find(|i| i.id == au).unwrap();
+        ta.name = "Keyed sound".into();
+        ta.gain_db = -3.0;
+        let vol = ta.effects.iter_mut().find(|e| e.effect == "volume").unwrap();
+        vol.params.insert("level".into(), Param { value: ParamValue::Float(0.0), keyframes: vec![
+            key(0, ParamValue::Float(0.0), Interpolation::Linear, third, third),
+            key(24, ParamValue::Float(-6.0), Interpolation::Linear, third, third),
+        ] });
+    }
+    let (bytes, _) = filmcraft_interchange::export_project(&p, &ExportOptions::default()).expect("Film writes the whole project");
+    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/it/oneos/film-keyed.otio");
+    if std::env::var_os("FILMCRAFT_BLESS").is_some() {
+        std::fs::write(path, &bytes).unwrap();
+    }
+    let golden = std::fs::read(path).expect("the golden Film-keyed file (FILMCRAFT_BLESS=1 writes it)");
+    assert_eq!(serde_json::from_slice::<Value>(&golden).unwrap(), serde_json::from_slice::<Value>(&bytes).unwrap(), "Film writes its keyframes as pinned");
+}

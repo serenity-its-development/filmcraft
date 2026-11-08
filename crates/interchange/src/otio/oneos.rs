@@ -231,6 +231,9 @@ pub(super) fn film_view(v: &Value) -> Value {
     }
 }
 
+/// The fields of Film's clip Cut edits in Film's own shape (files/989 step 2): read back from the file's clip by `reconcile`.
+const CUT_EDITS_OF_A_CLIP: &[&str] = &["gain_db", "effects"];
+
 /// What identifies one of Film's clips across another editor's edit: everything Film reads of it but its place, its trim and its name.
 fn clip_signature(c: &Value) -> Value {
     let mut s = film_view(c);
@@ -240,6 +243,10 @@ fn clip_signature(c: &Value) -> Value {
         if let Some(Value::Object(f)) = m.get_mut("metadata").and_then(|x| x.get_mut("filmcraft")) {
             f.remove("source_in_ticks");
             f.remove("duration_ticks");
+            // What Cut edits of Film's clip in Film's own shape (files/989 step 2): its gain and its effects (look and keyframes).
+            for k in CUT_EDITS_OF_A_CLIP {
+                f.remove(*k);
+            }
         }
     }
     s
@@ -335,14 +342,28 @@ fn reconcile(p: &mut Project, seq_id: ItemId, tl: &Value) -> Result<(), String> 
             continue;
         }
         let (kind, idx) = if k < nv { (TrackKind::Video, k) } else { (TrackKind::Audio, k - nv) };
-        for f in ["OTIO_SCHEMA", "kind", "source_range", "effects", "markers", "enabled", "metadata"] {
+        // Cut edits a Film track's mute as Film's own switch (files/989 step 2); nothing else of its metadata.
+        let unmuted = |v: &Value| {
+            let mut v = v.get("metadata").cloned().unwrap_or(Value::Null);
+            if let Some(Value::Object(f)) = v.get_mut("filmcraft") {
+                f.remove("muted");
+            }
+            v
+        };
+        for f in ["OTIO_SCHEMA", "kind", "source_range", "effects", "markers", "enabled"] {
             if !same_value(ok.get(f).unwrap_or(&Value::Null), ek.get(f).unwrap_or(&Value::Null)) {
                 return Err(format!("had the {f} of its track {k} changed outside Film"));
             }
         }
+        if !same_value(&unmuted(ok), &unmuted(ek)) {
+            return Err(format!("had the metadata of its track {k} changed outside Film"));
+        }
         let name = ok.get("name").and_then(Value::as_str).unwrap_or("").to_string();
         let track = seq.tracks_mut(kind).get_mut(idx).ok_or("does not hold the track Film wrote")?;
         track.name = name;
+        if let Some(m) = ok.pointer("/metadata/filmcraft/muted").and_then(Value::as_bool) {
+            track.muted = m;
+        }
         let (oc, ec) = (ok.get("children").and_then(Value::as_array).unwrap_or(&empty), ek.get("children").and_then(Value::as_array).unwrap_or(&empty));
         if same_value(&Value::Array(oc.clone()), &Value::Array(ec.clone())) {
             continue;
@@ -393,6 +414,13 @@ fn reconcile(p: &mut Project, seq_id: ItemId, tl: &Value) -> Result<(), String> 
             }
             it.name = c.get("name").and_then(Value::as_str).unwrap_or("").to_string();
             it.enabled = c.get("enabled").and_then(Value::as_bool).unwrap_or(true);
+            // What Cut edited in Film's own shape: the clip's gain and effects (look and keyframes) are the file's.
+            if let Some(g) = fc.and_then(|m| m.get("gain_db")).and_then(Value::as_f64) {
+                it.gain_db = g;
+            }
+            if let Some(e) = fc.and_then(|m| m.get("effects")) {
+                it.effects = super::effects_from(Some(e)).ok_or_else(|| format!("had the effects of \"{}\" on its track \"{}\" changed so Film cannot read them", it.name, track.name))?;
+            }
             items.push(it);
         }
         for w in items.windows(2) {

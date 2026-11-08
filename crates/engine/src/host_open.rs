@@ -359,4 +359,90 @@ mod tests {
         let e = save_host_file(&mut s).unwrap_err();
         assert!(e.contains("volume-not-in-cut"), "{e}");
     }
+
+    fn keys_of(s: &Session, seq: &str, clip: &str, effect: &str, param: &str) -> Vec<filmcraft_project::Keyframe> {
+        let (id, kind, ti, ci) = find(s, seq, clip);
+        let c = &s.project.sequence(id).unwrap().tracks(kind)[ti].items[ci];
+        c.effects.iter().filter(|e| e.effect == effect).find_map(|e| e.params.get(param)).unwrap_or_else(|| panic!("{clip} has no {effect} {param}")).keyframes.clone()
+    }
+
+    /// files/989 step 2 (Mona: "yes, so this becomes a tool choice not a file type choicer"): Film EDITS Cut's keyframes. On Cut's
+    /// editor-built project, Cut's channels open as Film's keyframes (Beach's opacity, its position, its blur's intensity), Film's change of a
+    /// keyframe and of a value Cut animates is written back as Cut's channel and field, and nothing else changes. Pinned as
+    /// `film-keyed-cut.otio` (`FILMCRAFT_BLESS=1` writes it), the file the OpenCut fork's `film-keys.test.ts` opens in Cut's project mode.
+    #[test]
+    fn film_edits_cut_s_keyframes_and_writes_them_as_cut_s_channels() {
+        use filmcraft_project::Interpolation;
+        let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-project.otio");
+        let cut: Value = serde_json::from_slice(bytes).unwrap();
+        let mut s = session();
+        open_host_file(&mut s, "trip.otio", bytes).unwrap();
+        let locked = s.host_shared.locked();
+        assert!(locked.iter().all(|l| l.contains("sticker")), "{locked:?}");
+        let op = keys_of(&s, "Main", "Beach", "opacity", "opacity");
+        assert_eq!(op.iter().map(|k| (k.time.0, k.value.clone(), k.interp)).collect::<Vec<_>>(), vec![
+            (0, ParamValue::Float(0.0), Interpolation::Linear),
+            (filmcraft_time::TICKS_PER_SECOND, ParamValue::Float(100.0), Interpolation::Linear),
+        ], "Cut's opacity channel is Film's Opacity keyframes");
+        let pos = keys_of(&s, "Main", "Beach", "motion", "position");
+        // Cut's canvas is 1080 x 1920; its position is from the centre; Y, not animated, is held at its value.
+        assert_eq!(pos.iter().map(|k| k.value.clone()).collect::<Vec<_>>(), vec![ParamValue::Vec2(filmcraft_geom::Vec2::new(540.0 + 40.0, 960.0 - 4.0))]);
+        assert_eq!(keys_of(&s, "Main", "Beach", "gaussian_blur", "blurriness").len(), 1, "the blur's intensity channel");
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
+        assert_eq!(first_difference(&cut, &saved, ""), None, "unedited: Cut's project comes back value for value");
+        edit_clip(&mut s, "Main", "Beach", |c| {
+            let o = c.effects.iter_mut().find(|e| e.effect == "opacity").unwrap();
+            o.params.get_mut("opacity").unwrap().keyframes[1].value = ParamValue::Float(50.0);
+            let m = c.effects.iter_mut().find(|e| e.effect == "motion").unwrap();
+            m.params.get_mut("rotation").unwrap().value = ParamValue::Float(30.0);
+        });
+        let out = save_host_file(&mut s).unwrap_or_else(|e| panic!("Film refused the save: {e}"));
+        let edited: Value = serde_json::from_slice(&out).unwrap();
+        let golden = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../interchange/tests/it/oneos/film-keyed-cut.otio");
+        if std::env::var_os("FILMCRAFT_BLESS").is_some() {
+            std::fs::write(&golden, &out).unwrap();
+        }
+        let pinned: Value = serde_json::from_slice(&std::fs::read(&golden).expect("film-keyed-cut.otio (FILMCRAFT_BLESS=1 writes it)")).unwrap();
+        assert_eq!(first_difference(&pinned, &edited, ""), None, "Film saves Cut's keyframes as pinned");
+        let mut want = cut.clone();
+        let el = "/children/0/tracks/children/0/children/0/metadata/opencut/element";
+        *want.pointer_mut(&format!("{el}/animations/channels/opacity:value/keys/1/value")).unwrap() = serde_json::json!(0.5);
+        *want.pointer_mut(&format!("{el}/transform/rotate")).unwrap() = serde_json::json!(30);
+        assert_eq!(first_difference(&want, &edited, ""), None, "only Film's edits differ, as Cut's channel and field");
+    }
+
+    /// files/989 step 2: Cut's edit of FILM's keyframes (the OpenCut fork's `cut-keyed.otio`: a position key moved, the rotation, an Opacity
+    /// key, a Gaussian Blur key added, a gain changed) opens in Film as Film's own clip, every keyframe Film's, and saves back value for value.
+    #[test]
+    fn a_cut_edit_of_film_s_keyframes_opens_in_film_as_film_s_own() {
+        use filmcraft_project::Interpolation;
+        let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-keyed.otio");
+        let cut: Value = serde_json::from_slice(bytes).unwrap();
+        let mut s = session();
+        open_host_file(&mut s, "Keys.otio", bytes).unwrap_or_else(|e| panic!("{e}"));
+        let pos = keys_of(&s, "Edit", "Keyed", "motion", "position");
+        assert_eq!((pos[1].value.clone(), pos[1].interp, pos[1].out_influence), (ParamValue::Vec2(filmcraft_geom::Vec2::new(1020.0, 500.0)), Interpolation::EaseOut, 0.5));
+        let blur = keys_of(&s, "Edit", "Keyed", "gaussian_blur", "blurriness");
+        assert_eq!(blur.iter().map(|k| k.interp).collect::<Vec<_>>(), vec![Interpolation::Linear, Interpolation::Hold, Interpolation::Linear]);
+        let (id, kind, ti, ci) = find(&s, "Edit", "Keyed sound");
+        assert_eq!(s.project.sequence(id).unwrap().tracks(kind)[ti].items[ci].gain_db, -1.0, "Cut's volume is Film's gain");
+        let lvl = keys_of(&s, "Edit", "Keyed sound", "volume", "level");
+        assert_eq!(lvl.iter().map(|k| k.value.clone()).collect::<Vec<_>>(), vec![ParamValue::Float(-2.0), ParamValue::Float(-8.0)]);
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
+        assert_eq!(first_difference(&cut, &saved, ""), None, "unedited, Cut's edit comes back value for value");
+    }
+
+    /// files/989 step 2: what Cut does not animate (a text's size) is refused by name when Film keyframes it, never dropped.
+    #[test]
+    fn a_keyframe_cut_has_no_channel_for_is_refused_by_name() {
+        let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-project.otio");
+        let mut s = session();
+        open_host_file(&mut s, "trip.otio", bytes).unwrap();
+        edit_clip(&mut s, "Main", "Title", |c| {
+            let l = c.effects.iter_mut().find(|e| e.effect == "graphic_text").unwrap();
+            l.params.get_mut("size").unwrap().put_keyframe(filmcraft_time::Tick(0), ParamValue::Float(40.0));
+        });
+        let e = save_host_file(&mut s).unwrap_err();
+        assert!(e.contains("keyframes-not-in-cut") && e.contains("size") && e.contains("Title"), "{e}");
+    }
 }

@@ -213,18 +213,7 @@
                                         "source_in_ticks": 254016000000
                                     },
                                     "opencut": {
-                                        "element": {
-                                            "transform": {
-                                                "position": {
-                                                    "x": 0,
-                                                    "y": 0
-                                                },
-                                                "scale": 1,
-                                                "rotate": 0,
-                                                "flipX": false
-                                            },
-                                            "opacity": 1
-                                        }
+                                        "element": {}
                                     }
                                 },
                                 "name": "01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1",
@@ -1171,13 +1160,13 @@
                                             "textDecoration": "none",
                                             "hidden": false,
                                             "transform": {
+                                                "scaleX": 1,
+                                                "scaleY": 1,
                                                 "position": {
                                                     "x": 0,
                                                     "y": 0
                                                 },
-                                                "scale": 1,
-                                                "rotate": 0,
-                                                "flipX": false
+                                                "rotate": 0
                                             },
                                             "opacity": 1,
                                             "trimEnd": 0
@@ -1676,18 +1665,19 @@
                                     "opencut": {
                                         "element": {
                                             "volume": 0,
-                                            "trimEnd": 71640000,
-                                            "sourceDuration": 72000000,
                                             "transform": {
+                                                "scaleX": 1,
+                                                "scaleY": 1,
                                                 "position": {
                                                     "x": 0,
                                                     "y": 0
                                                 },
-                                                "scale": 1,
-                                                "rotate": 0,
-                                                "flipX": false
+                                                "rotate": 0
                                             },
-                                            "opacity": 1
+                                            "opacity": 1,
+                                            "effects": [],
+                                            "trimEnd": 71640000,
+                                            "sourceDuration": 72000000
                                         }
                                     }
                                 }

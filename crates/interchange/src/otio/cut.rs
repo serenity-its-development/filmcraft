@@ -39,6 +39,7 @@ use filmcraft_project::{
 use filmcraft_time::{FrameRate, TICKS_PER_SECOND, Tick, TimeRange};
 use serde_json::{Map, Value, json};
 
+use super::cut_keys::{CutKey, cut_to_film, film_to_cut, same_curve};
 use super::oneos::{Split, oneos_media};
 use super::{read_tr, schema_name};
 use crate::common::{empty_sequence, rate_from_f64, settings_for};
@@ -123,6 +124,8 @@ struct CutTrack {
 struct CutClip {
     origin: Value,
     f0: Fields,
+    /// Each of Cut's channels Film shows, as Film's keyframes read back into Cut's shape when the file was opened (or last saved).
+    a0: Anims,
     kind: Kind,
     time0: (Tick, Tick, Tick),
 }
@@ -281,12 +284,9 @@ fn layer_mut(ti: &mut TrackItem) -> Result<&mut EffectInstance, String> {
     ti.effects.iter_mut().find(|e| graphic::is_layer(e)).ok_or_else(|| "the clip has no graphic layer".to_string())
 }
 
+/// A parameter's value (when it is keyframed, its value without them: Cut's static field; the keyframes are Cut's channel, `anims`).
 fn param<'a>(e: &'a EffectInstance, id: &str) -> Result<&'a ParamValue, String> {
-    let p = e.params.get(id).ok_or_else(|| format!("{} has no {id}", e.effect))?;
-    if !p.keyframes.is_empty() {
-        return Err(format!("keyframes-not-in-cut: {}'s {id} is keyframed in Film, which this field of Cut's does not hold", e.effect));
-    }
-    Ok(&p.value)
+    Ok(&e.params.get(id).ok_or_else(|| format!("{} has no {id}", e.effect))?.value)
 }
 
 fn set(e: &mut EffectInstance, id: &str, v: ParamValue) {
@@ -674,6 +674,318 @@ fn fields_for(kind: Kind, origin: &Value) -> Vec<Field> {
     v
 }
 
+// ---------------------------------------------------------------------------------------------
+// Keyframes: Cut's channels as Film's keyframes, and back (`cut_keys`)
+// ---------------------------------------------------------------------------------------------
+
+/// Cut's channels by path, each a list of components (a number has one, a colour four: r, g, b, a).
+type Anims = BTreeMap<String, Vec<Vec<CutKey>>>;
+
+/// Where one of Cut's animated values is in Film.
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum At {
+    /// The clip's first effect of this id (Motion, Opacity, Gaussian Blur).
+    Effect(&'static str),
+    /// The clip's n-th Gaussian Blur (Cut's n-th blur effect).
+    Blur(usize),
+    /// The clip's graphic layer.
+    Layer,
+}
+
+/// One of Cut's animated paths and the parameter of Film's that holds it: Film's component `i` is `cut * k + off` (a colour's are sRGB,
+/// Cut's linear light).
+#[derive(Debug, Clone)]
+struct Anim {
+    path: String,
+    at: At,
+    param: &'static str,
+    keys: &'static [&'static str],
+    k: f64,
+    off: f64,
+    colour: bool,
+}
+
+const VALUE: &[&str] = &["value"];
+const RGBA: &[&str] = &["r", "g", "b", "a"];
+
+fn anim(path: &str, at: At, param: &'static str, k: f64, off: f64) -> Anim {
+    Anim { path: path.into(), at, param, keys: VALUE, k, off, colour: false }
+}
+fn colour(path: &str, param: &'static str) -> Anim {
+    Anim { path: path.into(), at: At::Layer, param, keys: RGBA, k: 1.0, off: 0.0, colour: true }
+}
+
+/// Cut's animated paths of an element of `kind` and where Film holds each (`origin`: the clip as the file holds it, for its effects' ids).
+fn anim_maps(kind: Kind, f: Frame, origin: &Value, gain: f64) -> Vec<Anim> {
+    let mut v = Vec::new();
+    match kind {
+        Kind::Audio => v.push(Anim { at: At::Effect("volume"), ..anim("volume", At::Effect("volume"), "level", 1.0, -gain) }),
+        Kind::Effect => v.push(anim("params.intensity", At::Effect("gaussian_blur"), "blurriness", blur_k(f), 0.0)),
+        _ => {
+            v.push(anim("opacity", At::Effect("opacity"), "opacity", 100.0, 0.0));
+            v.push(anim("transform.rotate", At::Effect("motion"), "rotation", 1.0, 0.0));
+            v.push(anim("transform.positionX", At::Effect("motion"), "position", 1.0, f.w / 2.0));
+            v.push(anim("transform.positionY", At::Effect("motion"), "position", 1.0, f.h / 2.0));
+            v.push(anim("transform.scaleX", At::Effect("motion"), "scale_width", 100.0, 0.0));
+            v.push(anim("transform.scaleY", At::Effect("motion"), "scale", 100.0, 0.0));
+            let effects = origin.pointer(&format!("{ELEMENT}/effects")).and_then(Value::as_array).cloned().unwrap_or_default();
+            for (i, e) in effects.iter().filter(|e| e.get("type").and_then(Value::as_str) == Some("blur")).enumerate() {
+                if let Some(id) = e.get("id").and_then(Value::as_str) {
+                    v.push(anim(&format!("effects.{id}.params.intensity"), At::Blur(i), "blurriness", blur_k(f), 0.0));
+                }
+            }
+        }
+    }
+    match kind {
+        Kind::Text => {
+            v.push(colour("color", "fill_color"));
+            v.push(colour("background.color", "background_color"));
+        }
+        Kind::Shape => {
+            v.push(colour("params.fill", "fill_color"));
+            v.push(colour("params.stroke", "stroke_color"));
+            v.push(anim("params.strokeWidth", At::Layer, "stroke_width", 1.0, 0.0));
+            v.push(anim("params.cornerRadius", At::Layer, "corner_radius", 1.0, 0.0));
+            v.push(anim("params.sides", At::Layer, "sides", 1.0, 0.0));
+        }
+        _ => {}
+    }
+    v
+}
+
+fn srgb_to_linear(c: f64) -> f64 {
+    if c <= 0.04045 { c / 12.92 } else { ((c + 0.055) / 1.055).powf(2.4) }
+}
+fn linear_to_srgb(c: f64) -> f64 {
+    if c <= 0.0031308 { c * 12.92 } else { 1.055 * c.powf(1.0 / 2.4) - 0.055 }
+}
+
+fn effect_at(ti: &TrackItem, at: At) -> Option<&EffectInstance> {
+    match at {
+        At::Effect(id) => fx(ti, id),
+        At::Blur(n) => ti.effects.iter().filter(|e| e.effect == "gaussian_blur").nth(n),
+        At::Layer => layer(ti),
+    }
+}
+fn effect_at_mut(ti: &mut TrackItem, at: At) -> Option<&mut EffectInstance> {
+    match at {
+        At::Effect(id) => ti.effects.iter_mut().find(|e| e.effect == id),
+        At::Blur(n) => ti.effects.iter_mut().filter(|e| e.effect == "gaussian_blur").nth(n),
+        At::Layer => ti.effects.iter_mut().find(|e| graphic::is_layer(e)),
+    }
+}
+
+/// A Film parameter's value as Cut's components (in Cut's units), in the order of `comps` (position: x then y; a colour: r, g, b, a).
+fn film_parts(v: &ParamValue, comps: &[&Anim]) -> Vec<f64> {
+    let raw: Vec<f64> = match v {
+        ParamValue::Vec2(p) => vec![p.x, p.y],
+        ParamValue::Color(c) => c.iter().map(|x| *x as f64).collect(),
+        other => vec![other.as_f64().unwrap_or(0.0)],
+    };
+    if comps.first().is_some_and(|a| a.colour) {
+        return raw.iter().enumerate().map(|(i, x)| if i < 3 { srgb_to_linear(*x) } else { *x }).collect();
+    }
+    comps.iter().enumerate().map(|(i, a)| (raw.get(i).copied().unwrap_or(0.0) - a.off) / a.k).collect()
+}
+
+fn film_value(like: &ParamValue, c: &[f64], comps: &[&Anim]) -> ParamValue {
+    if comps.first().is_some_and(|a| a.colour) {
+        let s = |i: usize| (if i < 3 { linear_to_srgb(c[i]) } else { c[i] }) as f32;
+        return ParamValue::Color([s(0), s(1), s(2), s(3)]);
+    }
+    let x: Vec<f64> = comps.iter().enumerate().map(|(i, a)| c[i] * a.k + a.off).collect();
+    match like {
+        ParamValue::Vec2(_) => ParamValue::Vec2(Vec2::new(x[0], x.get(1).copied().unwrap_or(0.0))),
+        ParamValue::Choice(_) => ParamValue::Choice(x[0].round().max(0.0) as u32),
+        _ => ParamValue::Float(x[0]),
+    }
+}
+
+/// Cut's channel at `path` (one list of keys per component, in `keys` order), when the element animates it.
+fn cut_channel(origin: &Value, path: &str, keys: &[&str]) -> Option<Vec<Vec<CutKey>>> {
+    let b = origin.pointer(&format!("{ELEMENT}/animations/bindings"))?.get(path)?;
+    let comps = b.get("components")?.as_array()?;
+    let mut out = Vec::new();
+    for k in keys {
+        let id = comps.iter().find(|c| c.get("key").and_then(Value::as_str) == Some(k))?.get("channelId")?.as_str()?;
+        let ch = origin.pointer(&format!("{ELEMENT}/animations/channels"))?.get(id)?;
+        out.push(ch.get("keys")?.as_array()?.iter().map(CutKey::read).collect::<Option<Vec<_>>>()?);
+    }
+    out.iter().any(|c| !c.is_empty()).then_some(out)
+}
+
+/// Write Cut's channel at `path` into the clip `c` (Cut's shape), or remove it when it holds no keys.
+fn put_channel(c: &mut Value, path: &str, a: &Anim, comps: Option<&[Vec<CutKey>]>) {
+    let bindings = format!("{ELEMENT}/animations/bindings");
+    let was: Vec<String> = c.pointer(&bindings).and_then(|b| b.get(path)).and_then(|b| b.get("components")).and_then(Value::as_array).map(|x| x.iter().filter_map(|y| y.get("channelId").and_then(Value::as_str).map(str::to_string)).collect()).unwrap_or_default();
+    match comps.filter(|x| x.iter().any(|k| !k.is_empty())) {
+        None => {
+            if let Some(Value::Object(m)) = c.pointer_mut(&bindings) {
+                m.remove(path);
+            }
+            if let Some(Value::Object(m)) = c.pointer_mut(&format!("{ELEMENT}/animations/channels")) {
+                for id in was {
+                    m.remove(&id);
+                }
+            }
+        }
+        Some(comps) => {
+            let ids: Vec<String> = a.keys.iter().enumerate().map(|(i, k)| was.get(i).cloned().unwrap_or_else(|| format!("{path}:{k}"))).collect();
+            let mut b = json!({"path": path, "kind": if a.colour { "color" } else { "number" }, "components": a.keys.iter().zip(&ids).map(|(k, id)| json!({"key": k, "channelId": id})).collect::<Vec<_>>()});
+            if a.colour {
+                b["colorSpace"] = json!("srgb-linear");
+            }
+            if c.pointer(&bindings).and_then(|x| x.get(path)).is_none() {
+                put(c, &format!("{bindings}/{}", path.replace('~', "~0").replace('/', "~1")), b);
+            }
+            for (i, id) in ids.iter().enumerate() {
+                let keys: Vec<Value> = comps[i].iter().map(CutKey::write).collect();
+                put(c, &format!("{ELEMENT}/animations/channels/{}", id.replace('~', "~0").replace('/', "~1")), json!({"kind": "scalar", "keys": keys}));
+            }
+        }
+    }
+}
+
+/// Group `maps` by the Film parameter that holds them (position's x and y are one; a colour's four components are one).
+fn groups(maps: &[Anim]) -> Vec<Vec<&Anim>> {
+    let mut out: Vec<Vec<&Anim>> = Vec::new();
+    for a in maps {
+        match out.iter_mut().find(|g| g[0].at == a.at && g[0].param == a.param) {
+            Some(g) => g.push(a),
+            None => out.push(vec![a]),
+        }
+    }
+    out
+}
+
+/// A colour Cut eases between two different colours: Cut eases in linear light, Film in sRGB, so the two would not draw the same.
+fn colour_eased(comps: &[Vec<CutKey>]) -> bool {
+    comps.iter().any(|ch| ch.windows(2).any(|w| w[0].segment != "step" && (w[0].value - w[1].value).abs() > 1e-12))
+}
+
+/// Cut's channels of the element (`origin`) as Film's keyframes on `ti`, and what they read back as (the file's `a0`); a reason when Film
+/// cannot hold one (the track is then locked, named).
+fn read_anims(kind: Kind, f: Frame, ti: &mut TrackItem, origin: &Value) -> Result<Anims, String> {
+    let maps = anim_maps(kind, f, origin, ti.gain_db);
+    // Uniform scale: Cut's two axes animate as one only when they are the same curve.
+    let sx = cut_channel(origin, "transform.scaleX", VALUE);
+    let sy = cut_channel(origin, "transform.scaleY", VALUE);
+    if (sx.is_some() || sy.is_some()) && !matches!((&sx, &sy), (Some(x), Some(y)) if same_curve(&x[0], &y[0]))
+        && let Some(m) = ti.effects.iter_mut().find(|e| e.effect == "motion")
+    {
+        set(m, "uniform_scale", ParamValue::Bool(false));
+    }
+    let uniform = fx(ti, "motion").and_then(|m| m.params.get("uniform_scale")).is_some_and(|p| matches!(p.value, ParamValue::Bool(true)));
+    let mut a0 = Anims::new();
+    for g in groups(&maps) {
+        let chans: Vec<Option<Vec<Vec<CutKey>>>> = g.iter().map(|a| cut_channel(origin, &a.path, a.keys)).collect();
+        if chans.iter().all(Option::is_none) {
+            continue;
+        }
+        // A uniform scale's width is its height: Cut's X channel, the same curve as Y, is held by Y's keyframes.
+        if uniform && g[0].param == "scale_width" {
+            a0.insert(g[0].path.clone(), chans[0].clone().unwrap_or_default());
+            continue;
+        }
+        if g[0].colour && chans.iter().flatten().any(|c| colour_eased(c)) {
+            return Err(format!("eases its {} between colours, which Cut does in linear light and Film in sRGB", g[0].path));
+        }
+        let e = effect_at(ti, g[0].at).ok_or_else(|| format!("animates {}, which has no {} in Film", g[0].path, g[0].param))?;
+        let like = e.params.get(g[0].param).map(|p| p.value.clone()).ok_or_else(|| format!("animates {}, which has no {} in Film", g[0].path, g[0].param))?;
+        let statics = film_parts(&like, &g);
+        // Each component as Cut's channel; one Cut does not animate is held at its value through the others' keys.
+        let flat: Vec<Vec<CutKey>> = if g[0].colour { chans[0].clone().unwrap_or_default() } else { chans.iter().map(|c| c.as_ref().map(|x| x[0].clone()).unwrap_or_default()).collect() };
+        let lead = flat.iter().find(|c| !c.is_empty()).cloned().unwrap_or_default();
+        let comps: Vec<Vec<CutKey>> = flat
+            .iter()
+            .enumerate()
+            .map(|(i, c)| if c.is_empty() { lead.iter().map(|k| CutKey { value: statics[i], right: k.right.map(|h| (h.0, 0.0)), left: k.left.map(|h| (h.0, 0.0)), ..k.clone() }).collect() } else { c.clone() })
+            .collect();
+        let keys = cut_to_film(&comps, &|c| film_value(&like, c, &g), &[]).map_err(|why| format!("animates {}: {why}", g[0].path))?;
+        let back = film_to_cut(&keys, &|v| film_parts(v, &g), &comps, &g[0].path)?;
+        let tol = |a: &[CutKey], b: &[CutKey]| a.len() == b.len() && a.iter().zip(b).all(|(x, y)| x.time == y.time && (x.value - y.value).abs() <= 1e-6 * x.value.abs().max(1.0)) && same_curve(&round6(a), &round6(b));
+        for (i, c) in flat.iter().enumerate() {
+            if !c.is_empty() && !(if g[0].colour { tol(c, &back[i]) } else { same_curve(c, &back[i]) }) {
+                return Err(format!("animates {} in a way that does not read back from Film exactly", g[0].path));
+            }
+        }
+        if let Some(p) = effect_at_mut(ti, g[0].at).and_then(|e| e.params.get_mut(g[0].param)) {
+            p.keyframes = keys;
+        }
+        if g[0].colour {
+            a0.insert(g[0].path.clone(), back);
+        } else {
+            for (i, a) in g.iter().enumerate() {
+                a0.insert(a.path.clone(), vec![back[i].clone()]);
+            }
+        }
+    }
+    if uniform && let Some(y) = a0.get("transform.scaleY").cloned() {
+        a0.insert("transform.scaleX".into(), y);
+    }
+    Ok(a0)
+}
+
+fn round6(a: &[CutKey]) -> Vec<CutKey> {
+    a.iter().map(|k| CutKey { value: (k.value * 1e6).round() / 1e6, ..k.clone() }).collect()
+}
+
+/// Film's keyframes on Cut's element as Cut's channels, written into `c` where they changed since `a0`; the channels now. A reason (by
+/// name) when Cut has no place for one.
+fn write_anims(kind: Kind, f: Frame, ti: &TrackItem, c: &mut Value, a0: &Anims, name: &str) -> Result<Anims, String> {
+    let maps = anim_maps(kind, f, c, ti.gain_db);
+    let uniform = fx(ti, "motion").and_then(|m| m.params.get("uniform_scale")).is_some_and(|p| matches!(p.value, ParamValue::Bool(true)));
+    let mut held: BTreeSet<(String, &'static str)> = BTreeSet::new();
+    let mut now = Anims::new();
+    for g in groups(&maps) {
+        let Some(e) = effect_at(ti, g[0].at) else { continue };
+        held.insert((e.effect.clone(), g[0].param));
+        let Some(p) = e.params.get(g[0].param) else { continue };
+        if g[0].param == "scale_width" && uniform {
+            continue;
+        }
+        let prior: Vec<Vec<CutKey>> = if g[0].colour { a0.get(&g[0].path).cloned().unwrap_or_default() } else { g.iter().map(|a| a0.get(&a.path).and_then(|x| x.first().cloned()).unwrap_or_default()).collect() };
+        let chans = film_to_cut(&p.keyframes, &|v| film_parts(v, &g), &prior, &format!("film-{}-{}", ti.id.0, g[0].path)).map_err(|why| format!("keyframes-not-in-cut: Film's {} {} on \"{name}\": {why}", e.effect, g[0].param))?;
+        if g[0].colour {
+            if colour_eased(&chans) {
+                return Err(format!("keyframes-not-in-cut: Film eases \"{name}\"'s {} between colours in sRGB, where Cut eases colours in linear light", g[0].path));
+            }
+            now.insert(g[0].path.clone(), chans);
+        } else {
+            for (i, a) in g.iter().enumerate() {
+                now.insert(a.path.clone(), chans.get(i).cloned().map(|x| vec![x]).unwrap_or_default());
+            }
+        }
+    }
+    if uniform && let Some(y) = now.get("transform.scaleY").cloned() {
+        now.insert("transform.scaleX".into(), y);
+        held.insert(("motion".into(), "scale_width"));
+    }
+    // A parameter Film keyframes that Cut has no channel for is refused by name, never dropped.
+    for e in &ti.effects {
+        for (id, p) in &e.params {
+            if !p.keyframes.is_empty() && !held.iter().any(|(x, y)| *x == e.effect && y == id) {
+                return Err(format!("keyframes-not-in-cut: Film keyframes {}'s {id} on \"{name}\", which Cut does not animate", e.effect));
+            }
+        }
+    }
+    for a in &maps {
+        let (Some(was), Some(is)) = (a0.get(&a.path).map(Vec::as_slice), now.get(&a.path).map(Vec::as_slice)) else {
+            if let Some(is) = now.get(&a.path).filter(|x| x.iter().any(|k| !k.is_empty())) {
+                put_channel(c, &a.path, a, Some(is));
+            } else if a0.get(&a.path).is_some_and(|x| x.iter().any(|k| !k.is_empty())) {
+                put_channel(c, &a.path, a, None);
+            }
+            continue;
+        };
+        let changed = was.len() != is.len() || was.iter().zip(is).any(|(x, y)| !same_curve(x, y));
+        if changed {
+            put_channel(c, &a.path, a, Some(is));
+        }
+    }
+    Ok(now.into_iter().filter(|(_, v)| v.iter().any(|k| !k.is_empty())).collect())
+}
+
 fn read_fields(kind: Kind, f: Frame, ti: &TrackItem, origin: &Value) -> Result<Fields, String> {
     fields_for(kind, origin).iter().map(|x| Ok((x.ptr.clone(), (x.get)(f, ti, origin)?))).collect()
 }
@@ -792,7 +1104,8 @@ fn read_clip(p: &mut Project, c: &Value, track_kind: TrackKind, f: Frame, rate: 
             return Err(format!("holds \"{}\" whose {} reads back from Film as {film} where the file says {file}", ti.name, x.ptr.trim_start_matches(ELEMENT)));
         }
     }
-    Ok((ti, CutClip { origin: c.clone(), f0, kind, time0: (start, src, dur) }))
+    let a0 = read_anims(kind, f, &mut ti, c).map_err(|e| format!("holds \"{}\" which {e}", ti.name))?;
+    Ok((ti, CutClip { origin: c.clone(), f0, a0, kind, time0: (start, src, dur) }))
 }
 
 fn track_type(t: &Value) -> String {
@@ -1152,13 +1465,19 @@ impl Out<'_> {
             Some(pr) => {
                 let mut c = pr.origin.clone();
                 let changed: Vec<&String> = now.keys().filter(|k| !pr.f0.get(*k).is_some_and(|v| same(v, &now[*k]))).collect();
-                let animated = c.pointer(&format!("{ELEMENT}/animations")).and_then(Value::as_object).is_some_and(|a| !a.is_empty());
-                if animated && changed.iter().any(|k| !k.ends_with("/hidden") && !k.ends_with("/muted")) {
-                    return Err(format!("keyframed-in-cut: \"{}\" is animated in Cut; Film does not change its look until Cut's keyframes are mapped", ti.name));
+                // Interim until step 2b: a video element's sound is Cut's own (its volume channel has no place on Film's video clip until it is
+                // Film's linked audio), so Film does not change the volume Cut animates.
+                if kind == Kind::Video
+                    && changed.iter().any(|k| k.ends_with("/volume"))
+                    && c.pointer(&format!("{ELEMENT}/animations/bindings/volume")).is_some()
+                {
+                    return Err(format!("volume-keyframed-in-cut: \"{}\"'s volume is animated in Cut, which Film shows on a video clip once its sound is linked audio", ti.name));
                 }
                 for k in changed {
                     put(&mut c, k, now[k].clone());
                 }
+                let a = write_anims(kind, f, ti, &mut c, &pr.a0, &ti.name)?;
+                self.r.clips.insert(ti.id, CutClip { origin: Value::Null, f0: Fields::new(), a0: a, kind, time0: time });
                 if (pr.time0.1, pr.time0.2) != (time.1, time.2) {
                     let rate = c.pointer("/source_range/duration/rate").and_then(Value::as_f64).unwrap_or(lane_rate);
                     c["source_range"] = time_range(ti.source_in, ti.duration, rate)?;
@@ -1171,12 +1490,18 @@ impl Out<'_> {
                 }
                 c
             }
-            None => self.fresh(ti, kind, &now, lane_rate)?,
+            None => {
+                let mut c = self.fresh(ti, kind, &now, lane_rate)?;
+                let a = write_anims(kind, f, ti, &mut c, &Anims::new(), &ti.name)?;
+                self.r.clips.insert(ti.id, CutClip { origin: Value::Null, f0: Fields::new(), a0: a, kind, time0: time });
+                c
+            }
         };
         if !c.is_object() {
             c = json!({});
         }
-        self.r.clips.insert(ti.id, CutClip { origin: c.clone(), f0: now, kind, time0: time });
+        let a0 = self.r.clips.remove(&ti.id).map(|x| x.a0).unwrap_or_default();
+        self.r.clips.insert(ti.id, CutClip { origin: c.clone(), f0: now, a0, kind, time0: time });
         Ok(c)
     }
 
