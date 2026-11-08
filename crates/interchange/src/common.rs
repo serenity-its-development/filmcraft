@@ -766,6 +766,17 @@ pub(crate) fn sanitize_reel(s: &str, max: usize) -> String {
     if r.is_empty() { "AX".into() } else { r }
 }
 
+/// OneOS (files/989): `oneos:file/<26 lowercase base32 chars>?version=<version>`, the one way a OneOS project names its media.
+pub fn is_oneos_media(url: &str) -> bool {
+    let Some(rest) = url.strip_prefix("oneos:file/") else { return false };
+    let Some((id, version)) = rest.split_once("?version=") else { return false };
+    id.len() == 26
+        && id.bytes().all(|b| b.is_ascii_digit() || b.is_ascii_lowercase())
+        && !version.is_empty()
+        && version.len() <= 128
+        && version.bytes().all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'_' | b'-'))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -989,15 +1000,4 @@ mod tests {
         assert_eq!(item_media(&p, missing_parent), None);
         assert_eq!(item_path(&p, missing_parent), None);
     }
-}
-
-/// OneOS (files/989): `oneos:file/<26 lowercase base32 chars>?version=<version>`, the one way a OneOS project names its media.
-pub fn is_oneos_media(url: &str) -> bool {
-    let Some(rest) = url.strip_prefix("oneos:file/") else { return false };
-    let Some((id, version)) = rest.split_once("?version=") else { return false };
-    id.len() == 26
-        && id.bytes().all(|b| b.is_ascii_digit() || b.is_ascii_lowercase())
-        && !version.is_empty()
-        && version.len() <= 128
-        && version.bytes().all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'_' | b'-'))
 }
