@@ -1675,6 +1675,7 @@
                                 "metadata": {
                                     "opencut": {
                                         "element": {
+                                            "volume": 0,
                                             "trimEnd": 71640000,
                                             "sourceDuration": 72000000,
                                             "transform": {

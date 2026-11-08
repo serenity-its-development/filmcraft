@@ -338,4 +338,25 @@ mod tests {
         *want.pointer_mut("/children/0/tracks/markers/0/metadata/opencut/bookmark/note").unwrap() = serde_json::json!("Edited in Film");
         assert_eq!(first_difference(&want, &edited, ""), None, "only Film's edit differs");
     }
+
+    /// files/989 (Mona: "yes, so this becomes a tool choice not a file type choicer"): Cut's volume IS Film's clip gain (both decibels).
+    /// On Cut's editor-built project, Film's gain change is written as Cut's element volume and nothing else changes; a gain outside
+    /// Cut's volume range (-60 to 20 dB) is refused by name at save, never clamped.
+    #[test]
+    fn film_edits_cut_s_volume_as_its_own_clip_gain() {
+        let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-project.otio");
+        let cut: Value = serde_json::from_slice(bytes).unwrap();
+        let mut s = session();
+        open_host_file(&mut s, "trip.otio", bytes).unwrap();
+        let (seq, kind, ti, ci) = find(&s, "Main", "Song");
+        assert_eq!(s.project.sequence(seq).unwrap().tracks(kind)[ti].items[ci].gain_db, 0.4, "Cut's volume is Film's gain");
+        edit_clip(&mut s, "Main", "Song", |c| c.gain_db = -12.5);
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap_or_else(|e| panic!("{e}"))).unwrap();
+        let mut want = cut.clone();
+        *want.pointer_mut("/children/0/tracks/children/4/children/1/metadata/opencut/element/volume").unwrap() = serde_json::json!(-12.5);
+        assert_eq!(first_difference(&want, &saved, ""), None, "only the volume changed, as Cut's element volume");
+        edit_clip(&mut s, "Main", "Song", |c| c.gain_db = 30.0);
+        let e = save_host_file(&mut s).unwrap_err();
+        assert!(e.contains("volume-not-in-cut"), "{e}");
+    }
 }

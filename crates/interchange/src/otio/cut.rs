@@ -627,8 +627,24 @@ fn shape_fields(definition: &str) -> Vec<Field> {
     v
 }
 
+/// Cut's volume range in decibels (OpenCut `timeline/audio-constants.ts`).
+const CUT_VOLUME_DB: (f64, f64) = (-60.0, 20.0);
+
+/// Cut's volume IS Film's clip gain: both are decibels (OpenCut `animation/property-registry.ts`: volume, -60 to 20 dB; default 0).
+fn volume_field() -> Field {
+    field("/volume", json!(0), |_, ti, _| {
+        if !(CUT_VOLUME_DB.0..=CUT_VOLUME_DB.1).contains(&ti.gain_db) {
+            return Err(format!("volume-not-in-cut: a gain of {} dB, where Cut's volume holds {} to {} dB", ti.gain_db, CUT_VOLUME_DB.0, CUT_VOLUME_DB.1));
+        }
+        Ok(num(ti.gain_db))
+    }, |_, ti, v| {
+        ti.gain_db = want_f64(v)?;
+        Ok(())
+    })
+}
+
 fn audio_fields() -> Vec<Field> {
-    vec![field("/muted", json!(false), |_, ti, _| Ok(json!(!ti.enabled)), |_, ti, v| {
+    vec![volume_field(), field("/muted", json!(false), |_, ti, _| Ok(json!(!ti.enabled)), |_, ti, v| {
         ti.enabled = !v.as_bool().ok_or("muted is not a switch")?;
         Ok(())
     })]
@@ -641,6 +657,9 @@ fn fields_for(kind: Kind, origin: &Value) -> Vec<Field> {
         Kind::Effect => v.push(scaled("/params/intensity", 15.0, "gaussian_blur", "blurriness", blur_k)),
         _ => {
             v.extend(look_fields(origin));
+            if kind == Kind::Video {
+                v.push(volume_field());
+            }
             v.push(effects_field());
             if kind != Kind::Text {
                 v.push(masks_field());
@@ -1183,12 +1202,7 @@ impl Out<'_> {
                 put(&mut c, &format!("{el}/definitionId"), json!(SHAPES[shape.min(2)]));
             }
             Kind::Effect => put(&mut c, &format!("{el}/effectType"), json!("blur")),
-            Kind::Audio => {
-                put(&mut c, &format!("{el}/volume"), json!(1));
-                if self.parts.project_mode {
-                    put(&mut c, &format!("{el}/sourceType"), json!("upload"));
-                }
-            }
+            Kind::Audio if self.parts.project_mode => put(&mut c, &format!("{el}/sourceType"), json!("upload")),
             _ => {}
         }
         if kind.generated() {
