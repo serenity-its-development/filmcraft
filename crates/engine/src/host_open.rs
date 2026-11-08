@@ -1,28 +1,22 @@
 //! The file the OneOS host opens in Film, and the bytes a save hands back (OneOS doctrine files/989).
 //!
 //! Film edits ONE format for the host: OpenTimelineIO (`.otio`, Mona 2026-11-08: "OpenTimelineIO .otio"), the video project format Film
-//! and Cut share. A timeline opens only when Film can write it back UNCHANGED, value for value: the interchange reads it, writes it again,
-//! and any difference (a part Film cannot represent, or represents another way) refuses the file by name, naming the first place it
-//! differs, so a save can never drop or rewrite it. Every medium must be a OneOS file (`oneos:file/<id>?version=<v>`); a path or an
-//! address is refused. Anything else (a `.fcproj`, a picture, a movie) is an import or an export, never a document a save writes back.
-//!
-//! One format holds everything of both editors (Mona 2026-11-08: "one format that can encompass everything of both"): Film CARRIES Cut's
-//! own parts of a shared file untouched, the way Cut carries Film's. Before Film reads a file it sets aside Cut's timelines (a `Timeline.1`
-//! with `metadata.opencut.scene`), every track holding Cut's data (any `opencut` key within it: Cut's text, sticker, graphic and effect
-//! clips, its stacked lanes, a track Cut edited), Cut's bookmarks on a stack and the root's metadata keys other than Film's; Film reads and
-//! edits the rest, and a save puts what it set aside back in its place. What is set aside is listed by name (`Carried::named`): it is shown,
-//! not edited, in Film.
+//! and Cut share, as two tools on one file (Mona 2026-11-09: "yes, so this becomes a tool choice not a file type choicer"). Film opens ALL
+//! of it as its own types and edits it (Mona 2026-11-09: "film should be able to edit cut though"): its own timelines through the project it
+//! keeps (a timeline Cut changed is reconciled into it), Cut's scenes, tracks, elements and bookmarks as Film sequences, tracks, clips and
+//! markers, written back in Cut's shape so Cut reopens them editable (`filmcraft_interchange::otio::oneos`). A save is a three-way merge:
+//! what Film did not change is written exactly as the file held it. Every medium must be a OneOS file (`oneos:file/<id>?version=<v>`); a
+//! path or an address is refused. A part Film would damage is LOCKED (shown, carried untouched) and named; a file Film would damage is
+//! refused by name. Anything but an `.otio` (a `.fcproj`, a picture, a movie) is an import or an export, never a document a save writes back.
 
-use filmcraft_interchange::{ExportOptions, Format, is_oneos_media};
-use filmcraft_project::{ItemKind, MediaRef};
-use serde_json::Value;
+use filmcraft_interchange::otio::oneos::{SharedError, open_shared, save_shared};
 
 use crate::Session;
 
 /// The extension Film edits for the host.
 pub const EDITS: &[&str] = &["otio"];
 
-/// Why a file is not opened for editing, by name.
+/// Why a file is not opened (or saved) for editing, by name.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Refusal {
     NotEditable(String),
@@ -46,223 +40,89 @@ fn extension(name: &str) -> String {
     name.rsplit_once('.').map(|(_, e)| e.to_ascii_lowercase()).unwrap_or_default()
 }
 
-/// The JSON pointer of the first place two documents differ (`""` when they are the same).
-fn first_difference(a: &Value, b: &Value, at: &str) -> Option<String> {
-    match (a, b) {
-        (Value::Object(x), Value::Object(y)) => {
-            let mut keys: Vec<&String> = x.keys().chain(y.keys()).collect();
-            keys.sort();
-            keys.dedup();
-            keys.into_iter().find_map(|k| match (x.get(k), y.get(k)) {
-                (Some(p), Some(q)) => first_difference(p, q, &format!("{at}/{k}")),
-                _ => Some(format!("{at}/{k}")),
-            })
-        }
-        (Value::Array(x), Value::Array(y)) if x.len() == y.len() => x.iter().zip(y).enumerate().find_map(|(i, (p, q))| first_difference(p, q, &format!("{at}/{i}"))),
-        (Value::Number(x), Value::Number(y)) if x.as_f64() == y.as_f64() => None,
-        _ if a == b => None,
-        _ => Some(if at.is_empty() { "/".into() } else { at.into() }),
-    }
-}
-
-/// What Film carries untouched through a shared `.otio`: Cut's own parts, set aside before Film reads the rest and put back in their places
-/// on save (files/989).
-#[derive(Debug, Clone, Default, PartialEq)]
-pub struct Carried {
-    /// The root's metadata keys other than Film's own (`filmcraft`).
-    pub root_metadata: serde_json::Map<String, Value>,
-    /// Cut's own timelines, each at its index among the collection's children.
-    pub timelines: Vec<(usize, Value)>,
-    /// Tracks holding Cut's data: (the index of Film's timeline among Film's timelines, the index in its stack, the track).
-    pub tracks: Vec<(usize, usize, Value)>,
-    /// Cut's bookmarks on the stack of Film's timeline (by its index), after Film's own markers.
-    pub markers: Vec<(usize, Vec<Value>)>,
-}
-
-impl Carried {
-    /// What Film shows but does not edit, by name.
-    pub fn named(&self) -> Vec<String> {
-        let name = |v: &Value| v.get("name").and_then(Value::as_str).unwrap_or("").to_string();
-        let mut out: Vec<String> = self.timelines.iter().map(|(_, t)| format!("the timeline \"{}\" (Cut's)", name(t))).collect();
-        out.extend(self.tracks.iter().map(|(_, _, t)| format!("the track \"{}\" (holds Cut's edits)", name(t))));
-        out
-    }
-}
-
-/// Does `v` hold Cut's data (an `opencut` key anywhere within it)?
-fn holds_cut(v: &Value) -> bool {
-    match v {
-        Value::Object(m) => m.contains_key("opencut") || m.values().any(holds_cut),
-        Value::Array(a) => a.iter().any(holds_cut),
-        _ => false,
-    }
-}
-
-fn is_timeline(v: &Value) -> bool {
-    v.get("OTIO_SCHEMA").and_then(Value::as_str) == Some("Timeline.1")
-}
-
-/// Film's part of `doc` and what it carries.
-pub fn set_aside(doc: &Value) -> (Value, Carried) {
-    let mut film = doc.clone();
-    let mut c = Carried::default();
-    if film.get("OTIO_SCHEMA").and_then(Value::as_str) == Some("SerializableCollection.1") {
-        if let Some(Value::Object(meta)) = film.get_mut("metadata") {
-            let other: Vec<String> = meta.keys().filter(|k| k.as_str() != "filmcraft").cloned().collect();
-            for k in other {
-                if let Some(v) = meta.remove(&k) {
-                    c.root_metadata.insert(k, v);
-                }
-            }
-        }
-        if let Some(Value::Array(children)) = film.get_mut("children") {
-            let kept: Vec<Value> = std::mem::take(children)
-                .into_iter()
-                .enumerate()
-                .filter_map(|(i, t)| {
-                    if is_timeline(&t) && t.pointer("/metadata/opencut/scene").is_some_and(Value::is_object) {
-                        c.timelines.push((i, t));
-                        None
-                    } else {
-                        Some(t)
-                    }
-                })
-                .collect();
-            *children = kept;
-        }
-    }
-    for (fi, tl) in film_timelines(&mut film).into_iter().enumerate() {
-        let Some(Value::Object(stack)) = tl.get_mut("tracks") else { continue };
-        if let Some(Value::Array(tracks)) = stack.get_mut("children") {
-            let kept: Vec<Value> = std::mem::take(tracks)
-                .into_iter()
-                .enumerate()
-                .filter_map(|(k, t)| {
-                    if holds_cut(&t) {
-                        c.tracks.push((fi, k, t));
-                        None
-                    } else {
-                        Some(t)
-                    }
-                })
-                .collect();
-            *tracks = kept;
-        }
-        if let Some(Value::Array(markers)) = stack.get_mut("markers") {
-            let (cut, own): (Vec<Value>, Vec<Value>) = std::mem::take(markers).into_iter().partition(holds_cut);
-            *markers = own;
-            if !cut.is_empty() {
-                c.markers.push((fi, cut));
-            }
-        }
-    }
-    (film, c)
-}
-
-/// Film's timelines in `doc` (the root itself when it is one).
-fn film_timelines(doc: &mut Value) -> Vec<&mut Value> {
-    if is_timeline(doc) {
-        return vec![doc];
-    }
-    match doc.get_mut("children") {
-        Some(Value::Array(children)) => children.iter_mut().filter(|t| is_timeline(t)).collect(),
-        _ => Vec::new(),
-    }
-}
-
-/// Film's written part with what it carried put back in place.
-pub fn put_back(mut film: Value, c: &Carried) -> Value {
-    if !c.root_metadata.is_empty()
-        && let Some(root) = film.as_object_mut()
-    {
-        let meta = root.entry("metadata").or_insert_with(|| Value::Object(Default::default()));
-        if let Value::Object(m) = meta {
-            for (k, v) in &c.root_metadata {
-                m.insert(k.clone(), v.clone());
-            }
-        }
-    }
-    let mut timelines = film_timelines(&mut film);
-    for (fi, k, t) in &c.tracks {
-        if let Some(Some(Value::Array(tracks))) = timelines.get_mut(*fi).map(|tl| tl.pointer_mut("/tracks/children")) {
-            let at = (*k).min(tracks.len());
-            tracks.insert(at, t.clone());
-        }
-    }
-    for (fi, ms) in &c.markers {
-        if let Some(Some(stack)) = timelines.get_mut(*fi).map(|tl| tl.pointer_mut("/tracks"))
-            && let Some(obj) = stack.as_object_mut()
-        {
-            let markers = obj.entry("markers").or_insert_with(|| Value::Array(Vec::new()));
-            if let Value::Array(a) = markers {
-                a.extend(ms.iter().cloned());
-            }
-        }
-    }
-    if !c.timelines.is_empty()
-        && let Some(Value::Array(children)) = film.get_mut("children")
-    {
-        for (i, t) in &c.timelines {
-            let at = (*i).min(children.len());
-            children.insert(at, t.clone());
-        }
-    }
-    film
-}
-
 /// Open what the host sent into `s`, or refuse it by name (nothing is changed then).
 pub fn open_host_file(s: &mut Session, name: &str, bytes: &[u8]) -> Result<(), Refusal> {
     if !EDITS.contains(&extension(name).as_str()) {
         return Err(Refusal::NotEditable(name.to_string()));
     }
-    let unreadable = |e: String| Refusal::Unreadable { name: name.to_string(), error: e };
-    let original: Value = serde_json::from_slice(bytes).map_err(|e| unreadable(e.to_string()))?;
-    let (film_part, carried) = set_aside(&original);
-    let film_bytes = serde_json::to_vec(&film_part).map_err(|e| unreadable(e.to_string()))?;
-    let (imported, report) = filmcraft_interchange::import(&film_bytes, Format::Otio, None).map_err(|e| unreadable(e.to_string()))?;
-    if report.has_warnings() {
-        let said: Vec<String> = report.warnings().map(|w| w.message.clone()).collect();
-        return Err(Refusal::NotRoundTrip { name: name.to_string(), reason: format!("holds what Film cannot represent ({})", said.join("; ")) });
-    }
-    let Some(&first) = imported.sequences.first() else {
+    let (project, first, shared) = open_shared(name, bytes).map_err(|e| match e {
+        SharedError::Unreadable(error) => Refusal::Unreadable { name: name.to_string(), error },
+        SharedError::NotRoundTrip(reason) => Refusal::NotRoundTrip { name: name.to_string(), reason },
+        SharedError::MediaNotReferenced(media) => Refusal::MediaNotReferenced { name: name.to_string(), media },
+    })?;
+    let Some(first) = first else {
         return Err(Refusal::NotRoundTrip { name: name.to_string(), reason: "holds no timeline".into() });
     };
-    for item in imported.project.items.values() {
-        if let ItemKind::Media(m) = &item.kind
-            && let MediaRef::File { path } = &m.media
-            && !is_oneos_media(path)
-        {
-            return Err(Refusal::MediaNotReferenced { name: name.to_string(), media: item.name.clone() });
-        }
-    }
-    // The whole project, as Film writes it (files/989: a SerializableCollection.1 of every sequence, the project under metadata.filmcraft).
-    let (again, _) = filmcraft_interchange::export_project(&imported.project, &ExportOptions::default()).map_err(|e| unreadable(e.to_string()))?;
-    let again = put_back(serde_json::from_slice(&again).map_err(|e| unreadable(e.to_string()))?, &carried);
-    if let Some(at) = first_difference(&original, &again, "") {
-        return Err(Refusal::NotRoundTrip { name: name.to_string(), reason: format!("would be written back differently at {at}") });
-    }
-    crate::commands::install_project(s, imported.project, Some(name.to_string()), true);
-    s.host_carried = carried;
+    crate::commands::install_project(s, project, Some(name.to_string()), true);
+    s.host_shared = shared;
     s.state.active_sequence = Some(first);
     s.state.open_sequences = vec![first].into_iter().collect();
     Ok(())
 }
 
-/// The bytes of the whole project as the host stores them (`.otio`); the session is clean after.
+/// The bytes of the whole file as the host stores them (`.otio`), or a refusal by name (nothing is written then); the session is clean after.
 pub fn save_host_file(s: &mut Session) -> Result<Vec<u8>, String> {
-    let (bytes, _) = filmcraft_interchange::export_project(&s.project, &ExportOptions::default()).map_err(|e| e.to_string())?;
-    let film: Value = serde_json::from_slice(&bytes).map_err(|e| e.to_string())?;
-    let whole = serde_json::to_vec_pretty(&put_back(film, &s.host_carried)).map_err(|e| e.to_string())?;
+    let bytes = save_shared(&s.project, &mut s.host_shared).map_err(|e| e.to_string())?;
     s.saved_revision = s.revision;
-    Ok(whole)
+    Ok(bytes)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use filmcraft_interchange::{ExportOptions, Format};
+    use filmcraft_project::{ParamValue, TrackKind};
+    use serde_json::Value;
 
     fn session() -> Session {
         Session::new(std::sync::Arc::new(crate::FsServices))
+    }
+
+    /// The JSON pointer of the first place two documents differ (`None`: the same values).
+    fn first_difference(a: &Value, b: &Value, at: &str) -> Option<String> {
+        match (a, b) {
+            (Value::Object(x), Value::Object(y)) => {
+                let mut keys: Vec<&String> = x.keys().chain(y.keys()).collect();
+                keys.sort();
+                keys.dedup();
+                keys.into_iter().find_map(|k| match (x.get(k), y.get(k)) {
+                    (Some(p), Some(q)) => first_difference(p, q, &format!("{at}/{k}")),
+                    _ => Some(format!("{at}/{k}")),
+                })
+            }
+            (Value::Array(x), Value::Array(y)) if x.len() == y.len() => x.iter().zip(y).enumerate().find_map(|(i, (p, q))| first_difference(p, q, &format!("{at}/{i}"))),
+            (Value::Number(x), Value::Number(y)) if x.as_f64() == y.as_f64() => None,
+            _ if a == b => None,
+            _ => Some(if at.is_empty() { "/".into() } else { at.into() }),
+        }
+    }
+
+    /// The sequence named `name`, and the clip named `clip` on it (its track's kind, index and the clip's index).
+    fn find(s: &Session, seq: &str, clip: &str) -> (filmcraft_project::ItemId, TrackKind, usize, usize) {
+        let it = s.project.items.values().find(|i| i.name == seq && i.as_sequence().is_some()).unwrap_or_else(|| panic!("no sequence {seq}"));
+        let q = it.as_sequence().unwrap();
+        for kind in [TrackKind::Video, TrackKind::Audio] {
+            for (ti, t) in q.tracks(kind).iter().enumerate() {
+                if let Some(ci) = t.items.iter().position(|c| c.name == clip) {
+                    return (it.id, kind, ti, ci);
+                }
+            }
+        }
+        panic!("no clip {clip} on {seq}")
+    }
+
+    fn edit_clip(s: &mut Session, seq: &str, clip: &str, f: impl FnOnce(&mut filmcraft_project::TrackItem)) {
+        let (id, kind, ti, ci) = find(s, seq, clip);
+        let p = std::sync::Arc::make_mut(&mut s.project);
+        f(&mut p.sequence_mut(id).unwrap().tracks_mut(kind)[ti].items[ci]);
+    }
+
+    fn text_of(c: &filmcraft_project::TrackItem) -> String {
+        let l = c.effects.iter().find(|e| e.effect == "graphic_text").expect("a text layer");
+        match &l.params["text"].value {
+            ParamValue::Text(t) => t.clone(),
+            other => panic!("{other:?}"),
+        }
     }
 
     #[test]
@@ -330,39 +190,120 @@ mod tests {
         v
     }
 
-    /// files/989 ("one format that can encompass everything of both"): Cut -> Film -> Cut. Film opens a file Cut wrote its own parts into,
-    /// carries them untouched (named, shown, not edited), and a save, unedited or edited, gives every one of them back exactly.
+    /// files/989 (Mona 2026-11-09: "film should be able to edit cut though"): Cut's parts of a Film file open in Film as Film's own types (a
+    /// text track as a track of graphic clips with a text layer, Cut's stacked lanes as tracks, its scene as a sequence, its bookmark as a
+    /// marker), nothing locked; an unedited save is the file value for value, and so is a save after Film edits only its own part.
     #[test]
-    fn cut_parts_in_a_film_file_are_carried_through_film_untouched() {
+    fn cut_parts_in_a_film_file_open_as_film_types_and_save_back_value_for_value() {
         let cut = with_cut_parts(film_form());
         let bytes = serde_json::to_vec(&cut).unwrap();
         let mut s = session();
         open_host_file(&mut s, "trip.otio", &bytes).unwrap();
         assert!(!s.is_dirty());
-        assert_eq!(s.host_carried.named(), vec!["the timeline \"Teaser\" (Cut's)".to_string(), "the track \"Titles\" (holds Cut's edits)".into(), "the track \"Stickers\" (holds Cut's edits)".into()]);
+        assert_eq!(s.host_shared.locked(), Vec::<String>::new(), "nothing of Cut's is locked");
+        let (_, _, _, _) = find(&s, "Teaser", "Title");
+        let (seq, kind, ti, ci) = find(&s, "T", "End");
+        let q = s.project.sequence(seq).unwrap();
+        assert_eq!(kind, TrackKind::Video);
+        assert_eq!(q.video_tracks[ti].name, "Titles");
+        assert_eq!(text_of(&q.video_tracks[ti].items[ci]), "Hello");
+        assert!(q.video_tracks.iter().any(|t| t.name == "Stickers (lane 2)"), "Cut's lanes are tracks");
+        assert!(q.markers.iter().any(|m| m.name == "hook"), "Cut's bookmark is a marker");
         let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
-        assert_eq!(first_difference(&cut, &saved, ""), None, "unedited: Cut's file comes back value for value");
-        // Film edits its own part; every part of Cut's is still exactly what Cut wrote.
+        assert_eq!(first_difference(&cut, &saved, ""), None, "unedited: the file comes back value for value");
         std::sync::Arc::make_mut(&mut s.project).notes = "Film was here".into();
         let edited: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
         assert_ne!(first_difference(&cut, &edited, ""), None, "Film's edit is saved");
-        for at in ["/children/0/tracks/children/1", "/children/0/tracks/children/2", "/children/1", "/metadata/opencut"] {
-            assert_eq!(edited.pointer(at), cut.pointer(at), "{at} is Cut's, untouched");
+        for at in ["/children/0/tracks/children/1", "/children/0/tracks/children/2", "/children/0/tracks/markers", "/children/1", "/metadata/opencut"] {
+            assert_eq!(edited.pointer(at), cut.pointer(at), "{at} is Cut's, untouched by an edit of Film's own part");
         }
-        let marks = |v: &Value| v.pointer("/children/0/tracks/markers").cloned();
-        assert_eq!(marks(&edited), marks(&cut));
-        assert_eq!(edited.pointer("/children/0/tracks/children/0"), cut.pointer("/children/0/tracks/children/0"), "Film's own track");
     }
 
+    /// Film EDITS Cut's parts and writes them back in Cut's shape: a text's content and a trim of Cut's element, a renamed bookmark, the
+    /// scene's track hidden. Only those fields change; every other field of Cut's comes back exactly.
     #[test]
-    fn set_aside_and_put_back_are_inverse_and_take_nothing_of_film_s_own() {
-        let film = film_form();
-        let (part, c) = set_aside(&film);
-        assert_eq!(c, Carried::default(), "a Film file carries nothing");
-        assert_eq!(part, film);
+    fn film_edits_cut_s_parts_and_saves_them_in_cut_s_shape() {
         let cut = with_cut_parts(film_form());
-        let (part, c) = set_aside(&cut);
-        assert_eq!(part, film, "what is set aside is exactly Cut's");
-        assert_eq!(put_back(part, &c), cut);
+        let mut s = session();
+        open_host_file(&mut s, "trip.otio", &serde_json::to_vec(&cut).unwrap()).unwrap();
+        edit_clip(&mut s, "T", "Title", |c| {
+            let l = c.effects.iter_mut().find(|e| e.effect == "graphic_text").unwrap();
+            l.params.insert("text".into(), filmcraft_project::Param::new(ParamValue::Text("Bye".into())));
+        });
+        // A frame at 30 fps is 4000 of Cut's ticks: shorten "End" by one.
+        edit_clip(&mut s, "T", "End", |c| c.duration -= filmcraft_time::FrameRate::FPS_30.frame_duration());
+        {
+            let p = std::sync::Arc::make_mut(&mut s.project);
+            let id = p.items.values().find(|i| i.name == "T").unwrap().id;
+            let q = p.sequence_mut(id).unwrap();
+            q.markers.iter_mut().find(|m| m.name == "hook").unwrap().name = "hook 2".into();
+            let teaser = p.items.values().find(|i| i.name == "Teaser").unwrap().id;
+            p.sequence_mut(teaser).unwrap().video_tracks.iter_mut().find(|t| t.name == "Titles").unwrap().enabled = false;
+        }
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
+        // Film's own tracks (V1, A1), then Cut's Titles and its lanes.
+        let titles = "/children/0/tracks/children/2";
+        assert_eq!(saved.pointer(&format!("{titles}/children/0/metadata/opencut/element/content")), Some(&serde_json::json!("Bye")));
+        assert_eq!(saved.pointer(&format!("{titles}/children/2/source_range/duration/value")), Some(&serde_json::json!(116000)));
+        assert_eq!(saved.pointer("/children/0/tracks/markers/0/name"), Some(&serde_json::json!("hook 2")));
+        assert_eq!(saved.pointer("/children/0/tracks/markers/0/metadata/opencut/bookmark/note"), Some(&serde_json::json!("hook 2")));
+        assert_eq!(saved.pointer("/children/1/tracks/children/0/metadata/opencut/track/hidden"), Some(&serde_json::json!(true)));
+        // Everything else is exactly the file's.
+        let mut want = cut.clone();
+        *want.pointer_mut(&format!("{titles}/children/0/metadata/opencut/element/content")).unwrap() = serde_json::json!("Bye");
+        *want.pointer_mut(&format!("{titles}/children/2/source_range/duration/value")).unwrap() = serde_json::json!(116000);
+        *want.pointer_mut("/children/0/tracks/markers/0/name").unwrap() = serde_json::json!("hook 2");
+        *want.pointer_mut("/children/0/tracks/markers/0/metadata/opencut/bookmark/note").unwrap() = serde_json::json!("hook 2");
+        *want.pointer_mut("/children/1/tracks/children/0/metadata/opencut/track/hidden").unwrap() = serde_json::json!(true);
+        assert_eq!(first_difference(&want, &saved, ""), None);
+        // Saved again unedited: the same file.
+        let again: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
+        assert_eq!(first_difference(&saved, &again, ""), None);
+    }
+
+    /// files/989, Film -> Cut -> Film on a file Film wrote: `film-written.otio` (pinned to Film's writer by the interchange test
+    /// `oneos_film_writes_the_file_cut_reads`) as Cut edited it (the OpenCut fork's `oneos-tests/film-written.test.ts` pins Cut's writer to
+    /// `cut-edited.otio`: a trim of a clip on Film's track, a title track, a new scene). Film opens Cut's edit with every part as its own
+    /// type (Cut's trim reconciled into Film's clip), and an unedited save is the file value for value.
+    #[test]
+    fn a_file_cut_edited_opens_in_film_and_saves_back_value_for_value() {
+        let film: Value = serde_json::from_slice(include_bytes!("../../interchange/tests/it/oneos/film-written.otio")).unwrap();
+        let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-edited.otio");
+        let cut: Value = serde_json::from_slice(bytes).unwrap();
+        let mut s = session();
+        open_host_file(&mut s, "Trip.otio", bytes).unwrap();
+        assert_eq!(s.host_shared.locked(), Vec::<String>::new(), "nothing of Cut's is locked");
+        assert!(s.project.items.values().any(|i| i.name == "Teaser" && i.as_sequence().is_some()), "Cut's scene is a sequence");
+        let edit = s.project.items.values().find(|i| i.name == "Edit").unwrap().as_sequence().unwrap();
+        assert!(edit.video_tracks.iter().any(|t| t.name == "Titles"), "Cut's title track is a track");
+        // Cut's trim of Film's clip (source 24 frames in, 36 long, at 24 fps) is Film's clip now.
+        let c = &edit.video_tracks[0].items[0];
+        let f = filmcraft_time::FrameRate::FPS_24;
+        assert_eq!((c.source_in, c.duration), (f.tick_of(24), f.tick_of(36)));
+        assert_eq!(c.label, filmcraft_project::Label::Iris, "it keeps everything else of Film's");
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
+        assert_eq!(first_difference(&cut, &saved, ""), None, "Cut's edit comes back from Film value for value");
+        assert_eq!(first_difference(&saved["metadata"]["filmcraft"], &film["metadata"]["filmcraft"], ""), None, "Film's own project is Film's");
+    }
+
+    /// Film edits the clip Cut trimmed: it is written at Film's rate with Film's exact mirrors, and Cut's own data on it rides along.
+    #[test]
+    fn film_trims_the_clip_cut_trimmed_and_cut_s_data_on_it_is_kept() {
+        let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-edited.otio");
+        let cut: Value = serde_json::from_slice(bytes).unwrap();
+        let mut s = session();
+        open_host_file(&mut s, "Trip.otio", bytes).unwrap();
+        let f = filmcraft_time::FrameRate::FPS_24;
+        {
+            let p = std::sync::Arc::make_mut(&mut s.project);
+            let id = p.items.values().find(|i| i.name == "Edit").unwrap().id;
+            p.sequence_mut(id).unwrap().video_tracks[0].items[0].duration = f.tick_of(30);
+        }
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
+        let clip = "/children/0/tracks/children/0/children/0";
+        assert_eq!(saved.pointer(&format!("{clip}/source_range/duration/value")).and_then(Value::as_f64), Some(30.0));
+        assert_eq!(saved.pointer(&format!("{clip}/metadata/filmcraft/duration_ticks")).and_then(Value::as_i64), Some(f.tick_of(30).0));
+        assert_eq!(saved.pointer(&format!("{clip}/metadata/opencut")), cut.pointer(&format!("{clip}/metadata/opencut")), "Cut's data on Film's clip");
+        assert_eq!(saved.pointer("/children/2"), cut.pointer("/children/2"), "Cut's scene, untouched");
     }
 }
