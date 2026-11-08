@@ -746,3 +746,34 @@ fn oneos_a_whole_project_whose_timeline_another_tool_changed_is_named() {
     let (_, rep) = import(&serde_json::to_vec(&v).unwrap(), Format::Otio, None).unwrap();
     assert!(rep.mentions("changed outside FilmCraft"), "{rep}");
 }
+
+/// files/989, the Film -> Cut -> Film proof on a file FILM wrote (not a hand-built one): this project, written by Film's whole-project writer,
+/// is `tests/it/oneos/film-written.otio`, the very file the OpenCut fork's tests open (its `oneos-tests/fixtures/film-written.otio` is a copy,
+/// byte for byte). Two sequences; OneOS media; a plain track Cut edits, a track with a transition Cut carries locked, linked audio.
+/// `FILMCRAFT_BLESS=1` writes the golden file; otherwise the writer must give it again, value for value.
+#[test]
+fn oneos_film_writes_the_file_cut_reads() {
+    use serde_json::Value;
+    let r = FrameRate::FPS_24;
+    let mut p = Project::new("Trip");
+    let a = media(&mut p, "oneos:file/01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1", true, true, r);
+    let b = media(&mut p, "oneos:file/01jabcdefghjkmnpqrstvwxyz2?version=01jabcdefghjkmnpqrstvwxyz3", true, false, r);
+    let s = sequence(&mut p, "Edit", r, false);
+    let v1 = clip(&mut p, s, TrackKind::Video, 0, a, 0..48, 24);
+    let a1 = clip(&mut p, s, TrackKind::Audio, 0, a, 0..48, 24);
+    link(&mut p, s, &[v1, a1]);
+    clip(&mut p, s, TrackKind::Video, 0, b, 60..120, 0);
+    let x = clip(&mut p, s, TrackKind::Video, 1, a, 0..24, 0);
+    let y = clip(&mut p, s, TrackKind::Video, 1, b, 24..48, 10);
+    transition(&mut p, s, (TrackKind::Video, 1), "cross_dissolve", (Some(x), Some(y)), 20..28, TransitionAlign::CenterAtCut);
+    let alt = sequence(&mut p, "Alt", r, false);
+    clip(&mut p, alt, TrackKind::Video, 0, b, 0..30, 0);
+    p.notes = "Call the client".into();
+    let (bytes, _) = filmcraft_interchange::export_project(&p, &ExportOptions::default()).expect("Film writes the whole project");
+    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/it/oneos/film-written.otio");
+    if std::env::var_os("FILMCRAFT_BLESS").is_some() {
+        std::fs::write(path, &bytes).unwrap();
+    }
+    let golden = std::fs::read(path).expect("the golden Film-written file (FILMCRAFT_BLESS=1 writes it)");
+    assert_eq!(serde_json::from_slice::<Value>(&golden).unwrap(), serde_json::from_slice::<Value>(&bytes).unwrap(), "Film writes the shared file as it is pinned");
+}
