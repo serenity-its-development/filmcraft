@@ -41,37 +41,115 @@
                   "opencut": {
                     "element": {
                       "animations": {
-                        "opacity": {
-                          "keyframes": [
-                            {
-                              "easing": "ease-in",
-                              "time": 0,
-                              "value": 0
-                            },
-                            {
-                              "time": 120000,
-                              "value": 1
-                            }
-                          ]
+                        "bindings": {
+                          "effects.id-001.params.intensity": {
+                            "components": [
+                              {
+                                "channelId": "effects.id-001.params.intensity:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "effects.id-001.params.intensity"
+                          },
+                          "opacity": {
+                            "components": [
+                              {
+                                "channelId": "opacity:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "opacity"
+                          },
+                          "transform.positionX": {
+                            "components": [
+                              {
+                                "channelId": "transform.positionX:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "transform.positionX"
+                          },
+                          "volume": {
+                            "components": [
+                              {
+                                "channelId": "volume:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "volume"
+                          }
+                        },
+                        "channels": {
+                          "effects.id-001.params.intensity:value": {
+                            "keys": [
+                              {
+                                "id": "id-015",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 40
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "opacity:value": {
+                            "keys": [
+                              {
+                                "id": "id-011",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 0,
+                                "value": 0
+                              },
+                              {
+                                "id": "id-012",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 1
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "transform.positionX:value": {
+                            "keys": [
+                              {
+                                "id": "id-013",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 240000,
+                                "value": 40
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "volume:value": {
+                            "keys": [
+                              {
+                                "id": "id-014",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 360000,
+                                "value": 0.2
+                              }
+                            ],
+                            "kind": "scalar"
+                          }
                         }
                       },
                       "blendMode": "screen",
                       "effects": [
                         {
                           "enabled": true,
-                          "id": "fx1",
+                          "id": "id-001",
                           "params": {
-                            "radius": 4
+                            "intensity": 15
                           },
                           "type": "blur"
-                        },
-                        {
-                          "enabled": false,
-                          "id": "fx2",
-                          "params": {
-                            "saturation": 0.8
-                          },
-                          "type": "colorCorrect"
                         }
                       ],
                       "hidden": false,
@@ -79,22 +157,159 @@
                       "isSourceAudioEnabled": true,
                       "masks": [
                         {
-                          "id": "mk1",
-                          "inverted": true,
-                          "points": [
-                            {
-                              "x": 0,
-                              "y": 0
-                            },
-                            {
-                              "x": 1,
-                              "y": 0
-                            },
-                            {
-                              "x": 1,
-                              "y": 1
-                            }
-                          ],
+                          "id": "id-002",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "inverted": false,
+                            "rotation": 0,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0
+                          },
+                          "type": "split"
+                        },
+                        {
+                          "id": "id-003",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 1.1473474844178635
+                          },
+                          "type": "cinematic-bars"
+                        },
+                        {
+                          "id": "id-004",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 0.3375
+                          },
+                          "type": "rectangle"
+                        },
+                        {
+                          "id": "id-005",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 0.3375
+                          },
+                          "type": "ellipse"
+                        },
+                        {
+                          "id": "id-006",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 0.3375
+                          },
+                          "type": "heart"
+                        },
+                        {
+                          "id": "id-007",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 0.3375
+                          },
+                          "type": "diamond"
+                        },
+                        {
+                          "id": "id-008",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 0.3375
+                          },
+                          "type": "star"
+                        },
+                        {
+                          "id": "id-009",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "content": "Mask",
+                            "feather": 0,
+                            "fontFamily": "Arial",
+                            "fontSize": 15,
+                            "fontStyle": "normal",
+                            "fontWeight": "normal",
+                            "inverted": false,
+                            "letterSpacing": 0,
+                            "lineHeight": 1.2,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "textDecoration": "none"
+                          },
+                          "type": "text"
+                        },
+                        {
+                          "id": "id-010",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "closed": false,
+                            "feather": 0,
+                            "inverted": false,
+                            "path": [],
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0
+                          },
                           "type": "custom"
                         }
                       ],
@@ -107,13 +322,13 @@
                       },
                       "sourceDuration": 960000,
                       "transform": {
-                        "flipX": false,
                         "position": {
                           "x": 12,
                           "y": -4
                         },
                         "rotate": 7.5,
-                        "scale": 1.25
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
                       },
                       "trimEnd": 240000,
                       "type": "video",
@@ -176,19 +391,19 @@
                 "metadata": {
                   "opencut": {
                     "element": {
-                      "effects": [],
+                      "blendMode": "normal",
+                      "hidden": false,
                       "id": "i1",
-                      "masks": [],
                       "mediaId": "m-image",
                       "opacity": 1,
                       "transform": {
-                        "flipX": false,
                         "position": {
-                          "x": 12,
-                          "y": -4
+                          "x": 0,
+                          "y": 0
                         },
-                        "rotate": 7.5,
-                        "scale": 1.25
+                        "rotate": 0,
+                        "scaleX": 1,
+                        "scaleY": 1
                       },
                       "trimEnd": 0,
                       "type": "image"
@@ -277,18 +492,102 @@
                   "opencut": {
                     "element": {
                       "animations": {
-                        "opacity": {
-                          "keyframes": [
-                            {
-                              "easing": "ease-in",
-                              "time": 0,
-                              "value": 0
-                            },
-                            {
-                              "time": 120000,
-                              "value": 1
-                            }
-                          ]
+                        "bindings": {
+                          "color": {
+                            "colorSpace": "srgb-linear",
+                            "components": [
+                              {
+                                "channelId": "color:r",
+                                "key": "r"
+                              },
+                              {
+                                "channelId": "color:g",
+                                "key": "g"
+                              },
+                              {
+                                "channelId": "color:b",
+                                "key": "b"
+                              },
+                              {
+                                "channelId": "color:a",
+                                "key": "a"
+                              }
+                            ],
+                            "kind": "color",
+                            "path": "color"
+                          },
+                          "opacity": {
+                            "components": [
+                              {
+                                "channelId": "opacity:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "opacity"
+                          }
+                        },
+                        "channels": {
+                          "color:a": {
+                            "keys": [
+                              {
+                                "id": "id-018",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 1
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "color:b": {
+                            "keys": [
+                              {
+                                "id": "id-018",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 0
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "color:g": {
+                            "keys": [
+                              {
+                                "id": "id-018",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 0
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "color:r": {
+                            "keys": [
+                              {
+                                "id": "id-018",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 1
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "opacity:value": {
+                            "keys": [
+                              {
+                                "id": "id-017",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 0,
+                                "value": 0
+                              }
+                            ],
+                            "kind": "scalar"
+                          }
                         }
                       },
                       "background": {
@@ -300,13 +599,23 @@
                         "paddingX": 4,
                         "paddingY": 2
                       },
+                      "blendMode": "normal",
                       "color": "#ffffff",
                       "content": "Hello 日本語",
+                      "effects": [
+                        {
+                          "enabled": true,
+                          "id": "id-016",
+                          "params": {
+                            "intensity": 15
+                          },
+                          "type": "blur"
+                        }
+                      ],
                       "fontFamily": "Inter",
                       "fontSize": 64,
                       "fontStyle": "italic",
                       "fontWeight": "bold",
-                      "hidden": false,
                       "id": "t1",
                       "letterSpacing": 1,
                       "lineHeight": 1.2,
@@ -314,13 +623,13 @@
                       "textAlign": "center",
                       "textDecoration": "underline",
                       "transform": {
-                        "flipX": false,
                         "position": {
                           "x": 12,
                           "y": -4
                         },
                         "rotate": 7.5,
-                        "scale": 1.25
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
                       },
                       "trimEnd": 0,
                       "type": "text"
@@ -385,17 +694,18 @@
                 "metadata": {
                   "opencut": {
                     "element": {
+                      "blendMode": "normal",
                       "id": "g1",
                       "opacity": 0.5,
-                      "stickerId": "emoji:star",
+                      "stickerId": "shapes:star",
                       "transform": {
-                        "flipX": false,
                         "position": {
                           "x": 12,
                           "y": -4
                         },
                         "rotate": 7.5,
-                        "scale": 1.25
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
                       },
                       "trimEnd": 0,
                       "type": "sticker"
@@ -429,7 +739,7 @@
                   "duration": {
                     "OTIO_SCHEMA": "RationalTime.1",
                     "rate": 120000,
-                    "value": 360000
+                    "value": 120000
                   },
                   "start_time": {
                     "OTIO_SCHEMA": "RationalTime.1",
@@ -450,34 +760,264 @@
                     "available_range": null,
                     "generator_kind": "OpenCut.graphic",
                     "metadata": {},
-                    "name": "Lower third",
+                    "name": "Rectangle",
                     "parameters": {}
                   }
                 },
                 "metadata": {
                   "opencut": {
                     "element": {
-                      "definitionId": "lower-third",
+                      "animations": {
+                        "bindings": {
+                          "params.strokeWidth": {
+                            "components": [
+                              {
+                                "channelId": "params.strokeWidth:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "params.strokeWidth"
+                          }
+                        },
+                        "channels": {
+                          "params.strokeWidth:value": {
+                            "keys": [
+                              {
+                                "id": "id-019",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 1
+                              }
+                            ],
+                            "kind": "scalar"
+                          }
+                        }
+                      },
+                      "blendMode": "normal",
+                      "definitionId": "rectangle",
                       "id": "g2",
+                      "masks": [
+                        {
+                          "id": "id-020",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 0.6
+                          },
+                          "type": "ellipse"
+                        }
+                      ],
                       "opacity": 1,
                       "params": {
-                        "title": "Ana"
+                        "cornerRadius": 0,
+                        "fill": "#ffffff",
+                        "stroke": "#000000",
+                        "strokeAlign": "center",
+                        "strokeWidth": 0
                       },
                       "transform": {
-                        "flipX": false,
                         "position": {
                           "x": 12,
                           "y": -4
                         },
                         "rotate": 7.5,
-                        "scale": 1.25
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
                       },
                       "trimEnd": 0,
                       "type": "graphic"
                     }
                   }
                 },
-                "name": "Lower third",
+                "name": "Rectangle",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 240000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.graphic",
+                    "metadata": {},
+                    "name": "Ellipse",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "blendMode": "normal",
+                      "definitionId": "ellipse",
+                      "id": "g3",
+                      "opacity": 1,
+                      "params": {
+                        "fill": "#ffffff",
+                        "stroke": "#000000",
+                        "strokeAlign": "center",
+                        "strokeWidth": 0
+                      },
+                      "transform": {
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "graphic"
+                    }
+                  }
+                },
+                "name": "Ellipse",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 240000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.graphic",
+                    "metadata": {},
+                    "name": "Polygon",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "blendMode": "normal",
+                      "definitionId": "polygon",
+                      "id": "g4",
+                      "opacity": 1,
+                      "params": {
+                        "cornerRadius": 0,
+                        "fill": "#ffffff",
+                        "sides": 5,
+                        "stroke": "#000000",
+                        "strokeAlign": "center",
+                        "strokeWidth": 0
+                      },
+                      "transform": {
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "graphic"
+                    }
+                  }
+                },
+                "name": "Polygon",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 240000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.graphic",
+                    "metadata": {},
+                    "name": "Star",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "blendMode": "normal",
+                      "definitionId": "star",
+                      "id": "g5",
+                      "opacity": 1,
+                      "params": {
+                        "depth": 45,
+                        "fill": "#ffffff",
+                        "points": 5,
+                        "stroke": "#000000",
+                        "strokeAlign": "center",
+                        "strokeWidth": 0
+                      },
+                      "transform": {
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "graphic"
+                    }
+                  }
+                },
+                "name": "Star",
                 "source_range": {
                   "OTIO_SCHEMA": "TimeRange.1",
                   "duration": {
@@ -501,7 +1041,10 @@
               "opencut": {
                 "order": [
                   "g1",
-                  "g2"
+                  "g2",
+                  "g3",
+                  "g4",
+                  "g5"
                 ],
                 "slot": "overlay",
                 "track": {
@@ -536,10 +1079,10 @@
                 "metadata": {
                   "opencut": {
                     "element": {
-                      "effectType": "colorCorrect",
+                      "effectType": "blur",
                       "id": "e1",
                       "params": {
-                        "contrast": 1.1
+                        "intensity": 15
                       },
                       "trimEnd": 0,
                       "type": "effect"
@@ -777,37 +1320,115 @@
                   "opencut": {
                     "element": {
                       "animations": {
-                        "opacity": {
-                          "keyframes": [
-                            {
-                              "easing": "ease-in",
-                              "time": 0,
-                              "value": 0
-                            },
-                            {
-                              "time": 120000,
-                              "value": 1
-                            }
-                          ]
+                        "bindings": {
+                          "effects.id-021.params.intensity": {
+                            "components": [
+                              {
+                                "channelId": "effects.id-021.params.intensity:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "effects.id-021.params.intensity"
+                          },
+                          "opacity": {
+                            "components": [
+                              {
+                                "channelId": "opacity:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "opacity"
+                          },
+                          "transform.positionX": {
+                            "components": [
+                              {
+                                "channelId": "transform.positionX:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "transform.positionX"
+                          },
+                          "volume": {
+                            "components": [
+                              {
+                                "channelId": "volume:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "volume"
+                          }
+                        },
+                        "channels": {
+                          "effects.id-021.params.intensity:value": {
+                            "keys": [
+                              {
+                                "id": "id-035",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 40
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "opacity:value": {
+                            "keys": [
+                              {
+                                "id": "id-031",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 0,
+                                "value": 0
+                              },
+                              {
+                                "id": "id-032",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 1
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "transform.positionX:value": {
+                            "keys": [
+                              {
+                                "id": "id-033",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 240000,
+                                "value": 40
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "volume:value": {
+                            "keys": [
+                              {
+                                "id": "id-034",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 360000,
+                                "value": 0.2
+                              }
+                            ],
+                            "kind": "scalar"
+                          }
                         }
                       },
                       "blendMode": "screen",
                       "effects": [
                         {
                           "enabled": true,
-                          "id": "fx1",
+                          "id": "id-021",
                           "params": {
-                            "radius": 4
+                            "intensity": 15
                           },
                           "type": "blur"
-                        },
-                        {
-                          "enabled": false,
-                          "id": "fx2",
-                          "params": {
-                            "saturation": 0.8
-                          },
-                          "type": "colorCorrect"
                         }
                       ],
                       "hidden": false,
@@ -815,22 +1436,159 @@
                       "isSourceAudioEnabled": true,
                       "masks": [
                         {
-                          "id": "mk1",
-                          "inverted": true,
-                          "points": [
-                            {
-                              "x": 0,
-                              "y": 0
-                            },
-                            {
-                              "x": 1,
-                              "y": 0
-                            },
-                            {
-                              "x": 1,
-                              "y": 1
-                            }
-                          ],
+                          "id": "id-022",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "inverted": false,
+                            "rotation": 0,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0
+                          },
+                          "type": "split"
+                        },
+                        {
+                          "id": "id-023",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 1.1473474844178635
+                          },
+                          "type": "cinematic-bars"
+                        },
+                        {
+                          "id": "id-024",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 0.3375
+                          },
+                          "type": "rectangle"
+                        },
+                        {
+                          "id": "id-025",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 0.3375
+                          },
+                          "type": "ellipse"
+                        },
+                        {
+                          "id": "id-026",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 0.3375
+                          },
+                          "type": "heart"
+                        },
+                        {
+                          "id": "id-027",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 0.3375
+                          },
+                          "type": "diamond"
+                        },
+                        {
+                          "id": "id-028",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 0.3375
+                          },
+                          "type": "star"
+                        },
+                        {
+                          "id": "id-029",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "content": "Mask",
+                            "feather": 0,
+                            "fontFamily": "Arial",
+                            "fontSize": 15,
+                            "fontStyle": "normal",
+                            "fontWeight": "normal",
+                            "inverted": false,
+                            "letterSpacing": 0,
+                            "lineHeight": 1.2,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "textDecoration": "none"
+                          },
+                          "type": "text"
+                        },
+                        {
+                          "id": "id-030",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "closed": false,
+                            "feather": 0,
+                            "inverted": false,
+                            "path": [],
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0
+                          },
                           "type": "custom"
                         }
                       ],
@@ -843,13 +1601,13 @@
                       },
                       "sourceDuration": 960000,
                       "transform": {
-                        "flipX": false,
                         "position": {
                           "x": 12,
                           "y": -4
                         },
                         "rotate": 7.5,
-                        "scale": 1.25
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
                       },
                       "trimEnd": 240000,
                       "type": "video",
@@ -912,19 +1670,19 @@
                 "metadata": {
                   "opencut": {
                     "element": {
-                      "effects": [],
+                      "blendMode": "normal",
+                      "hidden": false,
                       "id": "i1",
-                      "masks": [],
                       "mediaId": "m-image",
                       "opacity": 1,
                       "transform": {
-                        "flipX": false,
                         "position": {
-                          "x": 12,
-                          "y": -4
+                          "x": 0,
+                          "y": 0
                         },
-                        "rotate": 7.5,
-                        "scale": 1.25
+                        "rotate": 0,
+                        "scaleX": 1,
+                        "scaleY": 1
                       },
                       "trimEnd": 0,
                       "type": "image"
@@ -1013,18 +1771,102 @@
                   "opencut": {
                     "element": {
                       "animations": {
-                        "opacity": {
-                          "keyframes": [
-                            {
-                              "easing": "ease-in",
-                              "time": 0,
-                              "value": 0
-                            },
-                            {
-                              "time": 120000,
-                              "value": 1
-                            }
-                          ]
+                        "bindings": {
+                          "color": {
+                            "colorSpace": "srgb-linear",
+                            "components": [
+                              {
+                                "channelId": "color:r",
+                                "key": "r"
+                              },
+                              {
+                                "channelId": "color:g",
+                                "key": "g"
+                              },
+                              {
+                                "channelId": "color:b",
+                                "key": "b"
+                              },
+                              {
+                                "channelId": "color:a",
+                                "key": "a"
+                              }
+                            ],
+                            "kind": "color",
+                            "path": "color"
+                          },
+                          "opacity": {
+                            "components": [
+                              {
+                                "channelId": "opacity:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "opacity"
+                          }
+                        },
+                        "channels": {
+                          "color:a": {
+                            "keys": [
+                              {
+                                "id": "id-038",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 1
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "color:b": {
+                            "keys": [
+                              {
+                                "id": "id-038",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 0
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "color:g": {
+                            "keys": [
+                              {
+                                "id": "id-038",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 0
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "color:r": {
+                            "keys": [
+                              {
+                                "id": "id-038",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 1
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "opacity:value": {
+                            "keys": [
+                              {
+                                "id": "id-037",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 0,
+                                "value": 0
+                              }
+                            ],
+                            "kind": "scalar"
+                          }
                         }
                       },
                       "background": {
@@ -1036,13 +1878,23 @@
                         "paddingX": 4,
                         "paddingY": 2
                       },
+                      "blendMode": "normal",
                       "color": "#ffffff",
                       "content": "Hello 日本語",
+                      "effects": [
+                        {
+                          "enabled": true,
+                          "id": "id-036",
+                          "params": {
+                            "intensity": 15
+                          },
+                          "type": "blur"
+                        }
+                      ],
                       "fontFamily": "Inter",
                       "fontSize": 64,
                       "fontStyle": "italic",
                       "fontWeight": "bold",
-                      "hidden": false,
                       "id": "t1",
                       "letterSpacing": 1,
                       "lineHeight": 1.2,
@@ -1050,13 +1902,13 @@
                       "textAlign": "center",
                       "textDecoration": "underline",
                       "transform": {
-                        "flipX": false,
                         "position": {
                           "x": 12,
                           "y": -4
                         },
                         "rotate": 7.5,
-                        "scale": 1.25
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
                       },
                       "trimEnd": 0,
                       "type": "text"
@@ -1121,17 +1973,18 @@
                 "metadata": {
                   "opencut": {
                     "element": {
+                      "blendMode": "normal",
                       "id": "g1",
                       "opacity": 0.5,
-                      "stickerId": "emoji:star",
+                      "stickerId": "shapes:star",
                       "transform": {
-                        "flipX": false,
                         "position": {
                           "x": 12,
                           "y": -4
                         },
                         "rotate": 7.5,
-                        "scale": 1.25
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
                       },
                       "trimEnd": 0,
                       "type": "sticker"
@@ -1165,7 +2018,7 @@
                   "duration": {
                     "OTIO_SCHEMA": "RationalTime.1",
                     "rate": 120000,
-                    "value": 360000
+                    "value": 120000
                   },
                   "start_time": {
                     "OTIO_SCHEMA": "RationalTime.1",
@@ -1186,34 +2039,264 @@
                     "available_range": null,
                     "generator_kind": "OpenCut.graphic",
                     "metadata": {},
-                    "name": "Lower third",
+                    "name": "Rectangle",
                     "parameters": {}
                   }
                 },
                 "metadata": {
                   "opencut": {
                     "element": {
-                      "definitionId": "lower-third",
+                      "animations": {
+                        "bindings": {
+                          "params.strokeWidth": {
+                            "components": [
+                              {
+                                "channelId": "params.strokeWidth:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "params.strokeWidth"
+                          }
+                        },
+                        "channels": {
+                          "params.strokeWidth:value": {
+                            "keys": [
+                              {
+                                "id": "id-039",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 1
+                              }
+                            ],
+                            "kind": "scalar"
+                          }
+                        }
+                      },
+                      "blendMode": "normal",
+                      "definitionId": "rectangle",
                       "id": "g2",
+                      "masks": [
+                        {
+                          "id": "id-040",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 0.6
+                          },
+                          "type": "ellipse"
+                        }
+                      ],
                       "opacity": 1,
                       "params": {
-                        "title": "Ana"
+                        "cornerRadius": 0,
+                        "fill": "#ffffff",
+                        "stroke": "#000000",
+                        "strokeAlign": "center",
+                        "strokeWidth": 0
                       },
                       "transform": {
-                        "flipX": false,
                         "position": {
                           "x": 12,
                           "y": -4
                         },
                         "rotate": 7.5,
-                        "scale": 1.25
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
                       },
                       "trimEnd": 0,
                       "type": "graphic"
                     }
                   }
                 },
-                "name": "Lower third",
+                "name": "Rectangle",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 240000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.graphic",
+                    "metadata": {},
+                    "name": "Ellipse",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "blendMode": "normal",
+                      "definitionId": "ellipse",
+                      "id": "g3",
+                      "opacity": 1,
+                      "params": {
+                        "fill": "#ffffff",
+                        "stroke": "#000000",
+                        "strokeAlign": "center",
+                        "strokeWidth": 0
+                      },
+                      "transform": {
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "graphic"
+                    }
+                  }
+                },
+                "name": "Ellipse",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 240000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.graphic",
+                    "metadata": {},
+                    "name": "Polygon",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "blendMode": "normal",
+                      "definitionId": "polygon",
+                      "id": "g4",
+                      "opacity": 1,
+                      "params": {
+                        "cornerRadius": 0,
+                        "fill": "#ffffff",
+                        "sides": 5,
+                        "stroke": "#000000",
+                        "strokeAlign": "center",
+                        "strokeWidth": 0
+                      },
+                      "transform": {
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "graphic"
+                    }
+                  }
+                },
+                "name": "Polygon",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 240000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.graphic",
+                    "metadata": {},
+                    "name": "Star",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "blendMode": "normal",
+                      "definitionId": "star",
+                      "id": "g5",
+                      "opacity": 1,
+                      "params": {
+                        "depth": 45,
+                        "fill": "#ffffff",
+                        "points": 5,
+                        "stroke": "#000000",
+                        "strokeAlign": "center",
+                        "strokeWidth": 0
+                      },
+                      "transform": {
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "graphic"
+                    }
+                  }
+                },
+                "name": "Star",
                 "source_range": {
                   "OTIO_SCHEMA": "TimeRange.1",
                   "duration": {
@@ -1237,7 +2320,10 @@
               "opencut": {
                 "order": [
                   "g1",
-                  "g2"
+                  "g2",
+                  "g3",
+                  "g4",
+                  "g5"
                 ],
                 "slot": "overlay",
                 "track": {
@@ -1272,10 +2358,10 @@
                 "metadata": {
                   "opencut": {
                     "element": {
-                      "effectType": "colorCorrect",
+                      "effectType": "blur",
                       "id": "e1",
                       "params": {
-                        "contrast": 1.1
+                        "intensity": 15
                       },
                       "trimEnd": 0,
                       "type": "effect"

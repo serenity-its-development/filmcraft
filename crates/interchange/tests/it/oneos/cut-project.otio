@@ -213,82 +213,297 @@
                                 "metadata": {
                                     "opencut": {
                                         "element": {
-                                            "id": "v1",
                                             "type": "video",
                                             "mediaId": "m-video",
                                             "trimEnd": 240000,
                                             "sourceDuration": 960000,
-                                            "volume": 0.7,
                                             "muted": false,
                                             "isSourceAudioEnabled": true,
                                             "hidden": false,
-                                            "retime": {
-                                                "rate": 1.5,
-                                                "maintainPitch": true
-                                            },
                                             "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
                                                 "position": {
                                                     "x": 12,
                                                     "y": -4
                                                 },
-                                                "scale": 1.25,
-                                                "rotate": 7.5,
-                                                "flipX": false
+                                                "rotate": 7.5
                                             },
                                             "opacity": 0.9,
                                             "blendMode": "screen",
+                                            "volume": 0.7,
+                                            "id": "v1",
+                                            "retime": {
+                                                "rate": 1.5,
+                                                "maintainPitch": true
+                                            },
                                             "effects": [
                                                 {
-                                                    "id": "fx1",
+                                                    "id": "id-001",
                                                     "type": "blur",
-                                                    "enabled": true,
                                                     "params": {
-                                                        "radius": 4
-                                                    }
-                                                },
-                                                {
-                                                    "id": "fx2",
-                                                    "type": "colorCorrect",
-                                                    "enabled": false,
-                                                    "params": {
-                                                        "saturation": 0.8
-                                                    }
+                                                        "intensity": 15
+                                                    },
+                                                    "enabled": true
                                                 }
                                             ],
                                             "masks": [
                                                 {
-                                                    "id": "mk1",
+                                                    "type": "split",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "rotation": 0
+                                                    },
+                                                    "id": "id-002"
+                                                },
+                                                {
+                                                    "type": "cinematic-bars",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 1.1473474844178637,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-003"
+                                                },
+                                                {
+                                                    "type": "rectangle",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 0.3375,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-004"
+                                                },
+                                                {
+                                                    "type": "ellipse",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 0.3375,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-005"
+                                                },
+                                                {
+                                                    "type": "heart",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 0.3375,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-006"
+                                                },
+                                                {
+                                                    "type": "diamond",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 0.3375,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-007"
+                                                },
+                                                {
+                                                    "type": "star",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 0.3375,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-008"
+                                                },
+                                                {
+                                                    "type": "text",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "content": "Mask",
+                                                        "fontSize": 15,
+                                                        "fontFamily": "Arial",
+                                                        "fontWeight": "normal",
+                                                        "fontStyle": "normal",
+                                                        "textDecoration": "none",
+                                                        "letterSpacing": 0,
+                                                        "lineHeight": 1.2,
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-009"
+                                                },
+                                                {
                                                     "type": "custom",
-                                                    "inverted": true,
-                                                    "points": [
-                                                        {
-                                                            "x": 0,
-                                                            "y": 0
-                                                        },
-                                                        {
-                                                            "x": 1,
-                                                            "y": 0
-                                                        },
-                                                        {
-                                                            "x": 1,
-                                                            "y": 1
-                                                        }
-                                                    ]
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "path": [],
+                                                        "closed": false,
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-010"
                                                 }
                                             ],
                                             "animations": {
-                                                "opacity": {
-                                                    "keyframes": [
-                                                        {
-                                                            "time": 0,
-                                                            "value": 0,
-                                                            "easing": "ease-in"
-                                                        },
-                                                        {
-                                                            "time": 120000,
-                                                            "value": 1
-                                                        }
-                                                    ]
+                                                "bindings": {
+                                                    "opacity": {
+                                                        "path": "opacity",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "opacity:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "transform.positionX": {
+                                                        "path": "transform.positionX",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "transform.positionX:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "volume": {
+                                                        "path": "volume",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "volume:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "effects.id-001.params.intensity": {
+                                                        "path": "effects.id-001.params.intensity",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "effects.id-001.params.intensity:value"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "channels": {
+                                                    "opacity:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-011",
+                                                                "time": 0,
+                                                                "value": 0,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            },
+                                                            {
+                                                                "id": "id-012",
+                                                                "time": 120000,
+                                                                "value": 1,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "transform.positionX:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-013",
+                                                                "time": 240000,
+                                                                "value": 40,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "volume:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-014",
+                                                                "time": 360000,
+                                                                "value": 0.2,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "effects.id-001.params.intensity:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-015",
+                                                                "time": 120000,
+                                                                "value": 40,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    }
                                                 }
                                             }
                                         }
@@ -349,22 +564,22 @@
                                 "metadata": {
                                     "opencut": {
                                         "element": {
-                                            "id": "i1",
                                             "type": "image",
                                             "mediaId": "m-image",
                                             "trimEnd": 0,
+                                            "hidden": false,
                                             "transform": {
+                                                "scaleX": 1,
+                                                "scaleY": 1,
                                                 "position": {
-                                                    "x": 12,
-                                                    "y": -4
+                                                    "x": 0,
+                                                    "y": 0
                                                 },
-                                                "scale": 1.25,
-                                                "rotate": 7.5,
-                                                "flipX": false
+                                                "rotate": 0
                                             },
                                             "opacity": 1,
-                                            "effects": [],
-                                            "masks": []
+                                            "blendMode": "normal",
+                                            "id": "i1"
                                         }
                                     }
                                 }
@@ -447,9 +662,9 @@
                                 "metadata": {
                                     "opencut": {
                                         "element": {
-                                            "id": "t1",
                                             "type": "text",
                                             "content": "Hello 日本語",
+                                            "trimEnd": 0,
                                             "fontSize": 64,
                                             "fontFamily": "Inter",
                                             "color": "#ffffff",
@@ -468,31 +683,125 @@
                                             "textDecoration": "underline",
                                             "letterSpacing": 1,
                                             "lineHeight": 1.2,
-                                            "hidden": false,
                                             "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
                                                 "position": {
                                                     "x": 12,
                                                     "y": -4
                                                 },
-                                                "scale": 1.25,
-                                                "rotate": 7.5,
-                                                "flipX": false
+                                                "rotate": 7.5
                                             },
                                             "opacity": 1,
-                                            "trimEnd": 0,
+                                            "blendMode": "normal",
+                                            "id": "t1",
+                                            "effects": [
+                                                {
+                                                    "id": "id-016",
+                                                    "type": "blur",
+                                                    "params": {
+                                                        "intensity": 15
+                                                    },
+                                                    "enabled": true
+                                                }
+                                            ],
                                             "animations": {
-                                                "opacity": {
-                                                    "keyframes": [
-                                                        {
-                                                            "time": 0,
-                                                            "value": 0,
-                                                            "easing": "ease-in"
-                                                        },
-                                                        {
-                                                            "time": 120000,
-                                                            "value": 1
-                                                        }
-                                                    ]
+                                                "bindings": {
+                                                    "opacity": {
+                                                        "path": "opacity",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "opacity:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "color": {
+                                                        "path": "color",
+                                                        "kind": "color",
+                                                        "colorSpace": "srgb-linear",
+                                                        "components": [
+                                                            {
+                                                                "key": "r",
+                                                                "channelId": "color:r"
+                                                            },
+                                                            {
+                                                                "key": "g",
+                                                                "channelId": "color:g"
+                                                            },
+                                                            {
+                                                                "key": "b",
+                                                                "channelId": "color:b"
+                                                            },
+                                                            {
+                                                                "key": "a",
+                                                                "channelId": "color:a"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "channels": {
+                                                    "opacity:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-017",
+                                                                "time": 0,
+                                                                "value": 0,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "color:r": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-018",
+                                                                "time": 120000,
+                                                                "value": 1,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "color:g": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-018",
+                                                                "time": 120000,
+                                                                "value": 0,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "color:b": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-018",
+                                                                "time": 120000,
+                                                                "value": 0,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "color:a": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-018",
+                                                                "time": 120000,
+                                                                "value": 1,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    }
                                                 }
                                             }
                                         }
@@ -519,7 +828,10 @@
                                 "slot": "overlay",
                                 "order": [
                                     "g1",
-                                    "g2"
+                                    "g2",
+                                    "g3",
+                                    "g4",
+                                    "g5"
                                 ]
                             }
                         },
@@ -557,20 +869,21 @@
                                 "metadata": {
                                     "opencut": {
                                         "element": {
-                                            "id": "g1",
                                             "type": "sticker",
-                                            "stickerId": "emoji:star",
+                                            "stickerId": "shapes:star",
+                                            "trimEnd": 0,
                                             "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
                                                 "position": {
                                                     "x": 12,
                                                     "y": -4
                                                 },
-                                                "scale": 1.25,
-                                                "rotate": 7.5,
-                                                "flipX": false
+                                                "rotate": 7.5
                                             },
                                             "opacity": 0.5,
-                                            "trimEnd": 0
+                                            "blendMode": "normal",
+                                            "id": "g1"
                                         }
                                     }
                                 }
@@ -588,7 +901,7 @@
                                     "duration": {
                                         "OTIO_SCHEMA": "RationalTime.1",
                                         "rate": 120000,
-                                        "value": 360000
+                                        "value": 120000
                                     }
                                 },
                                 "effects": [],
@@ -598,7 +911,7 @@
                             },
                             {
                                 "OTIO_SCHEMA": "Clip.2",
-                                "name": "Lower third",
+                                "name": "Rectangle",
                                 "source_range": {
                                     "OTIO_SCHEMA": "TimeRange.1",
                                     "start_time": {
@@ -618,7 +931,7 @@
                                 "media_references": {
                                     "DEFAULT_MEDIA": {
                                         "OTIO_SCHEMA": "GeneratorReference.1",
-                                        "name": "Lower third",
+                                        "name": "Rectangle",
                                         "generator_kind": "OpenCut.graphic",
                                         "parameters": {},
                                         "available_range": null,
@@ -629,23 +942,253 @@
                                 "metadata": {
                                     "opencut": {
                                         "element": {
-                                            "id": "g2",
                                             "type": "graphic",
-                                            "definitionId": "lower-third",
+                                            "definitionId": "rectangle",
                                             "params": {
-                                                "title": "Ana"
+                                                "fill": "#ffffff",
+                                                "stroke": "#000000",
+                                                "strokeWidth": 0,
+                                                "strokeAlign": "center",
+                                                "cornerRadius": 0
                                             },
+                                            "trimEnd": 0,
                                             "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
                                                 "position": {
                                                     "x": 12,
                                                     "y": -4
                                                 },
-                                                "scale": 1.25,
-                                                "rotate": 7.5,
-                                                "flipX": false
+                                                "rotate": 7.5
                                             },
                                             "opacity": 1,
-                                            "trimEnd": 0
+                                            "blendMode": "normal",
+                                            "id": "g2",
+                                            "animations": {
+                                                "bindings": {
+                                                    "params.strokeWidth": {
+                                                        "path": "params.strokeWidth",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "params.strokeWidth:value"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "channels": {
+                                                    "params.strokeWidth:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-019",
+                                                                "time": 120000,
+                                                                "value": 1,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "masks": [
+                                                {
+                                                    "type": "ellipse",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 0.6,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-020"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Ellipse",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 240000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Ellipse",
+                                        "generator_kind": "OpenCut.graphic",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "graphic",
+                                            "definitionId": "ellipse",
+                                            "params": {
+                                                "fill": "#ffffff",
+                                                "stroke": "#000000",
+                                                "strokeWidth": 0,
+                                                "strokeAlign": "center"
+                                            },
+                                            "trimEnd": 0,
+                                            "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "rotate": 7.5
+                                            },
+                                            "opacity": 1,
+                                            "blendMode": "normal",
+                                            "id": "g3"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Polygon",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 240000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Polygon",
+                                        "generator_kind": "OpenCut.graphic",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "graphic",
+                                            "definitionId": "polygon",
+                                            "params": {
+                                                "fill": "#ffffff",
+                                                "stroke": "#000000",
+                                                "strokeWidth": 0,
+                                                "strokeAlign": "center",
+                                                "sides": 5,
+                                                "cornerRadius": 0
+                                            },
+                                            "trimEnd": 0,
+                                            "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "rotate": 7.5
+                                            },
+                                            "opacity": 1,
+                                            "blendMode": "normal",
+                                            "id": "g4"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Star",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 240000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Star",
+                                        "generator_kind": "OpenCut.graphic",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "graphic",
+                                            "definitionId": "star",
+                                            "params": {
+                                                "fill": "#ffffff",
+                                                "stroke": "#000000",
+                                                "strokeWidth": 0,
+                                                "strokeAlign": "center",
+                                                "points": 5,
+                                                "depth": 45
+                                            },
+                                            "trimEnd": 0,
+                                            "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "rotate": 7.5
+                                            },
+                                            "opacity": 1,
+                                            "blendMode": "normal",
+                                            "id": "g5"
                                         }
                                     }
                                 }
@@ -707,13 +1250,13 @@
                                 "metadata": {
                                     "opencut": {
                                         "element": {
-                                            "id": "e1",
                                             "type": "effect",
-                                            "effectType": "colorCorrect",
+                                            "effectType": "blur",
                                             "params": {
-                                                "contrast": 1.1
+                                                "intensity": 15
                                             },
-                                            "trimEnd": 0
+                                            "trimEnd": 0,
+                                            "id": "e1"
                                         }
                                     }
                                 }
@@ -796,17 +1339,17 @@
                                 "metadata": {
                                     "opencut": {
                                         "element": {
-                                            "id": "a1",
                                             "type": "audio",
                                             "sourceType": "upload",
                                             "mediaId": "m-audio",
+                                            "trimEnd": 0,
+                                            "sourceDuration": 21600000,
                                             "volume": 0.4,
                                             "muted": false,
+                                            "id": "a1",
                                             "retime": {
                                                 "rate": 0.9
-                                            },
-                                            "trimEnd": 0,
-                                            "sourceDuration": 21600000
+                                            }
                                         }
                                     }
                                 }
@@ -949,82 +1492,297 @@
                                 "metadata": {
                                     "opencut": {
                                         "element": {
-                                            "id": "v1",
                                             "type": "video",
                                             "mediaId": "m-video",
                                             "trimEnd": 240000,
                                             "sourceDuration": 960000,
-                                            "volume": 0.7,
                                             "muted": false,
                                             "isSourceAudioEnabled": true,
                                             "hidden": false,
-                                            "retime": {
-                                                "rate": 1.5,
-                                                "maintainPitch": true
-                                            },
                                             "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
                                                 "position": {
                                                     "x": 12,
                                                     "y": -4
                                                 },
-                                                "scale": 1.25,
-                                                "rotate": 7.5,
-                                                "flipX": false
+                                                "rotate": 7.5
                                             },
                                             "opacity": 0.9,
                                             "blendMode": "screen",
+                                            "volume": 0.7,
+                                            "id": "v1",
+                                            "retime": {
+                                                "rate": 1.5,
+                                                "maintainPitch": true
+                                            },
                                             "effects": [
                                                 {
-                                                    "id": "fx1",
+                                                    "id": "id-021",
                                                     "type": "blur",
-                                                    "enabled": true,
                                                     "params": {
-                                                        "radius": 4
-                                                    }
-                                                },
-                                                {
-                                                    "id": "fx2",
-                                                    "type": "colorCorrect",
-                                                    "enabled": false,
-                                                    "params": {
-                                                        "saturation": 0.8
-                                                    }
+                                                        "intensity": 15
+                                                    },
+                                                    "enabled": true
                                                 }
                                             ],
                                             "masks": [
                                                 {
-                                                    "id": "mk1",
+                                                    "type": "split",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "rotation": 0
+                                                    },
+                                                    "id": "id-022"
+                                                },
+                                                {
+                                                    "type": "cinematic-bars",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 1.1473474844178637,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-023"
+                                                },
+                                                {
+                                                    "type": "rectangle",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 0.3375,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-024"
+                                                },
+                                                {
+                                                    "type": "ellipse",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 0.3375,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-025"
+                                                },
+                                                {
+                                                    "type": "heart",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 0.3375,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-026"
+                                                },
+                                                {
+                                                    "type": "diamond",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 0.3375,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-027"
+                                                },
+                                                {
+                                                    "type": "star",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 0.3375,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-028"
+                                                },
+                                                {
+                                                    "type": "text",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "content": "Mask",
+                                                        "fontSize": 15,
+                                                        "fontFamily": "Arial",
+                                                        "fontWeight": "normal",
+                                                        "fontStyle": "normal",
+                                                        "textDecoration": "none",
+                                                        "letterSpacing": 0,
+                                                        "lineHeight": 1.2,
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-029"
+                                                },
+                                                {
                                                     "type": "custom",
-                                                    "inverted": true,
-                                                    "points": [
-                                                        {
-                                                            "x": 0,
-                                                            "y": 0
-                                                        },
-                                                        {
-                                                            "x": 1,
-                                                            "y": 0
-                                                        },
-                                                        {
-                                                            "x": 1,
-                                                            "y": 1
-                                                        }
-                                                    ]
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "path": [],
+                                                        "closed": false,
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-030"
                                                 }
                                             ],
                                             "animations": {
-                                                "opacity": {
-                                                    "keyframes": [
-                                                        {
-                                                            "time": 0,
-                                                            "value": 0,
-                                                            "easing": "ease-in"
-                                                        },
-                                                        {
-                                                            "time": 120000,
-                                                            "value": 1
-                                                        }
-                                                    ]
+                                                "bindings": {
+                                                    "opacity": {
+                                                        "path": "opacity",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "opacity:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "transform.positionX": {
+                                                        "path": "transform.positionX",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "transform.positionX:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "volume": {
+                                                        "path": "volume",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "volume:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "effects.id-021.params.intensity": {
+                                                        "path": "effects.id-021.params.intensity",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "effects.id-021.params.intensity:value"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "channels": {
+                                                    "opacity:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-031",
+                                                                "time": 0,
+                                                                "value": 0,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            },
+                                                            {
+                                                                "id": "id-032",
+                                                                "time": 120000,
+                                                                "value": 1,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "transform.positionX:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-033",
+                                                                "time": 240000,
+                                                                "value": 40,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "volume:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-034",
+                                                                "time": 360000,
+                                                                "value": 0.2,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "effects.id-021.params.intensity:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-035",
+                                                                "time": 120000,
+                                                                "value": 40,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    }
                                                 }
                                             }
                                         }
@@ -1085,22 +1843,22 @@
                                 "metadata": {
                                     "opencut": {
                                         "element": {
-                                            "id": "i1",
                                             "type": "image",
                                             "mediaId": "m-image",
                                             "trimEnd": 0,
+                                            "hidden": false,
                                             "transform": {
+                                                "scaleX": 1,
+                                                "scaleY": 1,
                                                 "position": {
-                                                    "x": 12,
-                                                    "y": -4
+                                                    "x": 0,
+                                                    "y": 0
                                                 },
-                                                "scale": 1.25,
-                                                "rotate": 7.5,
-                                                "flipX": false
+                                                "rotate": 0
                                             },
                                             "opacity": 1,
-                                            "effects": [],
-                                            "masks": []
+                                            "blendMode": "normal",
+                                            "id": "i1"
                                         }
                                     }
                                 }
@@ -1183,9 +1941,9 @@
                                 "metadata": {
                                     "opencut": {
                                         "element": {
-                                            "id": "t1",
                                             "type": "text",
                                             "content": "Hello 日本語",
+                                            "trimEnd": 0,
                                             "fontSize": 64,
                                             "fontFamily": "Inter",
                                             "color": "#ffffff",
@@ -1204,31 +1962,125 @@
                                             "textDecoration": "underline",
                                             "letterSpacing": 1,
                                             "lineHeight": 1.2,
-                                            "hidden": false,
                                             "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
                                                 "position": {
                                                     "x": 12,
                                                     "y": -4
                                                 },
-                                                "scale": 1.25,
-                                                "rotate": 7.5,
-                                                "flipX": false
+                                                "rotate": 7.5
                                             },
                                             "opacity": 1,
-                                            "trimEnd": 0,
+                                            "blendMode": "normal",
+                                            "id": "t1",
+                                            "effects": [
+                                                {
+                                                    "id": "id-036",
+                                                    "type": "blur",
+                                                    "params": {
+                                                        "intensity": 15
+                                                    },
+                                                    "enabled": true
+                                                }
+                                            ],
                                             "animations": {
-                                                "opacity": {
-                                                    "keyframes": [
-                                                        {
-                                                            "time": 0,
-                                                            "value": 0,
-                                                            "easing": "ease-in"
-                                                        },
-                                                        {
-                                                            "time": 120000,
-                                                            "value": 1
-                                                        }
-                                                    ]
+                                                "bindings": {
+                                                    "opacity": {
+                                                        "path": "opacity",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "opacity:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "color": {
+                                                        "path": "color",
+                                                        "kind": "color",
+                                                        "colorSpace": "srgb-linear",
+                                                        "components": [
+                                                            {
+                                                                "key": "r",
+                                                                "channelId": "color:r"
+                                                            },
+                                                            {
+                                                                "key": "g",
+                                                                "channelId": "color:g"
+                                                            },
+                                                            {
+                                                                "key": "b",
+                                                                "channelId": "color:b"
+                                                            },
+                                                            {
+                                                                "key": "a",
+                                                                "channelId": "color:a"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "channels": {
+                                                    "opacity:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-037",
+                                                                "time": 0,
+                                                                "value": 0,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "color:r": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-038",
+                                                                "time": 120000,
+                                                                "value": 1,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "color:g": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-038",
+                                                                "time": 120000,
+                                                                "value": 0,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "color:b": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-038",
+                                                                "time": 120000,
+                                                                "value": 0,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "color:a": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-038",
+                                                                "time": 120000,
+                                                                "value": 1,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    }
                                                 }
                                             }
                                         }
@@ -1255,7 +2107,10 @@
                                 "slot": "overlay",
                                 "order": [
                                     "g1",
-                                    "g2"
+                                    "g2",
+                                    "g3",
+                                    "g4",
+                                    "g5"
                                 ]
                             }
                         },
@@ -1293,20 +2148,21 @@
                                 "metadata": {
                                     "opencut": {
                                         "element": {
-                                            "id": "g1",
                                             "type": "sticker",
-                                            "stickerId": "emoji:star",
+                                            "stickerId": "shapes:star",
+                                            "trimEnd": 0,
                                             "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
                                                 "position": {
                                                     "x": 12,
                                                     "y": -4
                                                 },
-                                                "scale": 1.25,
-                                                "rotate": 7.5,
-                                                "flipX": false
+                                                "rotate": 7.5
                                             },
                                             "opacity": 0.5,
-                                            "trimEnd": 0
+                                            "blendMode": "normal",
+                                            "id": "g1"
                                         }
                                     }
                                 }
@@ -1324,7 +2180,7 @@
                                     "duration": {
                                         "OTIO_SCHEMA": "RationalTime.1",
                                         "rate": 120000,
-                                        "value": 360000
+                                        "value": 120000
                                     }
                                 },
                                 "effects": [],
@@ -1334,7 +2190,7 @@
                             },
                             {
                                 "OTIO_SCHEMA": "Clip.2",
-                                "name": "Lower third",
+                                "name": "Rectangle",
                                 "source_range": {
                                     "OTIO_SCHEMA": "TimeRange.1",
                                     "start_time": {
@@ -1354,7 +2210,7 @@
                                 "media_references": {
                                     "DEFAULT_MEDIA": {
                                         "OTIO_SCHEMA": "GeneratorReference.1",
-                                        "name": "Lower third",
+                                        "name": "Rectangle",
                                         "generator_kind": "OpenCut.graphic",
                                         "parameters": {},
                                         "available_range": null,
@@ -1365,23 +2221,253 @@
                                 "metadata": {
                                     "opencut": {
                                         "element": {
-                                            "id": "g2",
                                             "type": "graphic",
-                                            "definitionId": "lower-third",
+                                            "definitionId": "rectangle",
                                             "params": {
-                                                "title": "Ana"
+                                                "fill": "#ffffff",
+                                                "stroke": "#000000",
+                                                "strokeWidth": 0,
+                                                "strokeAlign": "center",
+                                                "cornerRadius": 0
                                             },
+                                            "trimEnd": 0,
                                             "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
                                                 "position": {
                                                     "x": 12,
                                                     "y": -4
                                                 },
-                                                "scale": 1.25,
-                                                "rotate": 7.5,
-                                                "flipX": false
+                                                "rotate": 7.5
                                             },
                                             "opacity": 1,
-                                            "trimEnd": 0
+                                            "blendMode": "normal",
+                                            "id": "g2",
+                                            "animations": {
+                                                "bindings": {
+                                                    "params.strokeWidth": {
+                                                        "path": "params.strokeWidth",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "params.strokeWidth:value"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "channels": {
+                                                    "params.strokeWidth:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-039",
+                                                                "time": 120000,
+                                                                "value": 1,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "masks": [
+                                                {
+                                                    "type": "ellipse",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 0.6,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-040"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Ellipse",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 240000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Ellipse",
+                                        "generator_kind": "OpenCut.graphic",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "graphic",
+                                            "definitionId": "ellipse",
+                                            "params": {
+                                                "fill": "#ffffff",
+                                                "stroke": "#000000",
+                                                "strokeWidth": 0,
+                                                "strokeAlign": "center"
+                                            },
+                                            "trimEnd": 0,
+                                            "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "rotate": 7.5
+                                            },
+                                            "opacity": 1,
+                                            "blendMode": "normal",
+                                            "id": "g3"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Polygon",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 240000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Polygon",
+                                        "generator_kind": "OpenCut.graphic",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "graphic",
+                                            "definitionId": "polygon",
+                                            "params": {
+                                                "fill": "#ffffff",
+                                                "stroke": "#000000",
+                                                "strokeWidth": 0,
+                                                "strokeAlign": "center",
+                                                "sides": 5,
+                                                "cornerRadius": 0
+                                            },
+                                            "trimEnd": 0,
+                                            "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "rotate": 7.5
+                                            },
+                                            "opacity": 1,
+                                            "blendMode": "normal",
+                                            "id": "g4"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Star",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 240000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Star",
+                                        "generator_kind": "OpenCut.graphic",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "graphic",
+                                            "definitionId": "star",
+                                            "params": {
+                                                "fill": "#ffffff",
+                                                "stroke": "#000000",
+                                                "strokeWidth": 0,
+                                                "strokeAlign": "center",
+                                                "points": 5,
+                                                "depth": 45
+                                            },
+                                            "trimEnd": 0,
+                                            "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "rotate": 7.5
+                                            },
+                                            "opacity": 1,
+                                            "blendMode": "normal",
+                                            "id": "g5"
                                         }
                                     }
                                 }
@@ -1443,13 +2529,13 @@
                                 "metadata": {
                                     "opencut": {
                                         "element": {
-                                            "id": "e1",
                                             "type": "effect",
-                                            "effectType": "colorCorrect",
+                                            "effectType": "blur",
                                             "params": {
-                                                "contrast": 1.1
+                                                "intensity": 15
                                             },
-                                            "trimEnd": 0
+                                            "trimEnd": 0,
+                                            "id": "e1"
                                         }
                                     }
                                 }
@@ -1532,17 +2618,17 @@
                                 "metadata": {
                                     "opencut": {
                                         "element": {
-                                            "id": "a1",
                                             "type": "audio",
                                             "sourceType": "upload",
                                             "mediaId": "m-audio",
+                                            "trimEnd": 0,
+                                            "sourceDuration": 21600000,
                                             "volume": 0.4,
                                             "muted": false,
+                                            "id": "a1",
                                             "retime": {
                                                 "rate": 0.9
-                                            },
-                                            "trimEnd": 0,
-                                            "sourceDuration": 21600000
+                                            }
                                         }
                                     }
                                 }
