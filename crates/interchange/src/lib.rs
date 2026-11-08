@@ -45,7 +45,7 @@ use filmcraft_project::{BinEntry, BinId, ClipId, ItemId, ItemKind, MarkerId, Pro
 use filmcraft_time::{FrameRate, Tick};
 use serde::{Deserialize, Serialize};
 
-pub use common::{file_url_to_path, path_to_file_url, resolve_path};
+pub use common::{file_url_to_path, is_oneos_media, path_to_file_url, resolve_path};
 pub use comp::ExtractedMedia;
 
 /// Warn once when an export cannot carry exact marker metadata, including nested/source markers.

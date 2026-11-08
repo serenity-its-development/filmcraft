@@ -176,6 +176,10 @@ fn split_root(p: &str) -> (&str, bool, &str) {
 /// `Clip A.mov`, #2195). Plain file names (EDL, AAF) go through [`resolve_path`] untouched.
 pub fn resolve_url(reference: &str, base_dir: Option<&str>) -> String {
     let r = reference.trim();
+    // OneOS (files/989): a medium in OneOS storage is named `oneos:file/<id>?version=<v>`; it is never a path, so it is kept verbatim.
+    if is_oneos_media(r) {
+        return r.to_string();
+    }
     let is_file_url = r.get(..5).is_some_and(|s| s.eq_ignore_ascii_case("file:"));
     if is_file_url || is_absolute(r) { resolve_path(r, base_dir) } else { resolve_path(&percent_decode(r), base_dir) }
 }
@@ -985,4 +989,15 @@ mod tests {
         assert_eq!(item_media(&p, missing_parent), None);
         assert_eq!(item_path(&p, missing_parent), None);
     }
+}
+
+/// OneOS (files/989): `oneos:file/<26 lowercase base32 chars>?version=<version>`, the one way a OneOS project names its media.
+pub fn is_oneos_media(url: &str) -> bool {
+    let Some(rest) = url.strip_prefix("oneos:file/") else { return false };
+    let Some((id, version)) = rest.split_once("?version=") else { return false };
+    id.len() == 26
+        && id.bytes().all(|b| b.is_ascii_digit() || b.is_ascii_lowercase())
+        && !version.is_empty()
+        && version.len() <= 128
+        && version.bytes().all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'_' | b'-'))
 }

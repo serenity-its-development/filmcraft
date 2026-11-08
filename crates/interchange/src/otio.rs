@@ -256,10 +256,11 @@ impl Exp<'_, '_> {
                 "metadata": {"filmcraft": {"item": item.0, "generator": g, "info": m.info, "label": self.p.item(item).map(|i| i.label), "custom_label_color": self.p.item(item).and_then(|i| i.custom_label_color)}},
             }),
             MediaRef::File { path } => {
-                let url = match &self.opts.relative_to {
+                // OneOS (files/989): a OneOS medium is written as it was read, never as a file URL.
+                let url = if crate::common::is_oneos_media(path) { path.clone() } else { match &self.opts.relative_to {
                     Some(base) => relative_path(path, base).map(|r| relative_url(&r)).unwrap_or_else(|| abs_url(path)),
                     None => abs_url(path),
-                };
+                } };
                 json!({"OTIO_SCHEMA": "ExternalReference.1", "name": name, "target_url": url, "available_range": avail, "available_image_bounds": null, "metadata": meta})
             }
         }

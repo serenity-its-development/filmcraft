@@ -1,2 +1,19 @@
 [alias]
 xtask = "run --quiet --package xtask --"
+
+# OneOS: the storytold git sources are read from our forks under serenity-its-development at the same pinned revisions (cargo
+# source replacement), so a --locked build never reaches that third party.
+[source.storytold-1]
+git = "https://github.com/storytold/craft-libs"
+rev = "c5a1cbfb5f9049f9270955caffb5bee5997aebf7"
+replace-with = "oneos-1"
+[source.oneos-1]
+git = "https://github.com/serenity-its-development/craft-libs"
+rev = "c5a1cbfb5f9049f9270955caffb5bee5997aebf7"
+[source.storytold-2]
+git = "https://github.com/storytold/winit.git"
+rev = "a517b3846ee8457d84ee4975110bfda6797c44dc"
+replace-with = "oneos-2"
+[source.oneos-2]
+git = "https://github.com/serenity-its-development/winit.git"
+rev = "a517b3846ee8457d84ee4975110bfda6797c44dc"

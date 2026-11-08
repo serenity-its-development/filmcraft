@@ -668,3 +668,66 @@ fn relative_target_urls_are_percent_decoded() {
     let clip = &p.sequence(imp.sequences[0]).unwrap().video_tracks[0].items[0];
     assert_eq!(media_key(p, clip.item), "/proj/media/Clip A.mov");
 }
+
+/// OneOS (doctrine files/989, Mona 2026-11-08: "if otio cannot save then we need our own format that can encompass everything of both"):
+/// does a whole Film project survive `.otio` -> project, value for value? Every field of `Project` is set; the timeline is written and
+/// read back; each field is compared with its ids left out (an import renumbers them). The test pins the MEASURED list of what the OTIO
+/// writer does not carry today, so the list can only shrink (each needs a home under `metadata.filmcraft` before Film can edit `.otio`).
+#[test]
+fn oneos_a_whole_film_project_through_otio_field_by_field() {
+    use serde_json::{Value, json};
+    let (mut p, s) = project();
+    let r = FrameRate::FPS_23_976;
+    p.notes = "Call the client about reel 2".into();
+    p.custom_color_names.insert(filmcraft_project::HexColor([18, 171, 205]), "Brand teal".into());
+    p.luts.push(serde_json::from_value(json!({"id": "lut1", "name": "Warm", "source_path": null, "format": "cube", "text": "LUT_3D_SIZE 2\n0 0 0\n1 0 0\n0 1 0\n1 1 0\n0 0 1\n1 0 1\n0 1 1\n1 1 1\n"})).unwrap());
+    let bin = p.add_bin("Selects", None);
+    let sb = filmcraft_project::BinId(p.alloc_id());
+    p.search_bins.push(filmcraft_project::SearchBin { id: sb, name: "Interviews".into(), query: Default::default() });
+    let unused = media(&mut p, "/m/unused.mov", true, true, r);
+    let a = p.items.values().find(|i| i.name.contains("a.mov") || i.name == "a").map(|i| i.id).unwrap();
+    p.transcripts.insert(a, std::sync::Arc::new(filmcraft_project::Transcript { language: "en".into(), source: "manual".into(), speakers: vec![], words: vec![] }));
+    p.source_graphics.insert(a, Default::default());
+    p.narrations.insert(unused, filmcraft_project::Narration { text: "Hello".into(), language: "en-US".into(), voice: "v".into(), pitch: Default::default(), pace: 1.0, speech_duration: r.tick_of(24) });
+    let other = sequence(&mut p, "Another timeline", r, false);
+    let _ = (bin, other);
+
+    let (imp, text, rep) = roundtrip(&p, s, Format::Otio, &ExportOptions::default());
+    let q = &imp.project;
+    let names = |p: &Project, f: &dyn Fn(&filmcraft_project::ProjectItem) -> bool| {
+        let mut v: Vec<String> = p.items.values().filter(|i| f(i)).map(|i| i.name.clone()).collect();
+        v.sort();
+        v
+    };
+    let vals = |v: Value| -> Vec<String> {
+        let mut out: Vec<String> = match v { Value::Object(m) => m.into_iter().map(|(_, x)| x.to_string()).collect(), Value::Array(a) => a.into_iter().map(|x| x.to_string()).collect(), x => vec![x.to_string()] };
+        out.sort();
+        out
+    };
+    let mut lost: Vec<&str> = Vec::new();
+    let mut check = |field: &'static str, same: bool| if !same { lost.push(field) };
+    check("name", q.name == p.name);
+    check("notes", q.notes == p.notes);
+    check("custom_colors", q.custom_colors == p.custom_colors);
+    check("custom_color_names", q.custom_color_names == p.custom_color_names);
+    check("settings", q.settings == p.settings);
+    check("luts", q.luts == p.luts);
+    check("search_bins", serde_json::to_value(&q.search_bins).unwrap().as_array().map(|a| a.len()) == serde_json::to_value(&p.search_bins).unwrap().as_array().map(|a| a.len()));
+    check("transcripts", vals(serde_json::to_value(&q.transcripts).unwrap()) == vals(serde_json::to_value(&p.transcripts).unwrap()));
+    check("source_graphics", vals(serde_json::to_value(&q.source_graphics).unwrap()) == vals(serde_json::to_value(&p.source_graphics).unwrap()));
+    check("narrations", vals(serde_json::to_value(&q.narrations).unwrap()) == vals(serde_json::to_value(&p.narrations).unwrap()));
+    check("root bins", {
+        let b = |p: &Project| { let mut v: Vec<String> = serde_json::to_value(&p.root).unwrap()["bins"].as_array().into_iter().flatten().map(|b| b["name"].to_string()).collect(); v.sort(); v };
+        b(q) == b(&p)
+    });
+    check("items: media", names(q, &|i| i.as_media().is_some()) == names(&p, &|i| i.as_media().is_some()));
+    check("items: sequences", names(q, &|i| i.as_sequence().is_some()) == names(&p, &|i| i.as_sequence().is_some()));
+    assert!(!text.is_empty());
+    let _ = rep;
+    // The measured gap (2026-11-08). An entry leaves this list when the writer carries it.
+    assert_eq!(
+        lost,
+        vec!["name", "notes", "luts", "search_bins", "transcripts", "source_graphics", "narrations", "items: media", "items: sequences"],
+        "fields a whole Film project loses through .otio today (measured 2026-11-08 on a box; each has a home under metadata.filmcraft of a SerializableCollection.1, none is written yet)"
+    );
+}
