@@ -70,8 +70,8 @@ pub fn open_host_file(s: &mut Session, name: &str, bytes: &[u8]) -> Result<(), R
         let said: Vec<String> = report.warnings().map(|w| w.message.clone()).collect();
         return Err(Refusal::NotRoundTrip { name: name.to_string(), reason: format!("holds what Film cannot represent ({})", said.join("; ")) });
     }
-    let [seq] = imported.sequences[..] else {
-        return Err(Refusal::NotRoundTrip { name: name.to_string(), reason: format!("holds {} timelines; Film opens one", imported.sequences.len()) });
+    let Some(&first) = imported.sequences.first() else {
+        return Err(Refusal::NotRoundTrip { name: name.to_string(), reason: "holds no timeline".into() });
     };
     for item in imported.project.items.values() {
         if let ItemKind::Media(m) = &item.kind
@@ -81,21 +81,61 @@ pub fn open_host_file(s: &mut Session, name: &str, bytes: &[u8]) -> Result<(), R
             return Err(Refusal::MediaNotReferenced { name: name.to_string(), media: item.name.clone() });
         }
     }
-    let (again, _) = filmcraft_interchange::export(&imported.project, seq, Format::Otio, &ExportOptions::default()).map_err(|e| unreadable(e.to_string()))?;
+    // The whole project, as Film writes it (files/989: a SerializableCollection.1 of every sequence, the project under metadata.filmcraft).
+    let (again, _) = filmcraft_interchange::export_project(&imported.project, &ExportOptions::default()).map_err(|e| unreadable(e.to_string()))?;
     let again: Value = serde_json::from_slice(&again).map_err(|e| unreadable(e.to_string()))?;
     if let Some(at) = first_difference(&original, &again, "") {
         return Err(Refusal::NotRoundTrip { name: name.to_string(), reason: format!("would be written back differently at {at}") });
     }
     crate::commands::install_project(s, imported.project, Some(name.to_string()), true);
-    s.state.active_sequence = Some(seq);
-    s.state.open_sequences = vec![seq].into_iter().collect();
+    s.state.active_sequence = Some(first);
+    s.state.open_sequences = vec![first].into_iter().collect();
     Ok(())
 }
 
-/// The bytes of the open timeline as the host stores them (`.otio`); the session is clean after.
+/// The bytes of the whole project as the host stores them (`.otio`); the session is clean after.
 pub fn save_host_file(s: &mut Session) -> Result<Vec<u8>, String> {
-    let seq = s.state.active_sequence.ok_or("no-timeline: no timeline is open")?;
-    let (bytes, _) = filmcraft_interchange::export(&s.project, seq, Format::Otio, &ExportOptions::default()).map_err(|e| e.to_string())?;
+    let (bytes, _) = filmcraft_interchange::export_project(&s.project, &ExportOptions::default()).map_err(|e| e.to_string())?;
     s.saved_revision = s.revision;
     Ok(bytes)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn session() -> Session {
+        Session::new(std::sync::Arc::new(crate::FsServices))
+    }
+
+    #[test]
+    fn anything_but_an_otio_is_refused_by_name() {
+        let mut s = session();
+        let e = open_host_file(&mut s, "cut.fcproj", b"{}").unwrap_err();
+        assert!(e.to_string().starts_with("format-not-editable:"), "{e}");
+        let e = open_host_file(&mut s, "x.otio", b"not json").unwrap_err();
+        assert!(e.to_string().starts_with("file-unreadable:"), "{e}");
+    }
+
+    #[test]
+    fn a_file_media_path_is_refused_and_a_oneos_file_opens_and_saves_back_value_for_value() {
+        let otio = |url: &str| {
+            format!(
+                r#"{{"OTIO_SCHEMA":"Timeline.1","name":"T","global_start_time":null,"metadata":{{}},"tracks":{{"OTIO_SCHEMA":"Stack.1","name":"tracks","children":[{{"OTIO_SCHEMA":"Track.1","name":"V1","kind":"Video","children":[{{"OTIO_SCHEMA":"Clip.2","name":"beach","source_range":{{"OTIO_SCHEMA":"TimeRange.1","start_time":{{"OTIO_SCHEMA":"RationalTime.1","rate":24,"value":0}},"duration":{{"OTIO_SCHEMA":"RationalTime.1","rate":24,"value":48}}}},"media_references":{{"DEFAULT_MEDIA":{{"OTIO_SCHEMA":"ExternalReference.1","name":"beach","target_url":"{url}","available_range":null,"metadata":{{}}}}}},"active_media_reference_key":"DEFAULT_MEDIA"}}]}}]}}}}"#
+            )
+        };
+        let mut s = session();
+        let e = open_host_file(&mut s, "a.otio", otio("file:///m/beach.mov").as_bytes()).unwrap_err();
+        // A plain OTIO from another tool is first refused for not being in Film's form; a path is refused by name in Film's own form.
+        assert!(e.to_string().starts_with("format-not-round-trip:") || e.to_string().starts_with("media-not-referenced:"), "{e}");
+        // Film's own form of a timeline with a OneOS medium: read the plain one, write the whole project, open that.
+        let (imp, _) = filmcraft_interchange::import(otio("oneos:file/01jabcdefghjkmnpqrstvwxyz0?version=v3").as_bytes(), Format::Otio, None).unwrap();
+        let (film_form, _) = filmcraft_interchange::export_project(&imp.project, &ExportOptions::default()).unwrap();
+        open_host_file(&mut s, "a.otio", &film_form).unwrap();
+        assert!(!s.is_dirty());
+        let saved = save_host_file(&mut s).unwrap();
+        let (a, b): (Value, Value) = (serde_json::from_slice(&film_form).unwrap(), serde_json::from_slice(&saved).unwrap());
+        assert_eq!(first_difference(&a, &b, ""), None, "saved back value for value");
+        assert!(String::from_utf8_lossy(&saved).contains("oneos:file/01jabcdefghjkmnpqrstvwxyz0?version=v3"));
+    }
 }

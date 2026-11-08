@@ -674,7 +674,7 @@ fn relative_target_urls_are_percent_decoded() {
 /// read back; each field is compared with its ids left out (an import renumbers them). The test pins the MEASURED list of what the OTIO
 /// writer does not carry today, so the list can only shrink (each needs a home under `metadata.filmcraft` before Film can edit `.otio`).
 #[test]
-fn oneos_a_whole_film_project_through_otio_field_by_field() {
+fn oneos_a_whole_film_project_through_otio_value_for_value() {
     use serde_json::{Value, json};
     let (mut p, s) = project();
     let r = FrameRate::FPS_23_976;
@@ -692,8 +692,16 @@ fn oneos_a_whole_film_project_through_otio_field_by_field() {
     let other = sequence(&mut p, "Another timeline", r, false);
     let _ = (bin, other);
 
-    let (imp, text, rep) = roundtrip(&p, s, Format::Otio, &ExportOptions::default());
+    let _ = s;
+    let (bytes, rep) = filmcraft_interchange::export_project(&p, &ExportOptions::default()).expect("export the whole project");
+    let text = String::from_utf8(bytes.clone()).unwrap();
+    assert!(text.contains("\"OTIO_SCHEMA\": \"SerializableCollection.1\""));
+    assert_eq!(text.matches("\"OTIO_SCHEMA\": \"Timeline.1\"").count(), p.items.values().filter(|i| i.as_sequence().is_some()).count(), "one Timeline per sequence");
+    let (imp, rep2) = import(&bytes, Format::Otio, None).expect("import the whole project");
+    assert!(!rep2.has_warnings(), "{rep2}");
     let q = &imp.project;
+    // Value for value: the whole project, ids included (NaN auto points compare as their JSON).
+    assert_eq!(serde_json::to_value(q).unwrap(), serde_json::to_value(&p).unwrap());
     let names = |p: &Project, f: &dyn Fn(&filmcraft_project::ProjectItem) -> bool| {
         let mut v: Vec<String> = p.items.values().filter(|i| f(i)).map(|i| i.name.clone()).collect();
         v.sort();
@@ -725,9 +733,16 @@ fn oneos_a_whole_film_project_through_otio_field_by_field() {
     assert!(!text.is_empty());
     let _ = rep;
     // The measured gap (2026-11-08). An entry leaves this list when the writer carries it.
-    assert_eq!(
-        lost,
-        vec!["name", "notes", "luts", "search_bins", "transcripts", "source_graphics", "narrations", "items: media", "items: sequences"],
-        "fields a whole Film project loses through .otio today (measured 2026-11-08 on a box; each has a home under metadata.filmcraft of a SerializableCollection.1, none is written yet)"
-    );
+    assert_eq!(lost, Vec::<&str>::new(), "a whole Film project loses nothing through .otio (files/989: \"Stay on .otio, fix writers\")");
+}
+
+/// files/989: a timeline changed by another tool is read, and what is not reattached is SAID (the host refuses rather than lose it).
+#[test]
+fn oneos_a_whole_project_whose_timeline_another_tool_changed_is_named() {
+    let (p, _) = project();
+    let (bytes, _) = filmcraft_interchange::export_project(&p, &ExportOptions::default()).unwrap();
+    let mut v: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+    v["children"][0]["name"] = serde_json::json!("Renamed elsewhere");
+    let (_, rep) = import(&serde_json::to_vec(&v).unwrap(), Format::Otio, None).unwrap();
+    assert!(rep.mentions("changed outside FilmCraft"), "{rep}");
 }

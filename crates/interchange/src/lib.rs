@@ -473,6 +473,14 @@ pub fn export(project: &Project, sequence: ItemId, format: Format, opts: &Export
     Ok((text.into_bytes(), report))
 }
 
+/// OneOS (files/989): the WHOLE project as OpenTimelineIO, a `SerializableCollection.1` of every sequence with the project under
+/// `metadata.filmcraft.project`; [`import`] reads it back value for value.
+pub fn export_project(project: &Project, opts: &ExportOptions) -> Result<(Vec<u8>, Report)> {
+    let mut report = Report::default();
+    let text = otio::export_project(project, opts, &mut report)?;
+    Ok((text.into_bytes(), report))
+}
+
 /// Premiere's "Export ▸ EDL" with one list per video track: returns `(suggested suffix, document)`
 /// for every non-empty video track (`"V1"`, `"V2"`, …). Audio tracks go in the V1 list.
 pub fn export_edl_per_track(project: &Project, sequence: ItemId, opts: &ExportOptions) -> Result<(Vec<(String, Vec<u8>)>, Report)> {

@@ -407,6 +407,9 @@ struct Imp<'a, 'r> {
 
 pub(crate) fn import(text: &str, opts: &ImportOptions, report: &mut Report) -> Result<Imported> {
     let v: Value = serde_json::from_str(text).map_err(|e| Error::parse(Format::Otio, e.to_string()))?;
+    if let Some(whole) = whole_project(&v, opts, report) {
+        return Ok(whole);
+    }
     let mut timelines = Vec::new();
     collect_timelines(&v, &mut timelines);
     if timelines.is_empty() {
@@ -426,6 +429,84 @@ pub(crate) fn import(text: &str, opts: &ImportOptions, report: &mut Report) -> R
         imp.b.top.push(id);
     }
     Ok(imp.b.finish())
+}
+
+// ---------------------------------------------------------------------------------------------
+// OneOS (doctrine files/989, Mona 2026-11-08: "Stay on .otio, fix writers"): the WHOLE project as OpenTimelineIO.
+//
+// A `SerializableCollection.1` holds one `Timeline.1` per sequence of the project (each exactly as `export` writes it, so any OTIO
+// tool reads every timeline), and the project itself (its name, notes, LUT library, bins, search bins, transcripts, source graphics,
+// narrations, media not on any timeline, settings, ids) under the collection's `metadata.filmcraft.project`. Reading it back gives the
+// project value for value when its timelines are the ones FilmCraft wrote; when another tool changed a timeline, the timelines are read as
+// usual and a warning names what is not reattached (the host then refuses to open it rather than lose it).
+
+/// The sequences of `p`, in id order (the order the collection lists them).
+fn sequences_of(p: &Project) -> Vec<ItemId> {
+    p.items.values().filter(|i| i.as_sequence().is_some()).map(|i| i.id).collect()
+}
+
+pub(crate) fn export_project(p: &Project, opts: &ExportOptions, report: &mut Report) -> Result<String> {
+    let mut children = Vec::new();
+    for s in sequences_of(p) {
+        let one = ExportOptions { name: None, ..opts.clone() };
+        let text = export(p, s, &one, report)?;
+        children.push(serde_json::from_str::<Value>(&text).map_err(|e| Error::Other(e.to_string()))?);
+    }
+    let project = serde_json::to_value(p).map_err(|e| Error::Other(e.to_string()))?;
+    let doc = json!({
+        "OTIO_SCHEMA": "SerializableCollection.1",
+        "name": opts.name.clone().unwrap_or_else(|| p.name.clone()),
+        "metadata": {"filmcraft": {"project": project}},
+        "children": children,
+    });
+    serde_json::to_string_pretty(&doc).map_err(|e| Error::Other(e.to_string()))
+}
+
+/// Two JSON documents hold the same values (numbers compared as numbers: `1` and `1.0` are one value).
+pub(crate) fn same_value(a: &Value, b: &Value) -> bool {
+    match (a, b) {
+        (Value::Number(x), Value::Number(y)) => x.as_f64() == y.as_f64(),
+        (Value::Array(x), Value::Array(y)) => x.len() == y.len() && x.iter().zip(y).all(|(p, q)| same_value(p, q)),
+        (Value::Object(x), Value::Object(y)) => x.len() == y.len() && x.iter().all(|(k, p)| y.get(k).is_some_and(|q| same_value(p, q))),
+        _ => a == b,
+    }
+}
+
+fn whole_project(v: &Value, opts: &ImportOptions, report: &mut Report) -> Option<Imported> {
+    if schema_name(v) != "SerializableCollection" {
+        return None;
+    }
+    let embedded = v.pointer("/metadata/filmcraft/project")?;
+    let Ok(project) = serde_json::from_value::<Project>(embedded.clone()) else {
+        report.warn("the project kept in metadata.filmcraft.project could not be read; only its timelines were read");
+        return None;
+    };
+    let seqs = sequences_of(&project);
+    let children = v.get("children").and_then(Value::as_array).cloned().unwrap_or_default();
+    let mut same = seqs.len() == children.len();
+    if same {
+        let mut scratch = Report::default();
+        for (s, child) in seqs.iter().zip(&children) {
+            let text = export(&project, *s, &ExportOptions::default(), &mut scratch);
+            let ours = text.ok().and_then(|t| serde_json::from_str::<Value>(&t).ok());
+            if !ours.is_some_and(|o| same_value(&o, child)) {
+                same = false;
+                break;
+            }
+        }
+    }
+    if !same {
+        report.warn(
+            "a timeline was changed outside FilmCraft: the project around the timelines (name, notes, LUT library, bins, search bins, transcripts, source graphics, narrations, media not on a timeline) is not reattached",
+        );
+        let _ = opts;
+        return None;
+    }
+    // Top-level: the sequences no other sequence uses as a clip.
+    let nested: std::collections::BTreeSet<ItemId> =
+        project.items.values().filter_map(|i| i.as_sequence()).flat_map(|s| s.video_tracks.iter().chain(s.audio_tracks.iter())).flat_map(|t| t.items.iter().map(|it| it.item)).collect();
+    let sequences = seqs.into_iter().filter(|s| !nested.contains(s)).collect();
+    Some(Imported { project, sequences })
 }
 
 fn collect_timelines<'v>(v: &'v Value, out: &mut Vec<&'v Value>) {
