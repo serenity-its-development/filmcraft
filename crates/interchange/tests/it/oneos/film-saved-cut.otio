@@ -1,0 +1,1556 @@
+{
+  "OTIO_SCHEMA": "SerializableCollection.1",
+  "children": [
+    {
+      "OTIO_SCHEMA": "Timeline.1",
+      "global_start_time": null,
+      "metadata": {
+        "opencut": {
+          "scene": {
+            "createdAt": "2026-11-08T00:00:00.000Z",
+            "id": "s1",
+            "isMain": true,
+            "updatedAt": "2026-11-08T01:00:00.000Z"
+          }
+        }
+      },
+      "name": "Main",
+      "tracks": {
+        "OTIO_SCHEMA": "Stack.1",
+        "children": [
+          {
+            "OTIO_SCHEMA": "Track.1",
+            "children": [
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "ExternalReference.1",
+                    "available_image_bounds": null,
+                    "available_range": null,
+                    "metadata": {},
+                    "name": "beach.mp4",
+                    "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz0?version=v3"
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "animations": {
+                        "opacity": {
+                          "keyframes": [
+                            {
+                              "easing": "ease-in",
+                              "time": 0,
+                              "value": 0
+                            },
+                            {
+                              "time": 120000,
+                              "value": 1
+                            }
+                          ]
+                        }
+                      },
+                      "blendMode": "screen",
+                      "effects": [
+                        {
+                          "enabled": true,
+                          "id": "fx1",
+                          "params": {
+                            "radius": 4
+                          },
+                          "type": "blur"
+                        },
+                        {
+                          "enabled": false,
+                          "id": "fx2",
+                          "params": {
+                            "saturation": 0.8
+                          },
+                          "type": "colorCorrect"
+                        }
+                      ],
+                      "hidden": false,
+                      "id": "v1",
+                      "isSourceAudioEnabled": true,
+                      "masks": [
+                        {
+                          "id": "mk1",
+                          "inverted": true,
+                          "points": [
+                            {
+                              "x": 0,
+                              "y": 0
+                            },
+                            {
+                              "x": 1,
+                              "y": 0
+                            },
+                            {
+                              "x": 1,
+                              "y": 1
+                            }
+                          ],
+                          "type": "custom"
+                        }
+                      ],
+                      "mediaId": "m-video",
+                      "muted": false,
+                      "opacity": 0.9,
+                      "retime": {
+                        "maintainPitch": true,
+                        "rate": 1.5
+                      },
+                      "sourceDuration": 960000,
+                      "transform": {
+                        "flipX": false,
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scale": 1.25
+                      },
+                      "trimEnd": 240000,
+                      "type": "video",
+                      "volume": 0.7
+                    }
+                  }
+                },
+                "name": "Beach",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 600000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 120000
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Gap.1",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "metadata": {},
+                "name": "",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 240000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "ExternalReference.1",
+                    "available_image_bounds": null,
+                    "available_range": null,
+                    "metadata": {},
+                    "name": "logo.png",
+                    "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz1?version=v1"
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "effects": [],
+                      "id": "i1",
+                      "masks": [],
+                      "mediaId": "m-image",
+                      "opacity": 1,
+                      "transform": {
+                        "flipX": false,
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scale": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "image"
+                    }
+                  }
+                },
+                "name": "Logo",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 360000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              }
+            ],
+            "effects": [],
+            "enabled": true,
+            "kind": "Video",
+            "markers": [],
+            "metadata": {
+              "opencut": {
+                "order": [
+                  "v1",
+                  "i1"
+                ],
+                "slot": "main",
+                "track": {
+                  "hidden": false,
+                  "id": "s1-main",
+                  "muted": false,
+                  "type": "video"
+                }
+              }
+            },
+            "name": "Main",
+            "source_range": null
+          },
+          {
+            "OTIO_SCHEMA": "Track.1",
+            "children": [
+              {
+                "OTIO_SCHEMA": "Gap.1",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "metadata": {},
+                "name": "",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 120000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.text",
+                    "metadata": {},
+                    "name": "Title",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "animations": {
+                        "opacity": {
+                          "keyframes": [
+                            {
+                              "easing": "ease-in",
+                              "time": 0,
+                              "value": 0
+                            },
+                            {
+                              "time": 120000,
+                              "value": 1
+                            }
+                          ]
+                        }
+                      },
+                      "background": {
+                        "color": "#00000080",
+                        "cornerRadius": 8,
+                        "enabled": true,
+                        "offsetX": 0,
+                        "offsetY": 0,
+                        "paddingX": 4,
+                        "paddingY": 2
+                      },
+                      "color": "#ffffff",
+                      "content": "Hello 日本語",
+                      "fontFamily": "Inter",
+                      "fontSize": 64,
+                      "fontStyle": "italic",
+                      "fontWeight": "bold",
+                      "hidden": false,
+                      "id": "t1",
+                      "letterSpacing": 1,
+                      "lineHeight": 1.2,
+                      "opacity": 1,
+                      "textAlign": "center",
+                      "textDecoration": "underline",
+                      "transform": {
+                        "flipX": false,
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scale": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "text"
+                    }
+                  }
+                },
+                "name": "Title",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 240000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              }
+            ],
+            "effects": [],
+            "enabled": true,
+            "kind": "Video",
+            "markers": [],
+            "metadata": {
+              "opencut": {
+                "order": [
+                  "t1"
+                ],
+                "slot": "overlay",
+                "track": {
+                  "hidden": false,
+                  "id": "s1-text",
+                  "type": "text"
+                }
+              }
+            },
+            "name": "Titles",
+            "source_range": null
+          },
+          {
+            "OTIO_SCHEMA": "Track.1",
+            "children": [
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.sticker",
+                    "metadata": {},
+                    "name": "Star",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "id": "g1",
+                      "opacity": 0.5,
+                      "stickerId": "emoji:star",
+                      "transform": {
+                        "flipX": false,
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scale": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "sticker"
+                    }
+                  }
+                },
+                "name": "Star",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 120000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Gap.1",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "metadata": {},
+                "name": "",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 360000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.graphic",
+                    "metadata": {},
+                    "name": "Lower third",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "definitionId": "lower-third",
+                      "id": "g2",
+                      "opacity": 1,
+                      "params": {
+                        "title": "Ana"
+                      },
+                      "transform": {
+                        "flipX": false,
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scale": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "graphic"
+                    }
+                  }
+                },
+                "name": "Lower third",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 240000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              }
+            ],
+            "effects": [],
+            "enabled": true,
+            "kind": "Video",
+            "markers": [],
+            "metadata": {
+              "opencut": {
+                "order": [
+                  "g1",
+                  "g2"
+                ],
+                "slot": "overlay",
+                "track": {
+                  "hidden": true,
+                  "id": "s1-gfx",
+                  "type": "graphic"
+                }
+              }
+            },
+            "name": "Graphics",
+            "source_range": null
+          },
+          {
+            "OTIO_SCHEMA": "Track.1",
+            "children": [
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.effect",
+                    "metadata": {},
+                    "name": "Grade",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "effectType": "colorCorrect",
+                      "id": "e1",
+                      "params": {
+                        "contrast": 1.1
+                      },
+                      "trimEnd": 0,
+                      "type": "effect"
+                    }
+                  }
+                },
+                "name": "Grade",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 1200000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              }
+            ],
+            "effects": [],
+            "enabled": true,
+            "kind": "Video",
+            "markers": [],
+            "metadata": {
+              "opencut": {
+                "order": [
+                  "e1"
+                ],
+                "slot": "overlay",
+                "track": {
+                  "hidden": false,
+                  "id": "s1-fx",
+                  "type": "effect"
+                }
+              }
+            },
+            "name": "Adjust",
+            "source_range": null
+          },
+          {
+            "OTIO_SCHEMA": "Track.1",
+            "children": [
+              {
+                "OTIO_SCHEMA": "Gap.1",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "metadata": {},
+                "name": "",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 60000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "ExternalReference.1",
+                    "available_image_bounds": null,
+                    "available_range": null,
+                    "metadata": {},
+                    "name": "song.wav",
+                    "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz2?version=v9"
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "id": "a1",
+                      "mediaId": "m-audio",
+                      "muted": false,
+                      "retime": {
+                        "rate": 0.9
+                      },
+                      "sourceDuration": 21600000,
+                      "sourceType": "upload",
+                      "trimEnd": 0,
+                      "type": "audio",
+                      "volume": 0.4
+                    }
+                  }
+                },
+                "name": "Song",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 1080000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 360000
+                  }
+                }
+              }
+            ],
+            "effects": [],
+            "enabled": true,
+            "kind": "Audio",
+            "markers": [],
+            "metadata": {
+              "opencut": {
+                "order": [
+                  "a1"
+                ],
+                "slot": "audio",
+                "track": {
+                  "id": "s1-a1",
+                  "muted": true,
+                  "type": "audio"
+                }
+              }
+            },
+            "name": "Music",
+            "source_range": null
+          }
+        ],
+        "effects": [],
+        "enabled": true,
+        "markers": [
+          {
+            "OTIO_SCHEMA": "Marker.2",
+            "color": "RED",
+            "comment": "",
+            "marked_range": {
+              "OTIO_SCHEMA": "TimeRange.1",
+              "duration": {
+                "OTIO_SCHEMA": "RationalTime.1",
+                "rate": 120000,
+                "value": 120000
+              },
+              "start_time": {
+                "OTIO_SCHEMA": "RationalTime.1",
+                "rate": 120000,
+                "value": 240000
+              }
+            },
+            "metadata": {
+              "opencut": {
+                "bookmark": {
+                  "color": "#ff0000",
+                  "duration": 120000,
+                  "note": "Edited in Film"
+                }
+              }
+            },
+            "name": "Edited in Film"
+          },
+          {
+            "OTIO_SCHEMA": "Marker.2",
+            "color": "RED",
+            "comment": "",
+            "marked_range": {
+              "OTIO_SCHEMA": "TimeRange.1",
+              "duration": {
+                "OTIO_SCHEMA": "RationalTime.1",
+                "rate": 120000,
+                "value": 0
+              },
+              "start_time": {
+                "OTIO_SCHEMA": "RationalTime.1",
+                "rate": 120000,
+                "value": 1080000
+              }
+            },
+            "metadata": {
+              "opencut": {
+                "bookmark": {}
+              }
+            },
+            "name": ""
+          }
+        ],
+        "metadata": {},
+        "name": "tracks",
+        "source_range": null
+      }
+    },
+    {
+      "OTIO_SCHEMA": "Timeline.1",
+      "global_start_time": null,
+      "metadata": {
+        "opencut": {
+          "scene": {
+            "createdAt": "2026-11-08T00:00:00.000Z",
+            "id": "s2",
+            "isMain": false,
+            "updatedAt": "2026-11-08T01:00:00.000Z"
+          }
+        }
+      },
+      "name": "B-roll",
+      "tracks": {
+        "OTIO_SCHEMA": "Stack.1",
+        "children": [
+          {
+            "OTIO_SCHEMA": "Track.1",
+            "children": [
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "ExternalReference.1",
+                    "available_image_bounds": null,
+                    "available_range": null,
+                    "metadata": {},
+                    "name": "beach.mp4",
+                    "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz0?version=v3"
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "animations": {
+                        "opacity": {
+                          "keyframes": [
+                            {
+                              "easing": "ease-in",
+                              "time": 0,
+                              "value": 0
+                            },
+                            {
+                              "time": 120000,
+                              "value": 1
+                            }
+                          ]
+                        }
+                      },
+                      "blendMode": "screen",
+                      "effects": [
+                        {
+                          "enabled": true,
+                          "id": "fx1",
+                          "params": {
+                            "radius": 4
+                          },
+                          "type": "blur"
+                        },
+                        {
+                          "enabled": false,
+                          "id": "fx2",
+                          "params": {
+                            "saturation": 0.8
+                          },
+                          "type": "colorCorrect"
+                        }
+                      ],
+                      "hidden": false,
+                      "id": "v1",
+                      "isSourceAudioEnabled": true,
+                      "masks": [
+                        {
+                          "id": "mk1",
+                          "inverted": true,
+                          "points": [
+                            {
+                              "x": 0,
+                              "y": 0
+                            },
+                            {
+                              "x": 1,
+                              "y": 0
+                            },
+                            {
+                              "x": 1,
+                              "y": 1
+                            }
+                          ],
+                          "type": "custom"
+                        }
+                      ],
+                      "mediaId": "m-video",
+                      "muted": false,
+                      "opacity": 0.9,
+                      "retime": {
+                        "maintainPitch": true,
+                        "rate": 1.5
+                      },
+                      "sourceDuration": 960000,
+                      "transform": {
+                        "flipX": false,
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scale": 1.25
+                      },
+                      "trimEnd": 240000,
+                      "type": "video",
+                      "volume": 0.7
+                    }
+                  }
+                },
+                "name": "Beach",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 600000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 120000
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Gap.1",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "metadata": {},
+                "name": "",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 240000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "ExternalReference.1",
+                    "available_image_bounds": null,
+                    "available_range": null,
+                    "metadata": {},
+                    "name": "logo.png",
+                    "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz1?version=v1"
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "effects": [],
+                      "id": "i1",
+                      "masks": [],
+                      "mediaId": "m-image",
+                      "opacity": 1,
+                      "transform": {
+                        "flipX": false,
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scale": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "image"
+                    }
+                  }
+                },
+                "name": "Logo",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 360000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              }
+            ],
+            "effects": [],
+            "enabled": true,
+            "kind": "Video",
+            "markers": [],
+            "metadata": {
+              "opencut": {
+                "order": [
+                  "v1",
+                  "i1"
+                ],
+                "slot": "main",
+                "track": {
+                  "hidden": false,
+                  "id": "s2-main",
+                  "muted": false,
+                  "type": "video"
+                }
+              }
+            },
+            "name": "Main",
+            "source_range": null
+          },
+          {
+            "OTIO_SCHEMA": "Track.1",
+            "children": [
+              {
+                "OTIO_SCHEMA": "Gap.1",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "metadata": {},
+                "name": "",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 120000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.text",
+                    "metadata": {},
+                    "name": "Title",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "animations": {
+                        "opacity": {
+                          "keyframes": [
+                            {
+                              "easing": "ease-in",
+                              "time": 0,
+                              "value": 0
+                            },
+                            {
+                              "time": 120000,
+                              "value": 1
+                            }
+                          ]
+                        }
+                      },
+                      "background": {
+                        "color": "#00000080",
+                        "cornerRadius": 8,
+                        "enabled": true,
+                        "offsetX": 0,
+                        "offsetY": 0,
+                        "paddingX": 4,
+                        "paddingY": 2
+                      },
+                      "color": "#ffffff",
+                      "content": "Hello 日本語",
+                      "fontFamily": "Inter",
+                      "fontSize": 64,
+                      "fontStyle": "italic",
+                      "fontWeight": "bold",
+                      "hidden": false,
+                      "id": "t1",
+                      "letterSpacing": 1,
+                      "lineHeight": 1.2,
+                      "opacity": 1,
+                      "textAlign": "center",
+                      "textDecoration": "underline",
+                      "transform": {
+                        "flipX": false,
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scale": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "text"
+                    }
+                  }
+                },
+                "name": "Title",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 240000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              }
+            ],
+            "effects": [],
+            "enabled": true,
+            "kind": "Video",
+            "markers": [],
+            "metadata": {
+              "opencut": {
+                "order": [
+                  "t1"
+                ],
+                "slot": "overlay",
+                "track": {
+                  "hidden": false,
+                  "id": "s2-text",
+                  "type": "text"
+                }
+              }
+            },
+            "name": "Titles",
+            "source_range": null
+          },
+          {
+            "OTIO_SCHEMA": "Track.1",
+            "children": [
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.sticker",
+                    "metadata": {},
+                    "name": "Star",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "id": "g1",
+                      "opacity": 0.5,
+                      "stickerId": "emoji:star",
+                      "transform": {
+                        "flipX": false,
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scale": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "sticker"
+                    }
+                  }
+                },
+                "name": "Star",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 120000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Gap.1",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "metadata": {},
+                "name": "",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 360000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.graphic",
+                    "metadata": {},
+                    "name": "Lower third",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "definitionId": "lower-third",
+                      "id": "g2",
+                      "opacity": 1,
+                      "params": {
+                        "title": "Ana"
+                      },
+                      "transform": {
+                        "flipX": false,
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scale": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "graphic"
+                    }
+                  }
+                },
+                "name": "Lower third",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 240000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              }
+            ],
+            "effects": [],
+            "enabled": true,
+            "kind": "Video",
+            "markers": [],
+            "metadata": {
+              "opencut": {
+                "order": [
+                  "g1",
+                  "g2"
+                ],
+                "slot": "overlay",
+                "track": {
+                  "hidden": true,
+                  "id": "s2-gfx",
+                  "type": "graphic"
+                }
+              }
+            },
+            "name": "Graphics",
+            "source_range": null
+          },
+          {
+            "OTIO_SCHEMA": "Track.1",
+            "children": [
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.effect",
+                    "metadata": {},
+                    "name": "Grade",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "effectType": "colorCorrect",
+                      "id": "e1",
+                      "params": {
+                        "contrast": 1.1
+                      },
+                      "trimEnd": 0,
+                      "type": "effect"
+                    }
+                  }
+                },
+                "name": "Grade",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 1200000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              }
+            ],
+            "effects": [],
+            "enabled": true,
+            "kind": "Video",
+            "markers": [],
+            "metadata": {
+              "opencut": {
+                "order": [
+                  "e1"
+                ],
+                "slot": "overlay",
+                "track": {
+                  "hidden": false,
+                  "id": "s2-fx",
+                  "type": "effect"
+                }
+              }
+            },
+            "name": "Adjust",
+            "source_range": null
+          },
+          {
+            "OTIO_SCHEMA": "Track.1",
+            "children": [
+              {
+                "OTIO_SCHEMA": "Gap.1",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "metadata": {},
+                "name": "",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 60000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "ExternalReference.1",
+                    "available_image_bounds": null,
+                    "available_range": null,
+                    "metadata": {},
+                    "name": "song.wav",
+                    "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz2?version=v9"
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "id": "a1",
+                      "mediaId": "m-audio",
+                      "muted": false,
+                      "retime": {
+                        "rate": 0.9
+                      },
+                      "sourceDuration": 21600000,
+                      "sourceType": "upload",
+                      "trimEnd": 0,
+                      "type": "audio",
+                      "volume": 0.4
+                    }
+                  }
+                },
+                "name": "Song",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 1080000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 360000
+                  }
+                }
+              }
+            ],
+            "effects": [],
+            "enabled": true,
+            "kind": "Audio",
+            "markers": [],
+            "metadata": {
+              "opencut": {
+                "order": [
+                  "a1"
+                ],
+                "slot": "audio",
+                "track": {
+                  "id": "s2-a1",
+                  "muted": true,
+                  "type": "audio"
+                }
+              }
+            },
+            "name": "Music",
+            "source_range": null
+          }
+        ],
+        "effects": [],
+        "enabled": true,
+        "markers": [
+          {
+            "OTIO_SCHEMA": "Marker.2",
+            "color": "RED",
+            "comment": "",
+            "marked_range": {
+              "OTIO_SCHEMA": "TimeRange.1",
+              "duration": {
+                "OTIO_SCHEMA": "RationalTime.1",
+                "rate": 120000,
+                "value": 120000
+              },
+              "start_time": {
+                "OTIO_SCHEMA": "RationalTime.1",
+                "rate": 120000,
+                "value": 240000
+              }
+            },
+            "metadata": {
+              "opencut": {
+                "bookmark": {
+                  "color": "#ff0000",
+                  "duration": 120000,
+                  "note": "Cut here"
+                }
+              }
+            },
+            "name": "Cut here"
+          },
+          {
+            "OTIO_SCHEMA": "Marker.2",
+            "color": "RED",
+            "comment": "",
+            "marked_range": {
+              "OTIO_SCHEMA": "TimeRange.1",
+              "duration": {
+                "OTIO_SCHEMA": "RationalTime.1",
+                "rate": 120000,
+                "value": 0
+              },
+              "start_time": {
+                "OTIO_SCHEMA": "RationalTime.1",
+                "rate": 120000,
+                "value": 1080000
+              }
+            },
+            "metadata": {
+              "opencut": {
+                "bookmark": {}
+              }
+            },
+            "name": ""
+          }
+        ],
+        "metadata": {},
+        "name": "tracks",
+        "source_range": null
+      }
+    }
+  ],
+  "metadata": {
+    "opencut": {
+      "media": [
+        {
+          "duration": 8,
+          "file": {
+            "id": "01jabcdefghjkmnpqrstvwxyz0",
+            "version": "v3"
+          },
+          "fps": 30,
+          "hasAudio": true,
+          "height": 1080,
+          "id": "m-video",
+          "name": "beach.mp4",
+          "type": "video",
+          "width": 1920
+        },
+        {
+          "file": {
+            "id": "01jabcdefghjkmnpqrstvwxyz1",
+            "version": "v1"
+          },
+          "height": 512,
+          "id": "m-image",
+          "name": "logo.png",
+          "type": "image",
+          "width": 512
+        },
+        {
+          "duration": 180,
+          "file": {
+            "id": "01jabcdefghjkmnpqrstvwxyz2",
+            "version": "v9"
+          },
+          "id": "m-audio",
+          "name": "song.wav",
+          "type": "audio"
+        }
+      ],
+      "project": {
+        "currentSceneId": "s2",
+        "metadata": {
+          "createdAt": "2026-11-08T00:00:00.000Z",
+          "duration": 1200000,
+          "id": "p1",
+          "name": "Trip",
+          "thumbnail": "data:image/png;base64,AAAA",
+          "updatedAt": "2026-11-08T02:00:00.000Z"
+        },
+        "settings": {
+          "background": {
+            "blurIntensity": 12,
+            "type": "blur"
+          },
+          "canvasSize": {
+            "height": 1920,
+            "width": 1080
+          },
+          "canvasSizeMode": "custom",
+          "fps": {
+            "denominator": 1001,
+            "numerator": 30000
+          },
+          "lastCustomCanvasSize": {
+            "height": 1920,
+            "width": 1080
+          },
+          "originalCanvasSize": null
+        },
+        "timelineViewState": {
+          "playheadTime": 360000,
+          "scrollLeft": 340,
+          "zoomLevel": 2.5
+        },
+        "version": 23
+      }
+    }
+  },
+  "name": "Trip"
+}

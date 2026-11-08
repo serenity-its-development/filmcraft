@@ -306,4 +306,36 @@ mod tests {
         assert_eq!(saved.pointer(&format!("{clip}/metadata/opencut")), cut.pointer(&format!("{clip}/metadata/opencut")), "Cut's data on Film's clip");
         assert_eq!(saved.pointer("/children/2"), cut.pointer("/children/2"), "Cut's scene, untouched");
     }
+
+    /// files/989 (Mona 2026-11-09: "yes, so this becomes a tool choice not a file type choicer"): a PURE Cut project (Cut's writer's maximal
+    /// project, the OpenCut fork's `oneos-tests/fixtures/cut-project.otio`) opens in Film, saves unedited value for value, and Film's edit of
+    /// Cut's bookmark is pinned as `film-saved-cut.otio` (`FILMCRAFT_BLESS=1` writes it), the file the OpenCut fork's
+    /// `oneos-tests/foreign-keys.test.ts` opens in Cut's PROJECT mode.
+    #[test]
+    fn a_pure_cut_project_film_saved_opens_in_cut_s_project_mode() {
+        let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-project.otio");
+        let cut: Value = serde_json::from_slice(bytes).unwrap();
+        let mut s = session();
+        open_host_file(&mut s, "trip.otio", bytes).unwrap();
+        eprintln!("locked in Film: {:?}", s.host_shared.locked());
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
+        assert_eq!(first_difference(&cut, &saved, ""), None, "unedited: Cut's project comes back value for value");
+        {
+            let p = std::sync::Arc::make_mut(&mut s.project);
+            let id = p.items.values().find(|i| i.name == "Main" && i.as_sequence().is_some()).unwrap().id;
+            p.sequence_mut(id).unwrap().markers.iter_mut().find(|m| m.name == "Cut here").unwrap().name = "Edited in Film".into();
+        }
+        let out = save_host_file(&mut s).unwrap_or_else(|e| panic!("Film refused the save: {e}"));
+        let edited: Value = serde_json::from_slice(&out).unwrap();
+        let golden = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../interchange/tests/it/oneos/film-saved-cut.otio");
+        if std::env::var_os("FILMCRAFT_BLESS").is_some() {
+            std::fs::write(&golden, &out).unwrap();
+        }
+        let pinned: Value = serde_json::from_slice(&std::fs::read(&golden).expect("film-saved-cut.otio (FILMCRAFT_BLESS=1 writes it)")).unwrap();
+        assert_eq!(first_difference(&pinned, &edited, ""), None, "Film saves Cut's project as it is pinned");
+        let mut want = cut.clone();
+        *want.pointer_mut("/children/0/tracks/markers/0/name").unwrap() = serde_json::json!("Edited in Film");
+        *want.pointer_mut("/children/0/tracks/markers/0/metadata/opencut/bookmark/note").unwrap() = serde_json::json!("Edited in Film");
+        assert_eq!(first_difference(&want, &edited, ""), None, "only Film's edit differs");
+    }
 }

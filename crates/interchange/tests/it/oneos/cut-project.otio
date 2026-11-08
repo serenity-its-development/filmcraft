@@ -1,0 +1,1556 @@
+{
+    "OTIO_SCHEMA": "SerializableCollection.1",
+    "name": "Trip",
+    "metadata": {
+        "opencut": {
+            "project": {
+                "metadata": {
+                    "id": "p1",
+                    "name": "Trip",
+                    "thumbnail": "data:image/png;base64,AAAA",
+                    "duration": 1200000,
+                    "createdAt": "2026-11-08T00:00:00.000Z",
+                    "updatedAt": "2026-11-08T02:00:00.000Z"
+                },
+                "currentSceneId": "s2",
+                "settings": {
+                    "fps": {
+                        "numerator": 30000,
+                        "denominator": 1001
+                    },
+                    "canvasSize": {
+                        "width": 1080,
+                        "height": 1920
+                    },
+                    "canvasSizeMode": "custom",
+                    "lastCustomCanvasSize": {
+                        "width": 1080,
+                        "height": 1920
+                    },
+                    "originalCanvasSize": null,
+                    "background": {
+                        "type": "blur",
+                        "blurIntensity": 12
+                    }
+                },
+                "version": 23,
+                "timelineViewState": {
+                    "zoomLevel": 2.5,
+                    "scrollLeft": 340,
+                    "playheadTime": 360000
+                }
+            },
+            "media": [
+                {
+                    "id": "m-video",
+                    "name": "beach.mp4",
+                    "type": "video",
+                    "file": {
+                        "id": "01jabcdefghjkmnpqrstvwxyz0",
+                        "version": "v3"
+                    },
+                    "width": 1920,
+                    "height": 1080,
+                    "duration": 8,
+                    "fps": 30,
+                    "hasAudio": true
+                },
+                {
+                    "id": "m-image",
+                    "name": "logo.png",
+                    "type": "image",
+                    "file": {
+                        "id": "01jabcdefghjkmnpqrstvwxyz1",
+                        "version": "v1"
+                    },
+                    "width": 512,
+                    "height": 512
+                },
+                {
+                    "id": "m-audio",
+                    "name": "song.wav",
+                    "type": "audio",
+                    "file": {
+                        "id": "01jabcdefghjkmnpqrstvwxyz2",
+                        "version": "v9"
+                    },
+                    "duration": 180
+                }
+            ]
+        }
+    },
+    "children": [
+        {
+            "OTIO_SCHEMA": "Timeline.1",
+            "name": "Main",
+            "global_start_time": null,
+            "metadata": {
+                "opencut": {
+                    "scene": {
+                        "id": "s1",
+                        "isMain": true,
+                        "createdAt": "2026-11-08T00:00:00.000Z",
+                        "updatedAt": "2026-11-08T01:00:00.000Z"
+                    }
+                }
+            },
+            "tracks": {
+                "OTIO_SCHEMA": "Stack.1",
+                "name": "tracks",
+                "source_range": null,
+                "effects": [],
+                "enabled": true,
+                "metadata": {},
+                "markers": [
+                    {
+                        "OTIO_SCHEMA": "Marker.2",
+                        "name": "Cut here",
+                        "marked_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 120000,
+                                "value": 240000
+                            },
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 120000,
+                                "value": 120000
+                            }
+                        },
+                        "color": "RED",
+                        "comment": "",
+                        "metadata": {
+                            "opencut": {
+                                "bookmark": {
+                                    "note": "Cut here",
+                                    "color": "#ff0000",
+                                    "duration": 120000
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "OTIO_SCHEMA": "Marker.2",
+                        "name": "",
+                        "marked_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 120000,
+                                "value": 1080000
+                            },
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 120000,
+                                "value": 0
+                            }
+                        },
+                        "color": "RED",
+                        "comment": "",
+                        "metadata": {
+                            "opencut": {
+                                "bookmark": {}
+                            }
+                        }
+                    }
+                ],
+                "children": [
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "name": "Main",
+                        "kind": "Video",
+                        "source_range": null,
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "metadata": {
+                            "opencut": {
+                                "track": {
+                                    "id": "s1-main",
+                                    "type": "video",
+                                    "muted": false,
+                                    "hidden": false
+                                },
+                                "slot": "main",
+                                "order": [
+                                    "v1",
+                                    "i1"
+                                ]
+                            }
+                        },
+                        "children": [
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Beach",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 120000
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 600000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "ExternalReference.1",
+                                        "name": "beach.mp4",
+                                        "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz0?version=v3",
+                                        "available_range": null,
+                                        "available_image_bounds": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "id": "v1",
+                                            "type": "video",
+                                            "mediaId": "m-video",
+                                            "trimEnd": 240000,
+                                            "sourceDuration": 960000,
+                                            "volume": 0.7,
+                                            "muted": false,
+                                            "isSourceAudioEnabled": true,
+                                            "hidden": false,
+                                            "retime": {
+                                                "rate": 1.5,
+                                                "maintainPitch": true
+                                            },
+                                            "transform": {
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "scale": 1.25,
+                                                "rotate": 7.5,
+                                                "flipX": false
+                                            },
+                                            "opacity": 0.9,
+                                            "blendMode": "screen",
+                                            "effects": [
+                                                {
+                                                    "id": "fx1",
+                                                    "type": "blur",
+                                                    "enabled": true,
+                                                    "params": {
+                                                        "radius": 4
+                                                    }
+                                                },
+                                                {
+                                                    "id": "fx2",
+                                                    "type": "colorCorrect",
+                                                    "enabled": false,
+                                                    "params": {
+                                                        "saturation": 0.8
+                                                    }
+                                                }
+                                            ],
+                                            "masks": [
+                                                {
+                                                    "id": "mk1",
+                                                    "type": "custom",
+                                                    "inverted": true,
+                                                    "points": [
+                                                        {
+                                                            "x": 0,
+                                                            "y": 0
+                                                        },
+                                                        {
+                                                            "x": 1,
+                                                            "y": 0
+                                                        },
+                                                        {
+                                                            "x": 1,
+                                                            "y": 1
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "animations": {
+                                                "opacity": {
+                                                    "keyframes": [
+                                                        {
+                                                            "time": 0,
+                                                            "value": 0,
+                                                            "easing": "ease-in"
+                                                        },
+                                                        {
+                                                            "time": 120000,
+                                                            "value": 1
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "OTIO_SCHEMA": "Gap.1",
+                                "name": "",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 240000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "metadata": {}
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Logo",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 360000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "ExternalReference.1",
+                                        "name": "logo.png",
+                                        "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz1?version=v1",
+                                        "available_range": null,
+                                        "available_image_bounds": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "id": "i1",
+                                            "type": "image",
+                                            "mediaId": "m-image",
+                                            "trimEnd": 0,
+                                            "transform": {
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "scale": 1.25,
+                                                "rotate": 7.5,
+                                                "flipX": false
+                                            },
+                                            "opacity": 1,
+                                            "effects": [],
+                                            "masks": []
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "name": "Titles",
+                        "kind": "Video",
+                        "source_range": null,
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "metadata": {
+                            "opencut": {
+                                "track": {
+                                    "id": "s1-text",
+                                    "type": "text",
+                                    "hidden": false
+                                },
+                                "slot": "overlay",
+                                "order": [
+                                    "t1"
+                                ]
+                            }
+                        },
+                        "children": [
+                            {
+                                "OTIO_SCHEMA": "Gap.1",
+                                "name": "",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 120000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "metadata": {}
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Title",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 240000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Title",
+                                        "generator_kind": "OpenCut.text",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "id": "t1",
+                                            "type": "text",
+                                            "content": "Hello 日本語",
+                                            "fontSize": 64,
+                                            "fontFamily": "Inter",
+                                            "color": "#ffffff",
+                                            "background": {
+                                                "enabled": true,
+                                                "color": "#00000080",
+                                                "cornerRadius": 8,
+                                                "paddingX": 4,
+                                                "paddingY": 2,
+                                                "offsetX": 0,
+                                                "offsetY": 0
+                                            },
+                                            "textAlign": "center",
+                                            "fontWeight": "bold",
+                                            "fontStyle": "italic",
+                                            "textDecoration": "underline",
+                                            "letterSpacing": 1,
+                                            "lineHeight": 1.2,
+                                            "hidden": false,
+                                            "transform": {
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "scale": 1.25,
+                                                "rotate": 7.5,
+                                                "flipX": false
+                                            },
+                                            "opacity": 1,
+                                            "trimEnd": 0,
+                                            "animations": {
+                                                "opacity": {
+                                                    "keyframes": [
+                                                        {
+                                                            "time": 0,
+                                                            "value": 0,
+                                                            "easing": "ease-in"
+                                                        },
+                                                        {
+                                                            "time": 120000,
+                                                            "value": 1
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "name": "Graphics",
+                        "kind": "Video",
+                        "source_range": null,
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "metadata": {
+                            "opencut": {
+                                "track": {
+                                    "id": "s1-gfx",
+                                    "type": "graphic",
+                                    "hidden": true
+                                },
+                                "slot": "overlay",
+                                "order": [
+                                    "g1",
+                                    "g2"
+                                ]
+                            }
+                        },
+                        "children": [
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Star",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 120000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Star",
+                                        "generator_kind": "OpenCut.sticker",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "id": "g1",
+                                            "type": "sticker",
+                                            "stickerId": "emoji:star",
+                                            "transform": {
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "scale": 1.25,
+                                                "rotate": 7.5,
+                                                "flipX": false
+                                            },
+                                            "opacity": 0.5,
+                                            "trimEnd": 0
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "OTIO_SCHEMA": "Gap.1",
+                                "name": "",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 360000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "metadata": {}
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Lower third",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 240000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Lower third",
+                                        "generator_kind": "OpenCut.graphic",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "id": "g2",
+                                            "type": "graphic",
+                                            "definitionId": "lower-third",
+                                            "params": {
+                                                "title": "Ana"
+                                            },
+                                            "transform": {
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "scale": 1.25,
+                                                "rotate": 7.5,
+                                                "flipX": false
+                                            },
+                                            "opacity": 1,
+                                            "trimEnd": 0
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "name": "Adjust",
+                        "kind": "Video",
+                        "source_range": null,
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "metadata": {
+                            "opencut": {
+                                "track": {
+                                    "id": "s1-fx",
+                                    "type": "effect",
+                                    "hidden": false
+                                },
+                                "slot": "overlay",
+                                "order": [
+                                    "e1"
+                                ]
+                            }
+                        },
+                        "children": [
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Grade",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 1200000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Grade",
+                                        "generator_kind": "OpenCut.effect",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "id": "e1",
+                                            "type": "effect",
+                                            "effectType": "colorCorrect",
+                                            "params": {
+                                                "contrast": 1.1
+                                            },
+                                            "trimEnd": 0
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "name": "Music",
+                        "kind": "Audio",
+                        "source_range": null,
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "metadata": {
+                            "opencut": {
+                                "track": {
+                                    "id": "s1-a1",
+                                    "type": "audio",
+                                    "muted": true
+                                },
+                                "slot": "audio",
+                                "order": [
+                                    "a1"
+                                ]
+                            }
+                        },
+                        "children": [
+                            {
+                                "OTIO_SCHEMA": "Gap.1",
+                                "name": "",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 60000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "metadata": {}
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Song",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 360000
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 1080000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "ExternalReference.1",
+                                        "name": "song.wav",
+                                        "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz2?version=v9",
+                                        "available_range": null,
+                                        "available_image_bounds": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "id": "a1",
+                                            "type": "audio",
+                                            "sourceType": "upload",
+                                            "mediaId": "m-audio",
+                                            "volume": 0.4,
+                                            "muted": false,
+                                            "retime": {
+                                                "rate": 0.9
+                                            },
+                                            "trimEnd": 0,
+                                            "sourceDuration": 21600000
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "OTIO_SCHEMA": "Timeline.1",
+            "name": "B-roll",
+            "global_start_time": null,
+            "metadata": {
+                "opencut": {
+                    "scene": {
+                        "id": "s2",
+                        "isMain": false,
+                        "createdAt": "2026-11-08T00:00:00.000Z",
+                        "updatedAt": "2026-11-08T01:00:00.000Z"
+                    }
+                }
+            },
+            "tracks": {
+                "OTIO_SCHEMA": "Stack.1",
+                "name": "tracks",
+                "source_range": null,
+                "effects": [],
+                "enabled": true,
+                "metadata": {},
+                "markers": [
+                    {
+                        "OTIO_SCHEMA": "Marker.2",
+                        "name": "Cut here",
+                        "marked_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 120000,
+                                "value": 240000
+                            },
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 120000,
+                                "value": 120000
+                            }
+                        },
+                        "color": "RED",
+                        "comment": "",
+                        "metadata": {
+                            "opencut": {
+                                "bookmark": {
+                                    "note": "Cut here",
+                                    "color": "#ff0000",
+                                    "duration": 120000
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "OTIO_SCHEMA": "Marker.2",
+                        "name": "",
+                        "marked_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 120000,
+                                "value": 1080000
+                            },
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 120000,
+                                "value": 0
+                            }
+                        },
+                        "color": "RED",
+                        "comment": "",
+                        "metadata": {
+                            "opencut": {
+                                "bookmark": {}
+                            }
+                        }
+                    }
+                ],
+                "children": [
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "name": "Main",
+                        "kind": "Video",
+                        "source_range": null,
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "metadata": {
+                            "opencut": {
+                                "track": {
+                                    "id": "s2-main",
+                                    "type": "video",
+                                    "muted": false,
+                                    "hidden": false
+                                },
+                                "slot": "main",
+                                "order": [
+                                    "v1",
+                                    "i1"
+                                ]
+                            }
+                        },
+                        "children": [
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Beach",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 120000
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 600000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "ExternalReference.1",
+                                        "name": "beach.mp4",
+                                        "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz0?version=v3",
+                                        "available_range": null,
+                                        "available_image_bounds": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "id": "v1",
+                                            "type": "video",
+                                            "mediaId": "m-video",
+                                            "trimEnd": 240000,
+                                            "sourceDuration": 960000,
+                                            "volume": 0.7,
+                                            "muted": false,
+                                            "isSourceAudioEnabled": true,
+                                            "hidden": false,
+                                            "retime": {
+                                                "rate": 1.5,
+                                                "maintainPitch": true
+                                            },
+                                            "transform": {
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "scale": 1.25,
+                                                "rotate": 7.5,
+                                                "flipX": false
+                                            },
+                                            "opacity": 0.9,
+                                            "blendMode": "screen",
+                                            "effects": [
+                                                {
+                                                    "id": "fx1",
+                                                    "type": "blur",
+                                                    "enabled": true,
+                                                    "params": {
+                                                        "radius": 4
+                                                    }
+                                                },
+                                                {
+                                                    "id": "fx2",
+                                                    "type": "colorCorrect",
+                                                    "enabled": false,
+                                                    "params": {
+                                                        "saturation": 0.8
+                                                    }
+                                                }
+                                            ],
+                                            "masks": [
+                                                {
+                                                    "id": "mk1",
+                                                    "type": "custom",
+                                                    "inverted": true,
+                                                    "points": [
+                                                        {
+                                                            "x": 0,
+                                                            "y": 0
+                                                        },
+                                                        {
+                                                            "x": 1,
+                                                            "y": 0
+                                                        },
+                                                        {
+                                                            "x": 1,
+                                                            "y": 1
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "animations": {
+                                                "opacity": {
+                                                    "keyframes": [
+                                                        {
+                                                            "time": 0,
+                                                            "value": 0,
+                                                            "easing": "ease-in"
+                                                        },
+                                                        {
+                                                            "time": 120000,
+                                                            "value": 1
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "OTIO_SCHEMA": "Gap.1",
+                                "name": "",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 240000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "metadata": {}
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Logo",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 360000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "ExternalReference.1",
+                                        "name": "logo.png",
+                                        "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz1?version=v1",
+                                        "available_range": null,
+                                        "available_image_bounds": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "id": "i1",
+                                            "type": "image",
+                                            "mediaId": "m-image",
+                                            "trimEnd": 0,
+                                            "transform": {
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "scale": 1.25,
+                                                "rotate": 7.5,
+                                                "flipX": false
+                                            },
+                                            "opacity": 1,
+                                            "effects": [],
+                                            "masks": []
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "name": "Titles",
+                        "kind": "Video",
+                        "source_range": null,
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "metadata": {
+                            "opencut": {
+                                "track": {
+                                    "id": "s2-text",
+                                    "type": "text",
+                                    "hidden": false
+                                },
+                                "slot": "overlay",
+                                "order": [
+                                    "t1"
+                                ]
+                            }
+                        },
+                        "children": [
+                            {
+                                "OTIO_SCHEMA": "Gap.1",
+                                "name": "",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 120000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "metadata": {}
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Title",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 240000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Title",
+                                        "generator_kind": "OpenCut.text",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "id": "t1",
+                                            "type": "text",
+                                            "content": "Hello 日本語",
+                                            "fontSize": 64,
+                                            "fontFamily": "Inter",
+                                            "color": "#ffffff",
+                                            "background": {
+                                                "enabled": true,
+                                                "color": "#00000080",
+                                                "cornerRadius": 8,
+                                                "paddingX": 4,
+                                                "paddingY": 2,
+                                                "offsetX": 0,
+                                                "offsetY": 0
+                                            },
+                                            "textAlign": "center",
+                                            "fontWeight": "bold",
+                                            "fontStyle": "italic",
+                                            "textDecoration": "underline",
+                                            "letterSpacing": 1,
+                                            "lineHeight": 1.2,
+                                            "hidden": false,
+                                            "transform": {
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "scale": 1.25,
+                                                "rotate": 7.5,
+                                                "flipX": false
+                                            },
+                                            "opacity": 1,
+                                            "trimEnd": 0,
+                                            "animations": {
+                                                "opacity": {
+                                                    "keyframes": [
+                                                        {
+                                                            "time": 0,
+                                                            "value": 0,
+                                                            "easing": "ease-in"
+                                                        },
+                                                        {
+                                                            "time": 120000,
+                                                            "value": 1
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "name": "Graphics",
+                        "kind": "Video",
+                        "source_range": null,
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "metadata": {
+                            "opencut": {
+                                "track": {
+                                    "id": "s2-gfx",
+                                    "type": "graphic",
+                                    "hidden": true
+                                },
+                                "slot": "overlay",
+                                "order": [
+                                    "g1",
+                                    "g2"
+                                ]
+                            }
+                        },
+                        "children": [
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Star",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 120000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Star",
+                                        "generator_kind": "OpenCut.sticker",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "id": "g1",
+                                            "type": "sticker",
+                                            "stickerId": "emoji:star",
+                                            "transform": {
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "scale": 1.25,
+                                                "rotate": 7.5,
+                                                "flipX": false
+                                            },
+                                            "opacity": 0.5,
+                                            "trimEnd": 0
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "OTIO_SCHEMA": "Gap.1",
+                                "name": "",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 360000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "metadata": {}
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Lower third",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 240000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Lower third",
+                                        "generator_kind": "OpenCut.graphic",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "id": "g2",
+                                            "type": "graphic",
+                                            "definitionId": "lower-third",
+                                            "params": {
+                                                "title": "Ana"
+                                            },
+                                            "transform": {
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "scale": 1.25,
+                                                "rotate": 7.5,
+                                                "flipX": false
+                                            },
+                                            "opacity": 1,
+                                            "trimEnd": 0
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "name": "Adjust",
+                        "kind": "Video",
+                        "source_range": null,
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "metadata": {
+                            "opencut": {
+                                "track": {
+                                    "id": "s2-fx",
+                                    "type": "effect",
+                                    "hidden": false
+                                },
+                                "slot": "overlay",
+                                "order": [
+                                    "e1"
+                                ]
+                            }
+                        },
+                        "children": [
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Grade",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 1200000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Grade",
+                                        "generator_kind": "OpenCut.effect",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "id": "e1",
+                                            "type": "effect",
+                                            "effectType": "colorCorrect",
+                                            "params": {
+                                                "contrast": 1.1
+                                            },
+                                            "trimEnd": 0
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "name": "Music",
+                        "kind": "Audio",
+                        "source_range": null,
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "metadata": {
+                            "opencut": {
+                                "track": {
+                                    "id": "s2-a1",
+                                    "type": "audio",
+                                    "muted": true
+                                },
+                                "slot": "audio",
+                                "order": [
+                                    "a1"
+                                ]
+                            }
+                        },
+                        "children": [
+                            {
+                                "OTIO_SCHEMA": "Gap.1",
+                                "name": "",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 60000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "metadata": {}
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Song",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 360000
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 1080000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "ExternalReference.1",
+                                        "name": "song.wav",
+                                        "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz2?version=v9",
+                                        "available_range": null,
+                                        "available_image_bounds": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "id": "a1",
+                                            "type": "audio",
+                                            "sourceType": "upload",
+                                            "mediaId": "m-audio",
+                                            "volume": 0.4,
+                                            "muted": false,
+                                            "retime": {
+                                                "rate": 0.9
+                                            },
+                                            "trimEnd": 0,
+                                            "sourceDuration": 21600000
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}
