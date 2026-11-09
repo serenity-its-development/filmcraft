@@ -80,6 +80,51 @@ pub fn prepare(masks: &[Mask], t: Tick, px_scale: f32, to_canvas: &Affine) -> Ve
         .collect()
 }
 
+/// Flatten the active masks at clip time `t` onto the placed layer's grid (output pixels), for a clip whose masks are drawn after its
+/// Motion: `to_output` maps clip pixels to output pixels and `out_scale` is output pixels per sequence pixel. A canvas mask is measured
+/// in the sequence frame's pixels, a clip mask in clip pixels (through the inverse of `to_output`), so masks of both units combine top
+/// to bottom on one grid. `None` when the clip is scaled to nothing (it draws nothing).
+pub fn prepare_placed(masks: &[Mask], t: Tick, to_output: &Affine, out_scale: f32) -> Option<Vec<FlatMask>> {
+    let back = to_output.inverse()?;
+    let stretch = least_stretch(&[to_output.a as f32, to_output.b as f32, to_output.c as f32, to_output.d as f32]).max(1e-6) as f64;
+    let most = {
+        let m = [to_output.a, to_output.b, to_output.c, to_output.d];
+        let t2: f64 = m.iter().map(|v| v * v).sum();
+        let det = (m[0] * m[3] - m[1] * m[2]).abs();
+        ((t2 + (t2 * t2 - 4.0 * det * det).max(0.0).sqrt()) / 2.0).sqrt().max(stretch)
+    };
+    let o = 1.0 / out_scale as f64;
+    Some(
+        masks
+            .iter()
+            .filter(|m| m.mode != MaskMode::None)
+            .map(|m| {
+                let pts = m.path_at(t).flatten(FLATTEN_TOLERANCE / most).into_iter().map(|p| to_output.apply(p)).map(|q| [q.x as f32, q.y as f32]).collect();
+                let metric = match m.units {
+                    MaskUnits::Canvas => [o as f32, 0.0, 0.0, o as f32],
+                    MaskUnits::Clip => [back.a as f32, back.b as f32, back.c as f32, back.d as f32],
+                };
+                FlatMask {
+                    pts,
+                    feather: m.feather.f64_at(t).max(0.0) as f32,
+                    expansion: m.expansion.f64_at(t) as f32,
+                    opacity: (m.opacity.f64_at(t) / 100.0).clamp(0.0, 1.0) as f32,
+                    inverted: m.inverted,
+                    mode: m.mode,
+                    metric,
+                }
+            })
+            .collect(),
+    )
+}
+
+/// Whether an item's Opacity masks are drawn after its Motion, on the sequence frame's grid: when one of them is measured in the
+/// canvas's pixels, so its feather is as sharp as the frame (Cut draws its masks on its canvas; OneOS doctrine files/989, tool choice).
+/// A clip holding only clip-pixel masks draws them on its own pixels before Motion.
+pub fn opacity_masks_after_motion(item: &filmcraft_project::TrackItem) -> bool {
+    item.effect("opacity").is_some_and(|e| e.enabled && e.masks.iter().any(|m| m.mode != MaskMode::None && m.units == MaskUnits::Canvas))
+}
+
 /// `metric` applied to the offset (x, y).
 #[inline]
 fn measured(m: &[f32; 4], x: f32, y: f32) -> (f32, f32) {

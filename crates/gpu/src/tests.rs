@@ -413,6 +413,33 @@ fn gpu_mask_coverage_matches_cpu() {
     }
 }
 
+/// files/989 (tool choice): a clip's masks drawn after its Motion, on the frame's grid (a canvas mask in sequence pixels beside a clip
+/// mask measured through the clip's map), draw alike on the GPU.
+#[test]
+fn gpu_mask_coverage_after_motion_matches_cpu() {
+    let Some((dev, q)) = device() else {
+        eprintln!("no GPU adapter; skipping");
+        return;
+    };
+    use filmcraft_project::{Mask, MaskMode, MaskPath, MaskUnits, ParamValue};
+    let g = crate::GpuMask::new(&dev, &q);
+    let mut a = Mask::new("a", MaskPath::ellipse(Vec2::new(150.0, 90.0), Vec2::new(90.0, 55.0)));
+    a.units = MaskUnits::Canvas;
+    a.feather.value = ParamValue::Float(16.0);
+    let mut b = Mask::new("b", MaskPath::rect(60.0, 40.0, 200.0, 150.0));
+    b.mode = MaskMode::Subtract;
+    b.feather.value = ParamValue::Float(6.0);
+    b.expansion.value = ParamValue::Float(-3.0);
+    let to_output = Affine::translate(30.0, 10.0).then_apply(&Affine::rotate_deg(12.0)).then_apply(&Affine::scale(1.8, 0.6));
+    let masks = filmcraft_render::mask::prepare_placed(&[a, b], filmcraft_time::Tick(0), &to_output, 0.5).unwrap();
+    let (w, h) = (320, 180);
+    let cpu = filmcraft_render::mask::coverage(&masks, w, h).unwrap();
+    let gpu = g.coverage(&masks, w, h).expect("gpu coverage");
+    let worst = cpu.iter().zip(&gpu).map(|(a, b)| (a - b).abs()).fold(0f32, f32::max);
+    assert!(worst < 2e-4, "{worst}");
+    assert!(cpu.iter().any(|v| *v > 0.2 && *v < 0.8));
+}
+
 #[test]
 fn gpu_masked_mix_matches_cpu() {
     let Some((dev, q)) = device() else {

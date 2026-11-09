@@ -606,10 +606,26 @@ pub(crate) fn item_layer_ex(
             mask::apply_effect(&mut layer, e, &cx);
         }
     }
-    // layer px → source px → sequence px: where a mask measured in the canvas's pixels is measured, at this frame's Motion
-    let to_canvas = motion.then_apply(&Affine::scale(1.0 / px_scale as f64, 1.0 / px_scale as f64));
-    mask::apply_opacity_masks(&mut layer, item, mt, px_scale, &to_canvas);
-    let placed = if layer.w == w && layer.h == h && identity_placement(&m) { layer } else { layer.transformed(w, h, &m) };
+    let after = mask::opacity_masks_after_motion(item);
+    if !after {
+        // layer px → source px → sequence px: where a mask measured in the canvas's pixels is measured, at this frame's Motion
+        let to_canvas = motion.then_apply(&Affine::scale(1.0 / px_scale as f64, 1.0 / px_scale as f64));
+        mask::apply_opacity_masks(&mut layer, item, mt, px_scale, &to_canvas);
+    }
+    let mut placed = if layer.w == w && layer.h == h && identity_placement(&m) { layer } else { layer.transformed(w, h, &m) };
+    if after && let Some(op) = item.effect("opacity") {
+        // a canvas mask is drawn on the frame's grid after Motion (clip px → sequence px → output px)
+        let to_output = Affine::scale(opts.scale as f64, opts.scale as f64).then_apply(&motion);
+        match mask::prepare_placed(&op.masks, mt, &to_output, opts.scale) {
+            Some(flat) => {
+                if let Some(cov) = mask::coverage(&flat, w, h) {
+                    mask::scale_by(&mut placed, &cov);
+                }
+            }
+            // scaled to nothing: the layer covers nothing
+            None => mask::scale_by(&mut placed, &vec![0.0; w * h]),
+        }
+    }
     let (op, bl) = opacity_blend(item, mt);
     Some(Layer::Full { image: placed, opacity: op, blend: bl, opaque: false })
 }
