@@ -714,6 +714,7 @@ fn write_on_follows_the_animated_brush() {
             in_influence: 1.0 / 3.0,
             out_rise: None,
             in_rise: None,
+            linear_light: false,
         },
         Keyframe {
             time: Tick::from_seconds_f64(1.0),
@@ -723,6 +724,7 @@ fn write_on_follows_the_animated_brush() {
             in_influence: 1.0 / 3.0,
             out_rise: None,
             in_rise: None,
+            linear_light: false,
         },
     ];
     // half way: painted from x=5 to x=20, not beyond

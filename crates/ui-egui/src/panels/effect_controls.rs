@@ -1483,34 +1483,47 @@ fn draw_graph_keyframes(
                 _ => format!("effectControls.{}.graph.keyframe.{}.y", pd.id, k.time.0),
             };
             app.auto.add(&auto_id, r, "keyframe value");
-            // influence handles: flat (ease) tangents with length ∝ influence × neighbouring segment;
-            // a point's sit on its X curve only, as both coordinates share the influence
+            // influence handles: tangents with length ∝ influence × neighbouring segment, flat (ease) or SLOPED (files/989, Mona
+            // 2026-11-09: "Add slopes to Film"): dragged sideways a handle's reach changes, dragged up or down its rise (in the value's
+            // units). A point's sit on its X curve only, as both coordinates share the influence; its rise there is the X component's.
             let (eases_out, eases_in) = (ci == 0 && eases_out, ci == 0 && eases_in);
             for (side, on, nb) in [(1.0f32, eases_out, ks.get(i + 1)), (-1.0f32, eases_in && i > 0, if i > 0 { ks.get(i - 1) } else { None })] {
                 let (true, Some(nb)) = (on, nb) else { continue };
                 let seg = (x_of(to_f(nb.time)) - c.x).abs();
-                let infl = if side > 0.0 { k.out_influence } else { k.in_influence } as f32;
+                let (infl, rise) = if side > 0.0 { (k.out_influence, &k.out_rise) } else { (k.in_influence, &k.in_rise) };
+                let infl = infl as f32;
+                let r0 = rise.as_ref().and_then(|r| r.first().copied()).unwrap_or(0.0);
                 let hid = id.with(if side > 0.0 { "out" } else { "in" });
-                let hdx: f32 = ui.data(|d| d.get_temp(hid)).unwrap_or(0.0);
-                let hx = c.x + side * (infl * seg + hdx * side).clamp(seg * 0.01, seg);
-                let hp = pos2(hx, c.y);
+                let hd: egui::Vec2 = ui.data(|d| d.get_temp(hid)).unwrap_or(egui::Vec2::ZERO);
+                // A sloped handle reaches 0% to 100% of its segment; a flat one 1% to 100%.
+                let sloped = rise.is_some() || hd.y != 0.0;
+                let least = if sloped { 0.0 } else { seg * 0.01 };
+                let hx = c.x + side * (infl * seg + hd.x * side).clamp(least, seg);
+                let hp = pos2(hx, y_of(v + r0) + dy + hd.y);
                 p.line_segment([c, hp], Stroke::new(1.0, t.plot_handle_dim));
                 p.circle_filled(hp, 3.5, t.keyframe_handle);
+                let auto_hid = format!("{auto_id}.{}", if side > 0.0 { "outHandle" } else { "inHandle" });
+                app.auto.add(&auto_hid, Rect::from_center_size(hp, vec2(10.0, 10.0)), "keyframe handle");
                 let hr = ui.interact(Rect::from_center_size(hp, vec2(10.0, 10.0)), hid.with("h"), Sense::drag());
                 if hr.dragged_by(egui::PointerButton::Primary) {
-                    let nx = graph_drag_offset(ui, &hr, vec2(hdx, 0.0)).x;
-                    ui.data_mut(|d| d.insert_temp(hid, nx));
+                    let nd = graph_drag_offset(ui, &hr, hd);
+                    ui.data_mut(|d| d.insert_temp(hid, nd));
                 }
                 if hr.drag_stopped() && ui.input(|i| i.key_pressed(egui::Key::Escape)) {
-                    ui.data_mut(|d| d.remove::<f32>(hid));
+                    ui.data_mut(|d| d.remove::<egui::Vec2>(hid));
                 } else if hr.drag_stopped_by(egui::PointerButton::Primary) {
-                    ui.data_mut(|d| d.remove::<f32>(hid));
-                    let ni = ((infl * seg + hdx * side) / seg.max(1.0)).clamp(0.01, 1.0);
-                    let key = if side > 0.0 { "outInfluence" } else { "inInfluence" };
-                    actions.push((
-                        "effects.setKeyframe".into(),
-                        with_mask(json!({"clip": clip.0, "effect": idx, "param": pd.id, "mediaTime": k.time.0, key: ni})),
-                    ));
+                    ui.data_mut(|d| d.remove::<egui::Vec2>(hid));
+                    let ni = ((infl * seg + hd.x * side) / seg.max(1.0)).clamp(if sloped { 0.0 } else { 0.01 }, 1.0);
+                    let (key, rkey) = if side > 0.0 { ("outInfluence", "outRise") } else { ("inInfluence", "inRise") };
+                    let mut args = json!({"clip": clip.0, "effect": idx, "param": pd.id, "mediaTime": k.time.0, key: ni});
+                    if sloped {
+                        // The dragged component's rise; the others keep theirs (flat when the handle had none).
+                        let mut r = rise.clone().unwrap_or_else(|| vec![0.0; comps.len()]);
+                        r.resize(comps.len().max(1), 0.0);
+                        r[0] = v_of(y_of(v + r0) + hd.y) - v;
+                        args[rkey] = json!(r);
+                    }
+                    actions.push(("effects.setKeyframe".into(), with_mask(args)));
                 }
             }
             p.circle_filled(c, 4.5, if resp.dragged_by(egui::PointerButton::Primary) { t.hot_text } else { t.plot_handle });
@@ -1852,6 +1865,34 @@ mod graph_drag_tests {
             let now = pos2(x + w / 2.0, y + h / 2.0);
             assert!(now.distance(start + offset) < 0.5, "keyframe {key} stays where it was dropped: dropped at {:?}, drawn at {now:?}", start + offset);
         }
+    }
+
+    /// files/989 (Mona 2026-11-09: "Add slopes to Film"): dragging an influence handle up gives it a slope. The key's out side holds the
+    /// rise, its value and time are untouched, the drawn handle stays where it was dropped, the curve between the keys now rises above the
+    /// flat ease, and the gesture is one undo step.
+    #[test]
+    fn dragging_an_influence_handle_up_slopes_it() {
+        let mut d = Driver::new();
+        let before = d.param();
+        let undo = d.undo_len();
+        let handle = d.frame(vec![])[1];
+        let up = vec2(0.0, -30.0);
+        d.frame(vec![egui::Event::PointerMoved(handle), button(handle, true)]);
+        d.frame(vec![egui::Event::PointerMoved(handle + up)]);
+        d.frame(vec![button(handle + up, false)]);
+        d.frame(vec![]);
+        let changed = d.param();
+        assert_eq!(d.undo_len(), undo + 1, "one undo step");
+        let rise = changed.keyframes[0].out_rise.clone().expect("the out handle is sloped");
+        assert!(rise[0] > 0.0, "dragged up, it rises: {rise:?}");
+        assert_eq!((changed.keyframes[0].time, changed.keyframes[0].value.clone()), (before.keyframes[0].time, before.keyframes[0].value.clone()));
+        assert!((changed.keyframes[0].out_influence - before.keyframes[0].out_influence).abs() < 1e-3, "dragged straight up, its reach stays");
+        let drawn = d.frame(vec![])[1];
+        assert!(drawn.distance(handle + up) < 0.5, "the handle stays where it was dropped: dropped at {:?}, drawn at {drawn:?}", handle + up);
+        let early = before.keyframes[0].time + Tick((before.keyframes[1].time.0 - before.keyframes[0].time.0) / 8);
+        assert!(changed.f64_at(early) > before.f64_at(early), "the curve leaves the key rising");
+        d.app.session.undo().expect("the slope to undo");
+        assert_eq!(d.param(), before);
     }
 
     #[test]

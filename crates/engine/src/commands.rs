@@ -4230,11 +4230,27 @@ fn keyframe_op(s: &mut Session, p: &Value, op: &str) -> Result<Value> {
                 if let Some(v) = p.get("value") {
                     k.value = json_to_param(&k.value, v).ok_or_else(|| bad("keyframe", "value has the wrong type"))?;
                 }
+                // A sloped handle (files/989, Mona 2026-11-09: "Add slopes to Film"): its rise per component, or null for a flat one.
+                let rise = |key: &str| -> Result<Option<Option<Vec<f64>>>> {
+                    match p.get(key) {
+                        None => Ok(None),
+                        Some(Value::Null) => Ok(Some(None)),
+                        Some(Value::Array(a)) => a.iter().map(|x| x.as_f64().filter(|v| v.is_finite())).collect::<Option<Vec<f64>>>().map(|v| Some(Some(v))).ok_or_else(|| bad("keyframe", format!("`{key}` is not a list of numbers"))),
+                        Some(_) => Err(bad("keyframe", format!("`{key}` is not a list of numbers or null"))),
+                    }
+                };
+                if let Some(r) = rise("inRise")? {
+                    k.in_rise = r;
+                }
+                if let Some(r) = rise("outRise")? {
+                    k.out_rise = r;
+                }
+                // A sloped handle reaches 0% to 100% of its segment; a flat one 1% to 100%.
                 if let Some(x) = f64_p(p, "inInfluence") {
-                    k.in_influence = x.clamp(0.01, 1.0);
+                    k.in_influence = x.clamp(if k.in_rise.is_some() { 0.0 } else { 0.01 }, 1.0);
                 }
                 if let Some(x) = f64_p(p, "outInfluence") {
-                    k.out_influence = x.clamp(0.01, 1.0);
+                    k.out_influence = x.clamp(if k.out_rise.is_some() { 0.0 } else { 0.01 }, 1.0);
                 }
             }
             _ => {

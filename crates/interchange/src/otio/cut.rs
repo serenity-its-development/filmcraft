@@ -695,7 +695,8 @@ enum At {
 }
 
 /// One of Cut's animated paths and the parameter of Film's that holds it: Film's component `i` is `cut * k + off`; a colour's are sRGB,
-/// and Cut's are sRGB too in an `srgb` channel (Mona 2026-11-09: "Add sRGB channel to Cut"), linear light in Cut's own.
+/// and Cut's are sRGB too in an `srgb` channel (Mona 2026-11-09: "Add sRGB channel to Cut"), linear light in Cut's own, which Film's keys
+/// then ease in linear light (Mona: "Film eases linear too").
 #[derive(Debug, Clone)]
 struct Anim {
     path: String,
@@ -717,8 +718,8 @@ enum Space {
 }
 
 impl Anim {
-    /// Film's units in one of Cut's for each component (a sloped handle's rise is converted by it). A linear-light colour's rise is
-    /// carried as it is: Film eases colours in sRGB, so between its keys such a channel is not drawn alike anyway (its keys are).
+    /// Film's units in one of Cut's for each component (a sloped handle's rise is converted by it). A colour's rise is in its channel's own
+    /// space, the space Film eases it in (Film's keys of a linear-light channel ease in linear light).
     fn per_cut(&self) -> Vec<f64> {
         match self.colour {
             Some(_) => vec![1.0; 4],
@@ -868,10 +869,6 @@ fn put_channel(c: &mut Value, path: &str, a: &Anim, comps: Option<&[Vec<CutKey>]
             let at = format!("{bindings}/{}", path.replace('~', "~0").replace('/', "~1"));
             if let Some(space) = a.colour {
                 b["colorSpace"] = json!(if space == Space::Srgb { "srgb" } else { "srgb-linear" });
-                // A colour channel is written in the space it is given in (Film's edit of one: sRGB), the binding saying which.
-                if let Some(was) = c.pointer_mut(&format!("{at}/colorSpace")) {
-                    *was = b["colorSpace"].clone();
-                }
             }
             if c.pointer(&bindings).and_then(|x| x.get(path)).is_none() {
                 put(c, &at, b);
@@ -940,6 +937,9 @@ fn read_anims(kind: Kind, f: Frame, ti: &mut TrackItem, origin: &Value) -> Resul
                 return Err(format!("animates {} in a way that does not read back from Film exactly", g[0].path));
             }
         }
+        // Cut's own colour channels ease in linear light, and so do Film's keys of them (Mona 2026-11-09: "Film eases linear too").
+        let linear = g[0].colour == Some(Space::Linear);
+        let keys: Vec<_> = keys.into_iter().map(|k| filmcraft_project::Keyframe { linear_light: linear, ..k }).collect();
         if let Some(p) = effect_at_mut(ti, g[0].at).and_then(|e| e.params.get_mut(g[0].param)) {
             p.keyframes = keys;
         }
@@ -975,7 +975,6 @@ fn write_anims(kind: Kind, f: Frame, ti: &TrackItem, c: &mut Value, a0: &Anims, 
         }
     }
     let mut now = Anims::new();
-    let mut as_srgb = Anims::new();
     for g in groups(&maps) {
         let Some(e) = effect_at(ti, g[0].at) else { continue };
         held.insert((e.effect.clone(), g[0].param));
@@ -987,12 +986,10 @@ fn write_anims(kind: Kind, f: Frame, ti: &TrackItem, c: &mut Value, a0: &Anims, 
         let per_cut: Vec<f64> = if g[0].colour.is_some() { g[0].per_cut() } else { g.iter().map(|a| a.k).collect() };
         let chans = film_to_cut(&p.keyframes, &|v| film_parts(v, &g), &prior, &format!("film-{}-{}", ti.id.0, g[0].path), &per_cut).map_err(|why| format!("keyframes-not-in-cut: Film's {} {} on \"{name}\": {why}", e.effect, g[0].param))?;
         if let Some(space) = g[0].colour {
-            // Film's edit of a colour is written as Cut's sRGB channel (Film's own shape), so both draw it alike.
-            if space == Space::Linear {
-                let srgb: Vec<Anim> = g.iter().map(|a| Anim { colour: Some(Space::Srgb), ..(*a).clone() }).collect();
-                let refs: Vec<&Anim> = srgb.iter().collect();
-                let fresh = film_to_cut(&p.keyframes, &|v| film_parts(v, &refs), &prior, &format!("film-{}-{}", ti.id.0, g[0].path), &per_cut).map_err(|why| format!("keyframes-not-in-cut: Film's {} {} on \"{name}\": {why}", e.effect, g[0].param))?;
-                as_srgb.insert(g[0].path.clone(), fresh);
+            // A colour is written in its channel's own space; Film eases it there too (its keys say so), so both draw it alike.
+            let linear = space == Space::Linear;
+            if p.keyframes.iter().any(|k| k.linear_light != linear) {
+                return Err(format!("keyframes-not-in-cut: Film eases \"{name}\"'s {} in {}, where its channel in Cut eases in {}", g[0].path, if linear { "sRGB" } else { "linear light" }, if linear { "linear light" } else { "sRGB" }));
             }
             now.insert(g[0].path.clone(), chans);
         } else {
@@ -1013,7 +1010,6 @@ fn write_anims(kind: Kind, f: Frame, ti: &TrackItem, c: &mut Value, a0: &Anims, 
             }
         }
     }
-    let mut rewritten: Vec<String> = Vec::new();
     for a in &maps {
         let (Some(was), Some(is)) = (a0.get(&a.path).map(Vec::as_slice), now.get(&a.path).map(Vec::as_slice)) else {
             if let Some(is) = now.get(&a.path).filter(|x| x.iter().any(|k| !k.is_empty())) {
@@ -1025,19 +1021,7 @@ fn write_anims(kind: Kind, f: Frame, ti: &TrackItem, c: &mut Value, a0: &Anims, 
         };
         let changed = was.len() != is.len() || was.iter().zip(is).any(|(x, y)| !same_curve(x, y));
         if changed {
-            match as_srgb.get(&a.path) {
-                Some(srgb) => {
-                    put_channel(c, &a.path, &Anim { colour: Some(Space::Srgb), ..a.clone() }, Some(srgb));
-                    rewritten.push(a.path.clone());
-                }
-                None => put_channel(c, &a.path, a, Some(is)),
-            }
-        }
-    }
-    // What a rewritten channel now reads as is its sRGB form, the space the file holds it in from here on.
-    for path in rewritten {
-        if let Some(x) = as_srgb.remove(&path) {
-            now.insert(path, x);
+            put_channel(c, &a.path, a, Some(is));
         }
     }
     Ok(now.into_iter().filter(|(_, v)| v.iter().any(|k| !k.is_empty())).collect())

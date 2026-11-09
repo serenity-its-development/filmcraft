@@ -325,6 +325,7 @@ pub fn cut_to_film(channels: &[Vec<CutKey>], value: &dyn Fn(&[f64]) -> ParamValu
                 in_influence: in_side.map(|x| x.flat.unwrap_or(x.r)).or(was.map(|w| w.in_influence)).unwrap_or(THIRD),
                 out_rise: out_side.filter(|x| x.flat.is_none()).map(rise),
                 in_rise: in_side.filter(|x| x.flat.is_none()).map(rise),
+                linear_light: false,
             }
         })
         .collect())
@@ -360,7 +361,7 @@ mod tests {
     use super::*;
 
     fn key(t: i64, v: f64, interp: Interpolation, o: f64, i: f64) -> Keyframe {
-        Keyframe { time: Tick(t * PER_CUT_TICK), value: ParamValue::Float(v), interp, out_influence: o, in_influence: i, out_rise: None, in_rise: None }
+        Keyframe { time: Tick(t * PER_CUT_TICK), value: ParamValue::Float(v), interp, out_influence: o, in_influence: i, out_rise: None, in_rise: None, linear_light: false }
     }
     fn parts(v: &ParamValue) -> Vec<f64> {
         vec![v.as_f64().unwrap_or(0.0)]

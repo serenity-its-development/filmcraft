@@ -161,6 +161,11 @@ pub struct Keyframe {
     /// `in_influence` of the segment back from it. Absent = flat.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub in_rise: Option<Vec<f64>>,
+    /// A colour's segment leaving this key eases in LINEAR LIGHT (OneOS files/989, Mona 2026-11-09: "Film eases linear too"): its sRGB
+    /// components are taken to linear light, eased, and taken back, as Cut eases its own colour channels (`srgb-linear`). Off = sRGB, as
+    /// Film has always eased. A key added to a parameter whose keys ease in linear light does too.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub linear_light: bool,
 }
 
 fn default_influence() -> f64 {
@@ -169,7 +174,7 @@ fn default_influence() -> f64 {
 
 impl Keyframe {
     pub fn new(time: Tick, value: ParamValue) -> Self {
-        Self { time, value, interp: Interpolation::Linear, out_influence: default_influence(), in_influence: default_influence(), out_rise: None, in_rise: None }
+        Self { time, value, interp: Interpolation::Linear, out_influence: default_influence(), in_influence: default_influence(), out_rise: None, in_rise: None, linear_light: false }
     }
 }
 
@@ -209,6 +214,7 @@ impl Param {
                 let interp = i.checked_sub(1).and_then(|j| self.keyframes.get(j)).map(|k| k.interp).unwrap_or_default();
                 let mut k = Keyframe::new(t, value);
                 k.interp = interp;
+                k.linear_light = self.eases_in_linear_light();
                 self.keyframes.insert(i, k);
             }
         }
@@ -238,10 +244,16 @@ impl Param {
     }
 
     fn set_at_force(&mut self, t: Tick, value: ParamValue) {
+        let linear = self.eases_in_linear_light();
         match self.keyframes.binary_search_by_key(&t, |k| k.time) {
             Ok(i) => self.keyframes[i].value = value,
-            Err(i) => self.keyframes.insert(i, Keyframe::new(t, value)),
+            Err(i) => self.keyframes.insert(i, Keyframe { linear_light: linear, ..Keyframe::new(t, value) }),
         }
+    }
+
+    /// Whether this parameter's keys ease a colour in linear light (a key added to it does too).
+    pub fn eases_in_linear_light(&self) -> bool {
+        self.keyframes.iter().any(|k| k.linear_light)
     }
 
     pub fn remove_keyframe_at(&mut self, t: Tick) -> bool {
@@ -285,6 +297,10 @@ impl Param {
             // e.g. mask paths with different vertex counts: hold
             return a.value.clone();
         }
+        // A colour eased in linear light: its r, g, b taken to linear light, eased, and taken back (alpha is not a light).
+        let linear = a.linear_light && matches!(a.value, ParamValue::Color(_));
+        let into = |i: usize, x: f64| if linear && i < 3 { srgb_to_linear(x) } else { x };
+        let (ca, cb): (Vec<f64>, Vec<f64>) = (ca.iter().enumerate().map(|(i, x)| into(i, *x)).collect(), cb.iter().enumerate().map(|(i, x)| into(i, *x)).collect());
         let c: Vec<f64> = match sloped(a, b, u) {
             Some(s) => ca.iter().zip(&cb).enumerate().map(|(i, (x, y))| s.at(i, *x, *y)).collect(),
             None => {
@@ -292,6 +308,7 @@ impl Param {
                 ca.iter().zip(&cb).map(|(x, y)| x + (y - x) * e).collect()
             }
         };
+        let c: Vec<f64> = c.iter().enumerate().map(|(i, x)| if linear && i < 3 { linear_to_srgb(*x) } else { *x }).collect();
         ParamValue::from_components(&a.value, &c)
     }
 
@@ -373,6 +390,16 @@ impl Param {
     pub fn next_keyframe(&self, t: Tick) -> Option<Tick> {
         self.keyframes.iter().map(|k| k.time).find(|&k| k > t)
     }
+}
+
+/// sRGB to linear light (one component, 0..1), as Cut converts (OpenCut `animation/binding-values.ts`).
+pub fn srgb_to_linear(c: f64) -> f64 {
+    if c <= 0.04045 { c / 12.92 } else { ((c + 0.055) / 1.055).powf(2.4) }
+}
+/// Linear light to sRGB (one component), clamped to 0..1 as Cut clamps it.
+pub fn linear_to_srgb(c: f64) -> f64 {
+    let c = c.clamp(0.0, 1.0);
+    if c <= 0.0031308 { c * 12.92 } else { 1.055 * c.powf(1.0 / 2.4) - 0.055 }
 }
 
 fn out_eases(a: &Keyframe) -> bool {
@@ -582,6 +609,26 @@ mod tests {
         // It is serialised only when set.
         let j = serde_json::to_value(&p.keyframes[1]).unwrap();
         assert!(j.get("out_rise").is_none() && j.get("in_rise").is_none(), "{j}");
+    }
+
+    /// Mona 2026-11-09 (files/989): "Film eases linear too". A colour whose keys ease in linear light is drawn as Cut draws its own
+    /// (`srgb-linear`) channel: halfway from black to white is 0.5 in linear light, #bcbcbc; in sRGB, as Film has eased, it is #808080. A
+    /// key added to such a parameter eases in linear light too.
+    #[test]
+    fn a_colour_eased_in_linear_light_is_drawn_as_cut_draws_it() {
+        let mut p = Param::new(ParamValue::Color([0.0, 0.0, 0.0, 1.0]));
+        p.toggle_animation(Tick(0));
+        p.set_at(Tick(1000), ParamValue::Color([1.0, 1.0, 1.0, 1.0]));
+        let r = |p: &Param| (p.value_at(Tick(500)).as_color().unwrap()[0] * 255.0).round();
+        assert_eq!(r(&p), 128.0, "sRGB, as Film has always eased");
+        for k in &mut p.keyframes {
+            k.linear_light = true;
+        }
+        assert_eq!(r(&p), 188.0, "linear light, as Cut eases its own channels (#bcbcbc)");
+        p.put_keyframe(Tick(2000), ParamValue::Color([1.0, 0.0, 0.0, 1.0]));
+        assert!(p.keyframes[2].linear_light, "a key added to it eases in linear light too");
+        let j = serde_json::to_value(Keyframe::new(Tick(0), ParamValue::Float(0.0))).unwrap();
+        assert!(j.get("linear_light").is_none(), "serialised only when set: {j}");
     }
 
     #[test]

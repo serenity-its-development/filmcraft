@@ -485,25 +485,44 @@ mod tests {
         assert_eq!(first_difference(&want, &edited, ""), None, "only Film's edits differ, as Cut's channels");
     }
 
-    /// Mona 2026-11-09 (files/989): "Add sRGB channel to Cut". Film eases a colour between colours in sRGB; its edit of Cut's title colour
-    /// is written as Cut's sRGB channel (`colorSpace: "srgb"`, Film's sRGB components exactly), which Cut draws as Film does, and it reopens
-    /// in Film as the very keyframes. Nothing is refused or locked for it.
+    /// Mona 2026-11-09 (files/989): "Add sRGB channel to Cut" and "Film eases linear too". Every colour channel is drawn alike in both
+    /// tools between its keys: Film's keys of Cut's own (linear-light) title colour ease in linear light and are written back in that
+    /// space; a colour Film keys anew is written as Cut's `srgb` channel and eased in sRGB by both. The edited file is pinned as
+    /// `film-coloured-cut.otio` and the frames Film draws between the keys as `colour-frames.json` (`FILMCRAFT_BLESS=1` writes both); the
+    /// OpenCut fork's `editor/animation.test.ts` draws the same file in Cut and compares every frame.
     #[test]
-    fn film_eases_cut_s_colour_and_writes_it_as_cut_s_srgb_channel() {
+    fn film_and_cut_draw_every_colour_alike_between_keys() {
         let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-project.otio");
         let mut s = session();
         open_host_file(&mut s, "trip.otio", bytes).unwrap();
+        let tps = filmcraft_time::TICKS_PER_SECOND;
         edit_clip(&mut s, "Main", "Title", |c| {
             let l = c.effects.iter_mut().find(|e| e.effect == "graphic_text").unwrap();
             l.params.get_mut("fill_color").unwrap().put_keyframe(filmcraft_time::Tick(0), ParamValue::Color([0.0, 0.5, 1.0, 1.0]));
+            let bg = l.params.get_mut("background_color").unwrap();
+            bg.put_keyframe(filmcraft_time::Tick(0), ParamValue::Color([1.0, 0.0, 0.0, 1.0]));
+            bg.put_keyframe(filmcraft_time::Tick(tps), ParamValue::Color([0.0, 0.0, 1.0, 1.0]));
         });
+        let fill = keys_of(&s, "Main", "Title", "graphic_text", "fill_color");
+        let bg = keys_of(&s, "Main", "Title", "graphic_text", "background_color");
+        assert!(fill.iter().all(|k| k.linear_light) && bg.iter().all(|k| !k.linear_light), "Cut's own colour eases in linear light, Film's new one in sRGB");
         let out = save_host_file(&mut s).unwrap_or_else(|e| panic!("Film refused the save: {e}"));
         let edited: Value = serde_json::from_slice(&out).unwrap();
         let el = "/children/0/tracks/children/1/children/1/metadata/opencut/element/animations";
-        assert_eq!(edited.pointer(&format!("{el}/bindings/color/colorSpace")), Some(&serde_json::json!("srgb")));
-        let g = edited.pointer(&format!("{el}/channels/color:g/keys")).unwrap().as_array().unwrap();
-        assert_eq!(g.iter().map(|k| k["value"].as_f64().unwrap()).collect::<Vec<_>>(), vec![0.5, 0.0], "sRGB components, as Film keys them");
-        let fill = keys_of(&s, "Main", "Title", "graphic_text", "fill_color");
+        assert_eq!(edited.pointer(&format!("{el}/bindings/color/colorSpace")), Some(&serde_json::json!("srgb-linear")), "written in its own space");
+        assert_eq!(edited.pointer(&format!("{el}/bindings/background.color/colorSpace")), Some(&serde_json::json!("srgb")));
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../interchange/tests/it/oneos");
+        // The frames Film draws, every tenth of the second between the keys (Cut's ticks from the element's start).
+        let at = |k: &[filmcraft_project::Keyframe], t: i64| filmcraft_project::Param { value: k[0].value.clone(), keyframes: k.to_vec() }.value_at(filmcraft_time::Tick(t * (tps / 120_000))).as_color().unwrap();
+        let frames: Vec<Value> = (0..=10).map(|i| i * 12_000).map(|t| serde_json::json!({"time": t, "color": at(&fill, t), "background.color": at(&bg, t)})).collect();
+        let frames = serde_json::to_string_pretty(&frames).unwrap() + "\n";
+        if std::env::var_os("FILMCRAFT_BLESS").is_some() {
+            std::fs::write(dir.join("film-coloured-cut.otio"), &out).unwrap();
+            std::fs::write(dir.join("colour-frames.json"), &frames).unwrap();
+        }
+        let pinned: Value = serde_json::from_slice(&std::fs::read(dir.join("film-coloured-cut.otio")).expect("film-coloured-cut.otio (FILMCRAFT_BLESS=1 writes it)")).unwrap();
+        assert_eq!(first_difference(&pinned, &edited, ""), None, "Film saves the colours as pinned");
+        assert_eq!(std::fs::read_to_string(dir.join("colour-frames.json")).expect("colour-frames.json (FILMCRAFT_BLESS=1 writes it)"), frames, "Film draws them as pinned");
         let mut again = session();
         open_host_file(&mut again, "trip.otio", &out).unwrap();
         assert_eq!(keys_of(&again, "Main", "Title", "graphic_text", "fill_color"), fill, "reopened in Film as the very keyframes");
