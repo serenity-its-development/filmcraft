@@ -29,6 +29,7 @@ use crate::{Error, ExportOptions, Format, ImportOptions, Imported, Report, Resul
 
 mod cut;
 mod cut_keys;
+mod cut_masks;
 pub mod oneos;
 
 // ---------------------------------------------------------------------------------------------

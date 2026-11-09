@@ -360,6 +360,80 @@ mod tests {
         assert!(e.contains("volume-not-in-cut"), "{e}");
     }
 
+    /// The JSON pointer of the first clip named `name` in `v`.
+    fn clip_ptr(v: &Value, name: &str, at: &str) -> Option<String> {
+        match v {
+            Value::Object(o) if o.get("OTIO_SCHEMA").and_then(Value::as_str) == Some("Clip.2") && o.get("name").and_then(Value::as_str) == Some(name) => Some(at.to_string()),
+            Value::Object(o) => o.iter().find_map(|(k, x)| clip_ptr(x, name, &format!("{at}/{k}"))),
+            Value::Array(a) => a.iter().enumerate().find_map(|(i, x)| clip_ptr(x, name, &format!("{at}/{i}"))),
+            _ => None,
+        }
+    }
+
+    /// files/989 part 2 ("Masks, both ways"): Film EDITS Cut's masks as its own. On Cut's editor-built project (Beach's text mask taken
+    /// out, which Film draws once its text mask is built), Beach's masks open as Film's masks on the clip's Opacity, one of each of Cut's
+    /// types, each the path Cut's editor draws (an open custom path kept with its mode None, as Cut does not draw it), and an unedited
+    /// save is the file. Film's change of a feather and the masks Film adds (on Beach, and on the Logo, which had none) are written back in
+    /// Cut's shape (a feather Film set in clip pixels, Film's mask as Cut's custom path) and nothing else changes. With its text mask,
+    /// Beach's masks are carried as the file holds them, and a mask Film would add beside them is refused by name.
+    #[test]
+    fn film_edits_cut_s_masks_as_its_own_and_writes_them_in_cut_s_shape() {
+        use filmcraft_project::{Mask, MaskMode, MaskPath};
+        let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-project.otio");
+        let mut cut: Value = serde_json::from_slice(bytes).unwrap();
+        let beach = format!("{}/metadata/opencut/element/masks", clip_ptr(&cut, "Beach", "").unwrap());
+        let logo = format!("{}/metadata/opencut/element/masks", clip_ptr(&cut, "Logo", "").unwrap());
+        cut.pointer_mut(&beach).unwrap().as_array_mut().unwrap().retain(|m| m["type"] != "text");
+        let file = serde_json::to_vec(&cut).unwrap();
+        let mut s = session();
+        open_host_file(&mut s, "trip.otio", &file).unwrap();
+        let masks_of = |s: &Session, clip: &str| {
+            let (seq, kind, ti, ci) = find(s, "Main", clip);
+            s.project.sequence(seq).unwrap().tracks(kind)[ti].items[ci].effects.iter().find(|e| e.effect == "opacity").unwrap().masks.clone()
+        };
+        let masks = masks_of(&s, "Beach");
+        assert_eq!(
+            masks.iter().map(|m| (m.name.as_str(), m.mode)).collect::<Vec<_>>(),
+            vec![("Split", MaskMode::Add), ("Cinematic Bars", MaskMode::Add), ("Rectangle", MaskMode::Add), ("Ellipse", MaskMode::Add), ("Heart", MaskMode::Add), ("Diamond", MaskMode::Add), ("Star", MaskMode::Add), ("Custom", MaskMode::None)],
+            "each of Cut's masks is Film's"
+        );
+        let unedited: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap_or_else(|e| panic!("{e}"))).unwrap();
+        assert_eq!(first_difference(&cut, &unedited, ""), None, "an unedited save is the file");
+        let hole = || {
+            let mut m = Mask::new("Hole", MaskPath::ellipse(filmcraft_geom::Vec2::new(960.0, 540.0), filmcraft_geom::Vec2::new(40.0, 30.0)));
+            m.mode = MaskMode::Subtract;
+            m
+        };
+        edit_clip(&mut s, "Main", "Beach", |c| {
+            let o = c.effects.iter_mut().find(|e| e.effect == "opacity").unwrap();
+            o.masks[2].feather = filmcraft_project::Param::new(ParamValue::Float(6.0));
+            o.masks.push(hole());
+        });
+        edit_clip(&mut s, "Main", "Logo", |c| c.effects.iter_mut().find(|e| e.effect == "opacity").unwrap().masks.push(hole()));
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap_or_else(|e| panic!("{e}"))).unwrap();
+        let got = saved.pointer(&beach).unwrap().as_array().unwrap().clone();
+        let logo_got = saved.pointer(&logo).unwrap_or_else(|| panic!("the Logo has masks")).clone();
+        let mut want = cut.clone();
+        let m2 = want.pointer_mut(&format!("{beach}/2/params")).unwrap();
+        m2["units"] = serde_json::json!("clip");
+        m2["feather"] = serde_json::json!(6);
+        m2["expansion"] = serde_json::json!(0);
+        want.pointer_mut(&beach).unwrap().as_array_mut().unwrap().push(got[8].clone());
+        let logo_el = logo.trim_end_matches("/masks").to_string();
+        want.pointer_mut(&logo_el).unwrap()["masks"] = logo_got.clone();
+        assert_eq!(first_difference(&want, &saved, ""), None, "only the rectangle's feather changed and Film's masks were added");
+        for m in [&got[8], &logo_got[0]] {
+            assert_eq!((&m["type"], &m["name"], &m["params"]["mode"], &m["params"]["units"], &m["params"]["closed"]), (&serde_json::json!("custom"), &serde_json::json!("Hole"), &serde_json::json!("subtract"), &serde_json::json!("clip"), &serde_json::json!(true)));
+        }
+        // With its text mask, Beach's masks are carried; Film adds none beside them.
+        let mut s = session();
+        open_host_file(&mut s, "trip.otio", bytes).unwrap();
+        assert!(masks_of(&s, "Beach").is_empty(), "carried, not shown");
+        edit_clip(&mut s, "Main", "Beach", |c| c.effects.iter_mut().find(|e| e.effect == "opacity").unwrap().masks.push(hole()));
+        let e = save_host_file(&mut s).unwrap_err();
+        assert!(e.contains("masks-carried") && e.contains("text mask"), "{e}");
+    }
+
     fn keys_of(s: &Session, seq: &str, clip: &str, effect: &str, param: &str) -> Vec<filmcraft_project::Keyframe> {
         let (id, kind, ti, ci) = find(s, seq, clip);
         let c = &s.project.sequence(id).unwrap().tracks(kind)[ti].items[ci];

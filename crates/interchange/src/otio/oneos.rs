@@ -295,13 +295,14 @@ pub(super) fn lcs<T>(a: &[T], b: &[T], eq: impl Fn(&T, &T) -> bool) -> Vec<(usiz
 }
 
 /// The media item of a OneOS medium in `p`, made when `p` has none (a medium another editor put on Film's timeline).
-pub(super) fn oneos_media(p: &mut Project, url: &str, name: &str, kind: TrackKind, length: Option<Tick>) -> ItemId {
+pub(super) fn oneos_media(p: &mut Project, url: &str, name: &str, kind: TrackKind, length: Option<Tick>, size: Option<(u32, u32)>) -> ItemId {
     if let Some(id) = p.items.values().find(|i| matches!(i.as_media().map(|m| &m.media), Some(MediaRef::File { path }) if path == url)).map(|i| i.id) {
         return id;
     }
     let spec = MediaSpec {
         duration: length,
-        video: (kind == TrackKind::Video).then(|| (1920, 1080, filmcraft_time::FrameRate::default())),
+        // A picture's size where the file carries it (files/989, "Masks, both ways"); else Film's default until the medium is read.
+        video: (kind == TrackKind::Video).then(|| { let (w, h) = size.unwrap_or((1920, 1080)); (w, h, filmcraft_time::FrameRate::default()) }),
         audio: (kind == TrackKind::Audio).then_some((48_000, 2)),
         start_tc: None,
         kind: None,
@@ -392,7 +393,7 @@ fn reconcile(p: &mut Project, seq_id: ItemId, tl: &Value) -> Result<(), String> 
                         return Err(format!("had a clip added to its track \"{}\" whose medium is not a OneOS file", track.name));
                     }
                     let cname = c.get("name").and_then(Value::as_str).unwrap_or("Clip");
-                    let item = oneos_media(p, url, r.get("name").and_then(Value::as_str).filter(|n| !n.is_empty()).unwrap_or(cname), kind, None);
+                    let item = oneos_media(p, url, r.get("name").and_then(Value::as_str).filter(|n| !n.is_empty()).unwrap_or(cname), kind, None, None);
                     p.make_track_item(item, kind, *start, TimeRange::new(*src, *dur), rate).ok_or("could not place a clip Cut added")?
                 }
             };

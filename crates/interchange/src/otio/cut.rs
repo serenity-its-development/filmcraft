@@ -40,6 +40,7 @@ use filmcraft_time::{FrameRate, TICKS_PER_SECOND, Tick, TimeRange};
 use serde_json::{Map, Value, json};
 
 use super::cut_keys::{CutKey, cut_to_film, film_to_cut, same_curve};
+use super::cut_masks::{self, ElementBox};
 use super::oneos::{Split, oneos_media};
 use super::{read_tr, schema_name};
 use crate::common::{empty_sequence, rate_from_f64, settings_for};
@@ -130,6 +131,8 @@ struct CutClip {
     h0: Held,
     kind: Kind,
     time0: (Tick, Tick, Tick),
+    /// The element's own pixels in the clip, as when it was opened (`Frame::el`).
+    el: Option<ElementBox>,
 }
 
 #[derive(Debug, Clone)]
@@ -268,6 +271,47 @@ fn put(v: &mut Value, ptr: &str, x: Value) {
 struct Frame {
     w: f64,
     h: f64,
+    /// The element's own pixels in the clip (a medium's pixel size, which the file carries, or the square Film draws a graphic on):
+    /// where Cut's masks, in fractions of the element, are in Film's clip pixels. None where the element has none.
+    el: Option<ElementBox>,
+}
+
+/// Where the element's own pixels are in Film's clip: a medium's are its pixels (Cut fits it in the canvas, `fit`); a graphic of Cut's is
+/// drawn on a 512 px square at the frame's centre.
+fn element_box(kind: Kind, px: Option<(f64, f64)>, f: Frame) -> Option<ElementBox> {
+    match kind {
+        Kind::Video | Kind::Image => px.filter(|(w, h)| *w > 0.0 && *h > 0.0).map(|(w, h)| ElementBox { x: 0.0, y: 0.0, w, h, fit: (f.w / w).min(f.h / h) }),
+        Kind::Shape => Some(ElementBox { x: f.w / 2.0 - 256.0, y: f.h / 2.0 - 256.0, w: 512.0, h: 512.0, fit: f.w.min(f.h) / 512.0 }),
+        _ => None,
+    }
+}
+
+/// A medium's pixel size as the file carries it: on Cut's reference (`metadata.opencut.media`), in a Cut project's media list, or on
+/// Film's reference (`metadata.filmcraft.info.video`).
+fn medium_px(root: &Map<String, Value>, c: &Value) -> Option<(f64, f64)> {
+    let size = |v: Option<&Value>| v.and_then(|v| Some((v.get("width")?.as_f64()?, v.get("height")?.as_f64()?)));
+    let r = c.pointer("/media_references/DEFAULT_MEDIA")?;
+    size(r.pointer("/metadata/opencut/media"))
+        .or_else(|| {
+            let id = c.pointer(&format!("{ELEMENT}/mediaId"))?.as_str()?;
+            size(root.get("opencut")?.get("media")?.as_array()?.iter().find(|m| m.get("id").and_then(Value::as_str) == Some(id)))
+        })
+        .or_else(|| size(r.pointer("/metadata/filmcraft/info/video")))
+}
+
+/// The canvas's pixels per clip pixel of the element now, when one number holds it (Cut's scale even and not keyed): what turns a mask of
+/// Cut's measured in the canvas's pixels into Film's clip pixels.
+fn canvas_per_clip(f: Frame, ti: &TrackItem, scale_keyed_in_file: bool) -> Option<f64> {
+    let b = f.el?;
+    let m = fx(ti, "motion")?;
+    if scale_keyed_in_file || ["scale", "scale_width"].iter().any(|k| m.params.get(*k).is_some_and(Param::is_animated)) {
+        return None;
+    }
+    let s = float(m, "scale").ok()?;
+    if !boolean(m, "uniform_scale").unwrap_or(true) && float(m, "scale_width").ok()? != s {
+        return None;
+    }
+    Some(b.fit * s.abs() / 100.0)
 }
 
 fn fx<'a>(ti: &'a TrackItem, id: &str) -> Option<&'a EffectInstance> {
@@ -537,18 +581,44 @@ fn effects_field() -> Field {
     )
 }
 
-/// The masks an element holds, carried; Film's masks on it have no place in Cut's yet (refused by name at save).
-fn masks_field() -> Field {
+/// The element's masks as Film's masks on the clip (its Opacity's masks), written back in Cut's shape (`cut_masks`). Cut's masks Film
+/// cannot show yet (a text mask) are carried as the file holds them, and Film adds none beside them.
+fn masks_field(scale_keyed: bool) -> Field {
     field(
         "/masks",
         Value::Null,
-        |_, ti, origin| {
-            if ti.effects.iter().any(|e| !e.masks.is_empty()) {
-                return Err("mask-not-in-cut: a mask drawn in Film has no place in Cut's element yet".into());
+        move |f, ti, origin| {
+            if let Some(e) = ti.effects.iter().find(|e| e.effect != "opacity" && !e.masks.is_empty()) {
+                return Err(format!("effect-mask-not-in-cut: Film masks its {} on \"{}\", where Cut's masks are the element's, not an effect's", e.effect, ti.name));
             }
-            Ok(origin.pointer(&format!("{ELEMENT}/masks")).cloned().unwrap_or(Value::Null))
+            let film: &[filmcraft_project::Mask] = fx(ti, "opacity").map(|e| e.masks.as_slice()).unwrap_or(&[]);
+            let was = origin.pointer(&format!("{ELEMENT}/masks"));
+            let origin_masks = was.and_then(Value::as_array).cloned().unwrap_or_default();
+            let carried = || was.cloned().unwrap_or(Value::Null);
+            let Some(b) = f.el else {
+                if film.is_empty() {
+                    return Ok(carried());
+                }
+                return Err(format!("mask-size-unknown: the file does not carry the pixel size of \"{}\"'s medium, so Film's mask has no place in Cut's fractions of it", ti.name));
+            };
+            let k = canvas_per_clip(f, ti, scale_keyed);
+            if let Err(why) = cut_masks::film_masks(&origin_masks, &b, k) {
+                if film.is_empty() {
+                    return Ok(carried());
+                }
+                return Err(format!("masks-carried: \"{}\" holds {why}, carried as the file holds it, so Film's masks are not written beside it", ti.name));
+            }
+            let out = cut_masks::cut_masks(film, &origin_masks, &b, k)?;
+            Ok(if out.is_empty() && was.is_none() { Value::Null } else { Value::Array(out) })
         },
-        |_, _, _| Ok(()),
+        move |f, ti, v| {
+            let (Some(b), Some(list)) = (f.el, v.as_array()) else { return Ok(()) };
+            // Cut's masks Film cannot show yet stay carried as the file holds them (the field reads them back as they are).
+            if let Ok(masks) = cut_masks::film_masks(list, &b, canvas_per_clip(f, ti, scale_keyed)) {
+                fx_mut(ti, "opacity")?.masks = masks;
+            }
+            Ok(())
+        },
     )
 }
 
@@ -664,7 +734,8 @@ fn fields_for(kind: Kind, origin: &Value) -> Vec<Field> {
             }
             v.push(effects_field());
             if kind != Kind::Text {
-                v.push(masks_field());
+                let keyed = origin.pointer(&format!("{ELEMENT}/animations/bindings")).and_then(Value::as_object).is_some_and(|b| b.keys().any(|k| k.starts_with("transform.scale")));
+                v.push(masks_field(keyed));
             }
         }
     }
@@ -1233,7 +1304,8 @@ fn kind_of_generator(c: &Value) -> Result<Kind, String> {
 }
 
 /// One of Cut's clips as a Film clip on a track of `kind`, and what Film keeps of it.
-fn read_clip(p: &mut Project, c: &Value, track_kind: TrackKind, f: Frame, rate: FrameRate, (start, src, dur): (Tick, Tick, Tick)) -> Result<(TrackItem, CutClip), String> {
+fn read_clip(p: &mut Project, root: &Map<String, Value>, c: &Value, track_kind: TrackKind, f: Frame, rate: FrameRate, (start, src, dur): (Tick, Tick, Tick)) -> Result<(TrackItem, CutClip), String> {
+    let px = medium_px(root, c);
     let name = c.get("name").and_then(Value::as_str).unwrap_or("").to_string();
     let r = c.pointer("/media_references/DEFAULT_MEDIA").ok_or_else(|| format!("holds the clip \"{name}\" without a medium"))?;
     let (w, h) = (f.w as u32, f.h as u32);
@@ -1252,7 +1324,7 @@ fn read_clip(p: &mut Project, c: &Value, track_kind: TrackKind, f: Frame, rate: 
             };
             let length = c.pointer(&format!("{ELEMENT}/sourceDuration")).and_then(Value::as_i64).map(|t| Tick(t * PER_CUT_TICK));
             let mname = r.get("name").and_then(Value::as_str).filter(|n| !n.is_empty()).unwrap_or(&name).to_string();
-            let item = oneos_media(p, url, &mname, track_kind, length);
+            let item = oneos_media(p, url, &mname, track_kind, length, px.map(|(w, h)| (w as u32, h as u32)));
             (kind, p.make_track_item(item, track_kind, start, TimeRange::new(src, dur), rate).ok_or_else(|| format!("could not place \"{name}\""))?)
         }
         "GeneratorReference" => {
@@ -1294,6 +1366,7 @@ fn read_clip(p: &mut Project, c: &Value, track_kind: TrackKind, f: Frame, rate: 
     ti.name = name;
     ti.duration = dur;
     ti.source_in = src;
+    let f = Frame { el: element_box(kind, px, f), ..f };
     for x in fields_for(kind, c) {
         let v = c.pointer(&x.ptr).cloned().filter(|v| !v.is_null()).unwrap_or_else(|| x.default.clone());
         if v.is_null() {
@@ -1311,7 +1384,7 @@ fn read_clip(p: &mut Project, c: &Value, track_kind: TrackKind, f: Frame, rate: 
     }
     let a0 = read_anims(kind, f, &mut ti, c).map_err(|e| format!("holds \"{}\" which {e}", ti.name))?;
     let h0 = read_held(kind, &mut ti, c).map_err(|e| format!("holds \"{}\" which {e}", ti.name))?;
-    Ok((ti, CutClip { origin: c.clone(), f0, a0, h0, kind, time0: (start, src, dur) }))
+    Ok((ti, CutClip { origin: c.clone(), f0, a0, h0, kind, time0: (start, src, dur), el: f.el }))
 }
 
 fn track_type(t: &Value) -> String {
@@ -1348,7 +1421,7 @@ impl CutParts {
         let mut c = CutParts { project_mode: file.pointer("/metadata/opencut/project").is_some_and(Value::is_object), root: split.root.clone(), ..Default::default() };
         let (w, h, rate) = c.frame_of(p, film_seqs);
         c.frame = (w, h);
-        let f = Frame { w: w as f64, h: h as f64 };
+        let f = Frame { w: w as f64, h: h as f64, el: None };
         // Cut's tracks in Film's timelines, after the Film track each followed in the file.
         let mut by_tl: BTreeMap<usize, Vec<(usize, Value)>> = BTreeMap::new();
         for (fi, k, t) in split.tracks {
@@ -1435,7 +1508,7 @@ impl CutParts {
                     },
                     "Clip" => {
                         let Some((src, dur)) = c.get("source_range").and_then(read_time) else { return lock(self, "it holds a clip without a source range".into()) };
-                        match read_clip(p, c, kind, f, rate, (pos, src, dur)) {
+                        match read_clip(p, &self.root, c, kind, f, rate, (pos, src, dur)) {
                             Ok((ti, cc)) => {
                                 clips.push((ti.id, cc));
                                 tr.items.push(ti);
@@ -1638,11 +1711,17 @@ fn media_url(p: &Project, ti: &TrackItem) -> Option<(String, String)> {
 }
 
 /// The media list entry of a OneOS medium in a Cut project (as Cut keys one it did not import: `oneos-<id>-<version>`).
-fn media_entry(url: &str, name: &str, kind: Kind) -> Option<(String, Value)> {
+fn media_entry(url: &str, name: &str, kind: Kind, px: Option<(u32, u32)>) -> Option<(String, Value)> {
     let rest = url.strip_prefix("oneos:file/")?;
     let (id, version) = rest.split_once("?version=")?;
     let key = format!("oneos-{id}-{version}");
-    Some((key.clone(), json!({"id": key, "name": name, "type": if kind == Kind::Audio { "audio" } else if kind == Kind::Image { "image" } else { "video" }, "file": {"id": id, "version": version}})))
+    let mut e = json!({"id": key, "name": name, "type": if kind == Kind::Audio { "audio" } else if kind == Kind::Image { "image" } else { "video" }, "file": {"id": id, "version": version}});
+    // A picture's pixel size, as Cut's media list holds it (files/989, "Masks, both ways").
+    if let (Some((w, h)), false) = (px, kind == Kind::Audio) {
+        e["width"] = json!(w);
+        e["height"] = json!(h);
+    }
+    Some((key.clone(), e))
 }
 
 struct Out<'a> {
@@ -1653,7 +1732,7 @@ struct Out<'a> {
 
 impl Out<'_> {
     fn frame(&self) -> Frame {
-        Frame { w: self.parts.frame.0 as f64, h: self.parts.frame.1 as f64 }
+        Frame { w: self.parts.frame.0 as f64, h: self.parts.frame.1 as f64, el: None }
     }
 
     fn clip(&mut self, ti: &TrackItem, track_kind: TrackKind, lane_rate: f64) -> Result<Value, String> {
@@ -1663,6 +1742,15 @@ impl Out<'_> {
             Some(c) => c.kind,
             None => kind_of_clip(self.p, ti, track_kind)?,
         };
+        // The element's own pixels: as it opened, or, for a clip Film made, its medium's pixels as Film knows them.
+        let el = match prior {
+            Some(c) => c.el,
+            None => {
+                let px = self.p.item(ti.item).and_then(|i| i.as_media()).and_then(|m| m.info.video.as_ref()).map(|v| (v.width as f64, v.height as f64));
+                element_box(kind, px, f)
+            }
+        };
+        let f = Frame { el, ..f };
         let empty = json!({});
         let origin = prior.map(|c| &c.origin).unwrap_or(&empty);
         let now = read_fields(kind, f, ti, origin).map_err(|e| format!("\"{}\" {e}", ti.name))?;
@@ -1684,7 +1772,7 @@ impl Out<'_> {
                 }
                 let a = write_anims(kind, f, ti, &mut c, &pr.a0, &ti.name)?;
                 let h = write_held(kind, ti, &mut c, &pr.h0, &ti.name)?;
-                self.r.clips.insert(ti.id, CutClip { origin: Value::Null, f0: Fields::new(), a0: a, h0: h, kind, time0: time });
+                self.r.clips.insert(ti.id, CutClip { origin: Value::Null, f0: Fields::new(), a0: a, h0: h, kind, time0: time, el });
                 if (pr.time0.1, pr.time0.2) != (time.1, time.2) {
                     let rate = c.pointer("/source_range/duration/rate").and_then(Value::as_f64).unwrap_or(lane_rate);
                     c["source_range"] = time_range(ti.source_in, ti.duration, rate)?;
@@ -1701,7 +1789,7 @@ impl Out<'_> {
                 let mut c = self.fresh(ti, kind, &now, lane_rate)?;
                 let a = write_anims(kind, f, ti, &mut c, &Anims::new(), &ti.name)?;
                 let h = write_held(kind, ti, &mut c, &Held::new(), &ti.name)?;
-                self.r.clips.insert(ti.id, CutClip { origin: Value::Null, f0: Fields::new(), a0: a, h0: h, kind, time0: time });
+                self.r.clips.insert(ti.id, CutClip { origin: Value::Null, f0: Fields::new(), a0: a, h0: h, kind, time0: time, el });
                 c
             }
         };
@@ -1709,7 +1797,7 @@ impl Out<'_> {
             c = json!({});
         }
         let (a0, h0) = self.r.clips.remove(&ti.id).map(|x| (x.a0, x.h0)).unwrap_or_default();
-        self.r.clips.insert(ti.id, CutClip { origin: c.clone(), f0: now, a0, h0, kind, time0: time });
+        self.r.clips.insert(ti.id, CutClip { origin: c.clone(), f0: now, a0, h0, kind, time0: time, el });
         Ok(c)
     }
 
@@ -1742,12 +1830,17 @@ impl Out<'_> {
             c["media_references"]["DEFAULT_MEDIA"] = json!({"OTIO_SCHEMA": "GeneratorReference.1", "name": ti.name, "generator_kind": format!("OpenCut.{}", kind.cut_type()), "parameters": {}, "available_range": null, "metadata": {}});
         } else {
             let (url, name) = media_url(self.p, ti).ok_or_else(|| format!("media-not-referenced: \"{}\" is not a OneOS file", ti.name))?;
+            let px = (kind != Kind::Audio).then(|| self.p.item(ti.item).and_then(|i| i.as_media()).and_then(|m| m.info.video.as_ref()).map(|v| (v.width, v.height))).flatten();
+            let mut meta = json!({});
             if self.parts.project_mode {
-                let (key, entry) = media_entry(&url, &name, kind).ok_or_else(|| format!("media-not-referenced: \"{}\" is not a OneOS file", ti.name))?;
+                let (key, entry) = media_entry(&url, &name, kind, px).ok_or_else(|| format!("media-not-referenced: \"{}\" is not a OneOS file", ti.name))?;
                 put(&mut c, &format!("{el}/mediaId"), json!(key));
                 self.r.media.push(entry);
+            } else if let Some((w, h)) = px {
+                // In a carried file the reference carries a picture's pixel size, as Cut writes it.
+                meta = json!({"opencut": {"media": {"width": w, "height": h}}});
             }
-            c["media_references"]["DEFAULT_MEDIA"] = json!({"OTIO_SCHEMA": "ExternalReference.1", "name": name, "target_url": url, "available_range": null, "available_image_bounds": null, "metadata": {}});
+            c["media_references"]["DEFAULT_MEDIA"] = json!({"OTIO_SCHEMA": "ExternalReference.1", "name": name, "target_url": url, "available_range": null, "available_image_bounds": null, "metadata": meta});
         }
         Ok(c)
     }
