@@ -293,6 +293,30 @@ mod tests {
         assert_eq!(first_difference(&saved["metadata"]["filmcraft"], &film["metadata"]["filmcraft"], ""), None, "Film's own project is Film's");
     }
 
+    /// files/989 (measured 2026-11-10): Cut split Film's linked picture and sound (the OpenCut fork's `oneos-tests/linked.test.ts` writes
+    /// `cut-split-film.otio`). Before, the right halves were Cut's own elements and Film read them as bare clips; now they are Film's clips in
+    /// Film's shape: each right half has its left half's look, gain and label, the right halves are linked under their own number, and an
+    /// unedited save is the file value for value.
+    #[test]
+    fn a_film_clip_cut_split_keeps_film_s_look_and_link() {
+        let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-split-film.otio");
+        let cut: Value = serde_json::from_slice(bytes).unwrap();
+        let mut s = session();
+        open_host_file(&mut s, "Trip.otio", bytes).unwrap();
+        assert_eq!(s.host_shared.locked(), Vec::<String>::new(), "nothing is locked");
+        let edit = s.project.items.values().find(|i| i.name == "Edit").unwrap().as_sequence().unwrap();
+        for (kind, t) in [(TrackKind::Video, &edit.video_tracks[0]), (TrackKind::Audio, &edit.audio_tracks[0])] {
+            let (l, r) = (&t.items[0], &t.items[1]);
+            assert_eq!(l.end(), r.start, "{kind:?}: the halves meet");
+            assert_eq!((l.link, r.link), (Some(13), Some(14)), "{kind:?}: the left halves keep Film's link, the right halves have their own");
+            assert_eq!((r.label, r.custom_label_color, r.gain_db, r.scale_to_frame), (l.label, l.custom_label_color, l.gain_db, l.scale_to_frame), "{kind:?}");
+            let static_of = |c: &filmcraft_project::TrackItem| serde_json::to_value(&c.effects).unwrap();
+            assert_eq!(first_difference(&static_of(l), &static_of(r), ""), None, "{kind:?}: the right half has Film's look");
+        }
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
+        assert_eq!(first_difference(&cut, &saved, ""), None, "Cut's split comes back from Film value for value");
+    }
+
     /// Film edits the clip Cut trimmed: it is written at Film's rate with Film's exact mirrors, and Cut's own data on it rides along.
     #[test]
     fn film_trims_the_clip_cut_trimmed_and_cut_s_data_on_it_is_kept() {

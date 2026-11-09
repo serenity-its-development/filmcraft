@@ -84,7 +84,9 @@ pub(super) fn is_cut_timeline(v: &Value) -> bool {
 
 /// A track of Cut's in a Film timeline: Cut's own track or stacked lanes (`metadata.opencut.track`), Film never wrote it.
 pub(super) fn is_cut_track(v: &Value) -> bool {
-    matches!(schema_name(v), "Track" | "Stack") && meta(v, "filmcraft").is_none() && meta(v, "opencut").and_then(|o| o.get("track")).is_some_and(Value::is_object)
+    matches!(schema_name(v), "Track" | "Stack")
+        && meta(v, "filmcraft").is_none()
+        && meta(v, "opencut").and_then(|o| o.get("track")).is_some_and(Value::is_object)
 }
 
 /// One of Cut's bookmarks (a `Marker.2` with `metadata.opencut.bookmark`).
@@ -177,11 +179,16 @@ fn film_part(film: &Value, name: &str) -> Result<(Project, bool), SharedError> {
     let not = |s: String| SharedError::NotRoundTrip(s);
     if schema_name(film) == "SerializableCollection" {
         if let Some(embedded) = film.pointer("/metadata/filmcraft/project") {
-            let mut project: Project = serde_json::from_value(embedded.clone()).map_err(|e| SharedError::Unreadable(format!("Film's project could not be read: {e}")))?;
+            let mut project: Project =
+                serde_json::from_value(embedded.clone()).map_err(|e| SharedError::Unreadable(format!("Film's project could not be read: {e}")))?;
             let seqs = sequences_of(&project);
             let children = film.get("children").and_then(Value::as_array).cloned().unwrap_or_default();
             if seqs.len() != children.len() {
-                return Err(not(format!("holds {} of Film's timelines where Film's project has {}: a timeline of Film's was added or removed outside Film", children.len(), seqs.len())));
+                return Err(not(format!(
+                    "holds {} of Film's timelines where Film's project has {}: a timeline of Film's was added or removed outside Film",
+                    children.len(),
+                    seqs.len()
+                )));
             }
             let mut reconciled = false;
             for (s, child) in seqs.iter().zip(&children) {
@@ -191,7 +198,8 @@ fn film_part(film: &Value, name: &str) -> Result<(Project, bool), SharedError> {
                 if same_value(&film_view(&ours), &film_view(child)) {
                     continue;
                 }
-                reconcile(&mut project, *s, child).map_err(|why| not(format!("the timeline \"{}\" {why}", child.get("name").and_then(Value::as_str).unwrap_or(""))))?;
+                reconcile(&mut project, *s, child)
+                    .map_err(|why| not(format!("the timeline \"{}\" {why}", child.get("name").and_then(Value::as_str).unwrap_or(""))))?;
                 reconciled = true;
             }
             return Ok((project, reconciled));
@@ -220,7 +228,10 @@ pub(super) fn film_view(v: &Value) -> Value {
                     if k == "metadata"
                         && let Value::Object(mm) = x
                     {
-                        return (k.clone(), Value::Object(mm.iter().filter(|(kk, _)| kk.as_str() == "filmcraft").map(|(kk, xx)| (kk.clone(), film_view(xx))).collect()));
+                        return (
+                            k.clone(),
+                            Value::Object(mm.iter().filter(|(kk, _)| kk.as_str() == "filmcraft").map(|(kk, xx)| (kk.clone(), film_view(xx))).collect()),
+                        );
                     }
                     (k.clone(), film_view(x))
                 })
@@ -302,7 +313,10 @@ pub(super) fn oneos_media(p: &mut Project, url: &str, name: &str, kind: TrackKin
     let spec = MediaSpec {
         duration: length,
         // A picture's size where the file carries it (files/989, "Masks, both ways"); else Film's default until the medium is read.
-        video: (kind == TrackKind::Video).then(|| { let (w, h) = size.unwrap_or((1920, 1080)); (w, h, filmcraft_time::FrameRate::default()) }),
+        video: (kind == TrackKind::Video).then(|| {
+            let (w, h) = size.unwrap_or((1920, 1080));
+            (w, h, filmcraft_time::FrameRate::default())
+        }),
         audio: (kind == TrackKind::Audio).then_some((48_000, 2)),
         start_tc: None,
         kind: None,
@@ -316,7 +330,8 @@ pub(super) fn oneos_media(p: &mut Project, url: &str, name: &str, kind: TrackKin
 /// medium), a clip removed, a track or the timeline renamed. Anything else is refused, named.
 fn reconcile(p: &mut Project, seq_id: ItemId, tl: &Value) -> Result<(), String> {
     let mut scratch = Report::default();
-    let ours: Value = serde_json::from_str(&export(p, seq_id, &ExportOptions::default(), &mut scratch).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
+    let ours: Value =
+        serde_json::from_str(&export(p, seq_id, &ExportOptions::default(), &mut scratch).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
     let (o, e) = (film_view(tl), film_view(&ours));
     for k in ["OTIO_SCHEMA", "global_start_time", "metadata"] {
         if !same_value(o.get(k).unwrap_or(&Value::Null), e.get(k).unwrap_or(&Value::Null)) {
@@ -397,7 +412,9 @@ fn reconcile(p: &mut Project, seq_id: ItemId, tl: &Value) -> Result<(), String> 
                     p.make_track_item(item, kind, *start, TimeRange::new(*src, *dur), rate).ok_or("could not place a clip Cut added")?
                 }
             };
-            let origin = item_media(p, crate::common::base_item(p, it.item)).and_then(|m| m.info.start_timecode.map(|f| m.frame_rate().tick_of(f))).unwrap_or(Tick::ZERO);
+            let origin = item_media(p, crate::common::base_item(p, it.item))
+                .and_then(|m| m.info.start_timecode.map(|f| m.frame_rate().tick_of(f)))
+                .unwrap_or(Tick::ZERO);
             it.start = *start;
             it.duration = *dur;
             it.source_in = *src - origin;
@@ -420,7 +437,31 @@ fn reconcile(p: &mut Project, seq_id: ItemId, tl: &Value) -> Result<(), String> 
                 it.gain_db = g;
             }
             if let Some(e) = fc.and_then(|m| m.get("effects")) {
-                it.effects = super::effects_from(Some(e)).ok_or_else(|| format!("had the effects of \"{}\" on its track \"{}\" changed so Film cannot read them", it.name, track.name))?;
+                it.effects = super::effects_from(Some(e))
+                    .ok_or_else(|| format!("had the effects of \"{}\" on its track \"{}\" changed so Film cannot read them", it.name, track.name))?;
+            }
+            // Film's own data on a clip Cut wrote in Film's shape (a copy of Film's clip: a split's right half, a duplicate, a paste; or a link
+            // Cut made): its link, label, colour, group and fit are the file's (files/989, measured 2026-11-10).
+            if let Some(m) = fc {
+                if let Some(l) = m.get("link") {
+                    it.link = if l.is_null() {
+                        None
+                    } else {
+                        Some(l.as_u64().ok_or_else(|| format!("had the link of \"{}\" made something Film cannot read", it.name))?)
+                    };
+                }
+                if let Some(l) = m.get("label").and_then(|l| serde_json::from_value::<filmcraft_project::Label>(l.clone()).ok()) {
+                    it.label = l;
+                }
+                if let Some(c) = m.get("custom_label_color") {
+                    it.custom_label_color = c.as_str().and_then(filmcraft_project::HexColor::parse);
+                }
+                if let Some(g) = m.get("group") {
+                    it.group = g.as_u64();
+                }
+                if let Some(f) = m.get("scale_to_frame").and_then(Value::as_bool) {
+                    it.scale_to_frame = f;
+                }
             }
             items.push(it);
         }
@@ -519,7 +560,10 @@ fn damage(file: &Value, then: &Value, at: &str, ctx: Ctx, snapshot: bool) -> Opt
             if f.len() != t.len() {
                 return Some(at.to_string());
             }
-            f.iter().zip(t).enumerate().find_map(|(i, (a, b))| damage(a, b, &format!("{at}/{i}"), if ctx == Ctx::Film { Ctx::Film } else { Ctx::Plain }, snapshot))
+            f.iter()
+                .zip(t)
+                .enumerate()
+                .find_map(|(i, (a, b))| damage(a, b, &format!("{at}/{i}"), if ctx == Ctx::Film { Ctx::Film } else { Ctx::Plain }, snapshot))
         }
         _ if same_value(file, then) => None,
         _ => Some(if at.is_empty() { "/".into() } else { at.into() }),
@@ -667,7 +711,10 @@ mod tests {
         assert_eq!(merge3(&file, &then, &then), file, "an unedited save is the file");
         let now = json!({"a": {"rate": 24, "value": 48}, "metadata": {"filmcraft": {"k": 2, "source_in_ticks": 7}}, "n": "y"});
         let out = merge3(&file, &then, &now);
-        assert_eq!(out, json!({"a": {"rate": 120000, "value": 240000}, "metadata": {"opencut": {"x": 1}, "filmcraft": {"k": 2, "source_in_ticks": 5}}, "n": "y"}));
+        assert_eq!(
+            out,
+            json!({"a": {"rate": 120000, "value": 240000}, "metadata": {"opencut": {"x": 1}, "filmcraft": {"k": 2, "source_in_ticks": 5}}, "n": "y"})
+        );
     }
 
     #[test]
