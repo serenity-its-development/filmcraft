@@ -401,9 +401,22 @@ pub(crate) fn caption_track_json(t: &filmcraft_project::CaptionTrack, rate: Fram
         "markers": [],
         "enabled": t.enabled,
         "metadata": {"filmcraft": {"caption_track": {
-            "format": t.format, "language": t.language, "style": t.style, "locked": t.locked, "sync_lock": t.sync_lock, "vtt_blocks": t.vtt_blocks,
+            "format": t.format, "language": t.language, "style": caption_style_json(&t.style), "locked": t.locked, "sync_lock": t.sync_lock, "vtt_blocks": t.vtt_blocks,
         }}},
     })
+}
+
+/// A caption style as OTIO: its sizes (`f32`) written as the decimal they are (`0.08`, not `0.07999999821186066`), so another tool that
+/// writes the same value writes the same number, and reading it back gives the same `f32`.
+fn caption_style_json(s: &filmcraft_project::CaptionStyle) -> Value {
+    let mut v = json!(s);
+    for k in ["size", "margin", "line_spacing", "outline"] {
+        if let Some(x) = v.get(k).and_then(Value::as_f64) {
+            let short: f64 = format!("{}", x as f32).parse().unwrap_or(x);
+            v[k] = json!(short);
+        }
+    }
+    v
 }
 
 /// Whether an OTIO track is a caption track (its `metadata.filmcraft.caption_track`).

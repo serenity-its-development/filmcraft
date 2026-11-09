@@ -1058,4 +1058,68 @@ mod tests {
         let e = save_host_file(&mut s).unwrap_err();
         assert!(e.contains("keyframes-not-in-cut") && e.contains("background_opacity") && e.contains("Title"), "{e}");
     }
+
+    /// files/989 (Mona 2026-11-10: "Caption track in the .otio"): Film's captions (`film-captions.otio`) edited in Cut as its caption track,
+    /// as the OpenCut fork's `oneos-tests/captions.test.ts` writes them (`cut-captions.otio`): a caption's text changed, one moved a second
+    /// later, one added, every caption made green (the style), and a new caption track "Français" (as Cut's SRT import makes one). In Film
+    /// they are Film's own captions, nothing locked: the cue data Film wrote kept, Cut's style change Film's style, the new track Film's
+    /// caption track; an unedited save is the file value for value, and a caption Film edits is written in the same shape.
+    #[test]
+    fn cut_s_caption_edits_open_in_film_as_its_own_captions() {
+        use filmcraft_time::FrameRate;
+        let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-captions.otio");
+        let cut: Value = serde_json::from_slice(bytes).unwrap();
+        let mut s = session();
+        open_host_file(&mut s, "Captions.otio", bytes).unwrap();
+        assert_eq!(s.host_shared.locked(), Vec::<String>::new(), "nothing is locked");
+        let edit = s.project.items.values().find(|i| i.name == "Edit").unwrap().as_sequence().unwrap();
+        let r = FrameRate::FPS_24;
+        let at = |sec: f64| filmcraft_time::Tick((sec * filmcraft_time::TICKS_PER_SECOND as f64) as i64);
+        assert_eq!(edit.caption_tracks.len(), 2, "Film's track and the one Cut added");
+        let (en, fr) = (&edit.caption_tracks[0], &edit.caption_tracks[1]);
+        let rows = |t: &filmcraft_project::CaptionTrack| t.captions.iter().map(|c| (c.text.clone(), c.start, c.duration)).collect::<Vec<_>>();
+        assert_eq!(
+            rows(en),
+            vec![
+                ("Hello there.".to_string(), at(0.0), at(1.0)),
+                ("Two lines,\nedited in Cut.".to_string(), at(1.0), at(1.0)),
+                ("After a pause.".to_string(), at(4.0), at(1.0)),
+                ("Added in Cut.".to_string(), at(6.0), at(1.5)),
+            ]
+        );
+        let _ = r;
+        assert_eq!(
+            (en.captions[0].speaker.as_deref(), en.captions[0].cue_id.as_deref(), en.captions[0].settings.as_str()),
+            (Some("Ana"), Some("intro"), "line:90% align:start")
+        );
+        assert_eq!(
+            (en.style.color, en.style.size, en.language.as_str()),
+            ([0, 255, 0, 255], 48.0, "en-AU"),
+            "Cut's colour is Film's style; the rest as Film had it"
+        );
+        assert_eq!((fr.name.as_str(), fr.language.as_str()), ("Français", "fr"));
+        assert_eq!(rows(fr), vec![("Bonjour.".to_string(), at(0.5), at(1.0)), ("Deux.".to_string(), at(2.0), at(1.0))]);
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
+        assert_eq!(first_difference(&cut, &saved, ""), None, "Cut's captions come back from Film value for value");
+        // Film edits a caption: written in the same shape, the rest of the file kept.
+        {
+            let id = s.project.items.values().find(|i| i.name == "Edit").unwrap().id;
+            let p = std::sync::Arc::make_mut(&mut s.project);
+            let q = p.sequence_mut(id).unwrap();
+            q.caption_tracks[1].captions[1].text = "Deux, par Film.".into();
+        }
+        let again: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
+        let tl = again["children"].as_array().unwrap().iter().find(|t| t["name"] == "Edit").unwrap();
+        let fr_out = tl["tracks"]["children"].as_array().unwrap().iter().find(|t| t["name"] == "Français").unwrap();
+        let texts: Vec<&str> = fr_out["children"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|c| c["OTIO_SCHEMA"] == "Clip.2")
+            .map(|c| c["metadata"]["filmcraft"]["caption"]["text"].as_str().unwrap())
+            .collect();
+        assert_eq!(texts, ["Bonjour.", "Deux, par Film."]);
+        let mut s2 = session();
+        open_host_file(&mut s2, "Captions.otio", &serde_json::to_vec(&again).unwrap()).expect("Film reopens its own save");
+    }
 }
