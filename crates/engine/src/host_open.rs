@@ -479,6 +479,48 @@ mod tests {
         assert_eq!(first_difference(&want, &saved, ""), None, "only the rectangle's feather changed, in the canvas's pixels");
     }
 
+    /// files/989 fix 4a (tool choice: both tools draw the same): Cut fits a picture in its canvas (contain) before its scale, so its media
+    /// open in Film fitted to the frame (Scale to Frame Size) with Cut's scale as Film's. On Cut's editor-built project (a 1080 x 1920
+    /// canvas) the 1920 x 1080 Beach, scaled 1.25, draws 1350 sequence pixels wide in Film as in Cut, and the 512-pixel Logo fills the
+    /// canvas's width. A picture Film does not fit is written with Cut's scale of the same size; keyed, it is refused by name.
+    #[test]
+    fn cut_s_pictures_open_fitted_in_film_and_draw_at_cut_s_size() {
+        let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-project.otio");
+        let cut: Value = serde_json::from_slice(bytes).unwrap();
+        let mut s = session();
+        open_host_file(&mut s, "trip.otio", bytes).unwrap();
+        let drawn_width = |s: &Session, clip: &str, px: (u32, u32)| {
+            let (seq, kind, ti, ci) = find(s, "Main", clip);
+            let q = s.project.sequence(seq).unwrap();
+            let c = &q.tracks(kind)[ti].items[ci];
+            assert!(c.scale_to_frame, "{clip} is fitted to the frame");
+            let m = filmcraft_render::motion_matrix(q, c, px, None, c.source_in);
+            let (a, b) = (m.apply(filmcraft_geom::Vec2::new(0.0, 0.0)), m.apply(filmcraft_geom::Vec2::new(px.0 as f64, 0.0)));
+            (b - a).length()
+        };
+        let w = drawn_width(&s, "Beach", (1920, 1080));
+        assert!((w - 1080.0 * 1.25).abs() < 1e-6, "Beach draws {w} wide");
+        let w = drawn_width(&s, "Logo", (512, 512));
+        assert!((w - 1080.0).abs() < 1e-6, "Logo draws {w} wide");
+        let unedited: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap_or_else(|e| panic!("{e}"))).unwrap();
+        assert_eq!(first_difference(&cut, &unedited, ""), None, "an unedited save is the file");
+        // Film draws the Logo at its own 512 pixels: Cut's scale of that size is 512 / 1080 of the canvas's width.
+        edit_clip(&mut s, "Main", "Logo", |c| c.scale_to_frame = false);
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap_or_else(|e| panic!("{e}"))).unwrap();
+        let logo = format!("{}/metadata/opencut/element/transform", clip_ptr(&cut, "Logo", "").unwrap());
+        let t = saved.pointer(&logo).unwrap();
+        for k in ["scaleX", "scaleY"] {
+            assert!((t[k].as_f64().unwrap() - 512.0 / 1080.0).abs() < 1e-8, "{k}: {}", t[k]);
+        }
+        edit_clip(&mut s, "Main", "Logo", |c| {
+            let (a, b) = (c.source_in, c.source_in + filmcraft_time::Tick(c.duration.0 / 2));
+            let m = c.effect_mut("motion").unwrap().params.get_mut("scale").unwrap();
+            m.keyframes = vec![filmcraft_project::Keyframe::new(a, ParamValue::Float(100.0)), filmcraft_project::Keyframe::new(b, ParamValue::Float(50.0))];
+        });
+        let e = save_host_file(&mut s).unwrap_err();
+        assert!(e.contains("scale-not-in-cut"), "{e}");
+    }
+
     fn keys_of(s: &Session, seq: &str, clip: &str, effect: &str, param: &str) -> Vec<filmcraft_project::Keyframe> {
         let (id, kind, ti, ci) = find(s, seq, clip);
         let c = &s.project.sequence(id).unwrap().tracks(kind)[ti].items[ci];

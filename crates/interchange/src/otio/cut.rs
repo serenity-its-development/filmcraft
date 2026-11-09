@@ -274,6 +274,8 @@ struct Frame {
     /// The element's own pixels in the clip (a medium's pixel size, which the file carries, or the square Film draws a graphic on):
     /// where Cut's masks, in fractions of the element, are in Film's clip pixels. None where the element has none.
     el: Option<ElementBox>,
+    /// A picture of Cut's (a video or image element), which Cut fits in its canvas before its scale.
+    picture: bool,
 }
 
 /// Where the element's own pixels are in Film's clip: a medium's are its pixels; a graphic of Cut's is drawn on a 512 px square at the
@@ -297,6 +299,23 @@ fn medium_px(root: &Map<String, Value>, c: &Value) -> Option<(f64, f64)> {
             size(root.get("opencut")?.get("media")?.as_array()?.iter().find(|m| m.get("id").and_then(Value::as_str) == Some(id)))
         })
         .or_else(|| size(r.pointer("/metadata/filmcraft/info/video")))
+}
+
+/// What turns Film's scale of a picture into Cut's: 1 when Film fits it in the frame (Scale to Frame Size, as Cut always does), else the
+/// inverse of that fit (Cut's scale of a picture Film draws at its own pixels: a clip Film placed without fitting it). A keyed scale on an
+/// unfitted picture is refused by name, as are a picture whose pixel size the file does not carry and a graphic of Film's own pixels.
+fn unfit(f: Frame, ti: &TrackItem) -> Result<f64, String> {
+    if !f.picture || ti.scale_to_frame {
+        return Ok(1.0);
+    }
+    let Some(b) = f.el else {
+        return Err(format!("scale-not-in-cut: \"{}\" is not fitted to the frame in Film and the file does not carry its pixel size, so Cut, which fits every picture, has no scale for it", ti.name));
+    };
+    let m = fx(ti, "motion").ok_or("the clip has no motion")?;
+    if ["scale", "scale_width"].iter().any(|k| m.params.get(*k).is_some_and(Param::is_animated)) {
+        return Err(format!("scale-not-in-cut: Film keys the scale of \"{}\", which it does not fit to the frame, and Cut fits every picture", ti.name));
+    }
+    Ok(1.0 / (f.w / b.w).min(f.h / b.h))
 }
 
 fn fx<'a>(ti: &'a TrackItem, id: &str) -> Option<&'a EffectInstance> {
@@ -476,12 +495,12 @@ fn look_fields(origin: &Value) -> Vec<Field> {
         v.push(field(
             "/transform/scale",
             json!(1),
-            |_, ti, _| {
+            |f, ti, _| {
                 let m = fx(ti, "motion").ok_or("the clip has no motion")?;
                 if !boolean(m, "uniform_scale")? {
                     return Err("scaled unevenly in Film, which this element's single scale does not hold".into());
                 }
-                Ok(num(float(m, "scale")? / 100.0))
+                Ok(num(float(m, "scale")? / 100.0 * unfit(f, ti)?))
             },
             |_, ti, v| {
                 let m = fx_mut(ti, "motion")?;
@@ -494,9 +513,9 @@ fn look_fields(origin: &Value) -> Vec<Field> {
         v.push(field(
             "/transform/scaleX",
             json!(1),
-            |_, ti, _| {
+            |f, ti, _| {
                 let m = fx(ti, "motion").ok_or("the clip has no motion")?;
-                Ok(num(float(m, if boolean(m, "uniform_scale")? { "scale" } else { "scale_width" })? / 100.0))
+                Ok(num(float(m, if boolean(m, "uniform_scale")? { "scale" } else { "scale_width" })? / 100.0 * unfit(f, ti)?))
             },
             |_, ti, v| {
                 let m = fx_mut(ti, "motion")?;
@@ -508,7 +527,7 @@ fn look_fields(origin: &Value) -> Vec<Field> {
         v.push(field(
             "/transform/scaleY",
             json!(1),
-            |_, ti, _| Ok(num(float(fx(ti, "motion").ok_or("the clip has no motion")?, "scale")? / 100.0)),
+            |f, ti, _| Ok(num(float(fx(ti, "motion").ok_or("the clip has no motion")?, "scale")? / 100.0 * unfit(f, ti)?)),
             |_, ti, v| {
                 let m = fx_mut(ti, "motion")?;
                 let y = want_f64(v)? * 100.0;
@@ -1308,7 +1327,10 @@ fn read_clip(p: &mut Project, root: &Map<String, Value>, c: &Value, track_kind: 
             let length = c.pointer(&format!("{ELEMENT}/sourceDuration")).and_then(Value::as_i64).map(|t| Tick(t * PER_CUT_TICK));
             let mname = r.get("name").and_then(Value::as_str).filter(|n| !n.is_empty()).unwrap_or(&name).to_string();
             let item = oneos_media(p, url, &mname, track_kind, length, px.map(|(w, h)| (w as u32, h as u32)));
-            (kind, p.make_track_item(item, track_kind, start, TimeRange::new(src, dur), rate).ok_or_else(|| format!("could not place \"{name}\""))?)
+            let mut ti = p.make_track_item(item, track_kind, start, TimeRange::new(src, dur), rate).ok_or_else(|| format!("could not place \"{name}\""))?;
+            // Cut fits a picture in its canvas (contain) before its scale, as Film's Scale to Frame Size does: so Cut's scale is Film's.
+            ti.scale_to_frame = kind != Kind::Audio;
+            (kind, ti)
         }
         "GeneratorReference" => {
             let kind = kind_of_generator(c)?;
@@ -1349,7 +1371,7 @@ fn read_clip(p: &mut Project, root: &Map<String, Value>, c: &Value, track_kind: 
     ti.name = name;
     ti.duration = dur;
     ti.source_in = src;
-    let f = Frame { el: element_box(kind, px, f), ..f };
+    let f = Frame { el: element_box(kind, px, f), picture: matches!(kind, Kind::Video | Kind::Image), ..f };
     for x in fields_for(kind, c) {
         let v = c.pointer(&x.ptr).cloned().filter(|v| !v.is_null()).unwrap_or_else(|| x.default.clone());
         if v.is_null() {
@@ -1404,7 +1426,7 @@ impl CutParts {
         let mut c = CutParts { project_mode: file.pointer("/metadata/opencut/project").is_some_and(Value::is_object), root: split.root.clone(), ..Default::default() };
         let (w, h, rate) = c.frame_of(p, film_seqs);
         c.frame = (w, h);
-        let f = Frame { w: w as f64, h: h as f64, el: None };
+        let f = Frame { w: w as f64, h: h as f64, el: None, picture: false };
         // Cut's tracks in Film's timelines, after the Film track each followed in the file.
         let mut by_tl: BTreeMap<usize, Vec<(usize, Value)>> = BTreeMap::new();
         for (fi, k, t) in split.tracks {
@@ -1715,7 +1737,7 @@ struct Out<'a> {
 
 impl Out<'_> {
     fn frame(&self) -> Frame {
-        Frame { w: self.parts.frame.0 as f64, h: self.parts.frame.1 as f64, el: None }
+        Frame { w: self.parts.frame.0 as f64, h: self.parts.frame.1 as f64, el: None, picture: false }
     }
 
     fn clip(&mut self, ti: &TrackItem, track_kind: TrackKind, lane_rate: f64) -> Result<Value, String> {
@@ -1733,7 +1755,7 @@ impl Out<'_> {
                 element_box(kind, px, f)
             }
         };
-        let f = Frame { el, ..f };
+        let f = Frame { el, picture: matches!(kind, Kind::Video | Kind::Image), ..f };
         let empty = json!({});
         let origin = prior.map(|c| &c.origin).unwrap_or(&empty);
         let now = read_fields(kind, f, ti, origin).map_err(|e| format!("\"{}\" {e}", ti.name))?;
