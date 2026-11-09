@@ -437,6 +437,9 @@ fn track_matte_uses_the_other_tracks_alpha_and_luma() {
         fn layer_to_output(&self) -> Affine {
             Affine::IDENTITY
         }
+        fn layer_to_sequence(&self) -> Affine {
+            Affine::IDENTITY
+        }
         fn clip_seconds(&self) -> f64 {
             1.0
         }
@@ -750,6 +753,9 @@ fn transform_presets_animate_over_the_clip() {
         fn layer_to_output(&self) -> Affine {
             Affine::IDENTITY
         }
+        fn layer_to_sequence(&self) -> Affine {
+            Affine::IDENTITY
+        }
         fn clip_seconds(&self) -> f64 {
             2.0
         }
@@ -1017,6 +1023,9 @@ impl FxEnv for ClipEnv {
         None
     }
     fn layer_to_output(&self) -> Affine {
+        Affine::IDENTITY
+    }
+    fn layer_to_sequence(&self) -> Affine {
         Affine::IDENTITY
     }
     fn clip_seconds(&self) -> f64 {

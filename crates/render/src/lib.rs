@@ -359,7 +359,7 @@ fn adjustment_layer(project: &Project, seq: &Sequence, item: &TrackItem, t: Tick
     let (op, bl) = opacity_blend(item, mt);
     // Adjustment layer opacity (and opacity masks, in sequence pixels) weigh adjusted against original.
     let mut weight = Image::filled(w, h, [op; 4]);
-    mask::apply_opacity_masks(&mut weight, item, mt, opts.scale);
+    mask::apply_opacity_masks(&mut weight, item, mt, opts.scale, &Affine::scale(1.0 / opts.scale as f64, 1.0 / opts.scale as f64));
     // Motion moves / scales the adjustment layer's frame: it only applies inside it.
     if let Some(region) = adjustment_region(seq, item, project, mt, opts.scale, w, h) {
         let cov: Vec<f32> = region.px.as_chunks::<4>().0.iter().map(|p| p[3]).collect();
@@ -606,7 +606,9 @@ pub(crate) fn item_layer_ex(
             mask::apply_effect(&mut layer, e, &cx);
         }
     }
-    mask::apply_opacity_masks(&mut layer, item, mt, px_scale);
+    // layer px → source px → sequence px: where a mask measured in the canvas's pixels is measured, at this frame's Motion
+    let to_canvas = motion.then_apply(&Affine::scale(1.0 / px_scale as f64, 1.0 / px_scale as f64));
+    mask::apply_opacity_masks(&mut layer, item, mt, px_scale, &to_canvas);
     let placed = if layer.w == w && layer.h == h && identity_placement(&m) { layer } else { layer.transformed(w, h, &m) };
     let (op, bl) = opacity_blend(item, mt);
     Some(Layer::Full { image: placed, opacity: op, blend: bl, opaque: false })

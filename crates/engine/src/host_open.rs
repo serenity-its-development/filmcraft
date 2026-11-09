@@ -374,7 +374,7 @@ mod tests {
     /// out, which Film draws once its text mask is built), Beach's masks open as Film's masks on the clip's Opacity, one of each of Cut's
     /// types, each the path Cut's editor draws (an open custom path kept with its mode None, as Cut does not draw it), and an unedited
     /// save is the file. Film's change of a feather and the masks Film adds (on Beach, and on the Logo, which had none) are written back in
-    /// Cut's shape (a feather Film set in clip pixels, Film's mask as Cut's custom path) and nothing else changes. With its text mask,
+    /// Cut's shape (a feather Film set in the mask's own units, Film's mask as Cut's custom path) and nothing else changes. With its text mask,
     /// Beach's masks are carried as the file holds them, and a mask Film would add beside them is refused by name.
     #[test]
     fn film_edits_cut_s_masks_as_its_own_and_writes_them_in_cut_s_shape() {
@@ -422,7 +422,6 @@ mod tests {
         let logo_got = saved.pointer(&logo).unwrap_or_else(|| panic!("the Logo has masks")).clone();
         let mut want = cut.clone();
         let m2 = want.pointer_mut(&format!("{beach}/2/params")).unwrap();
-        m2["units"] = serde_json::json!("clip");
         m2["feather"] = serde_json::json!(6);
         m2["expansion"] = serde_json::json!(0);
         want.pointer_mut(&beach).unwrap().as_array_mut().unwrap().push(got[8].clone());
@@ -439,6 +438,45 @@ mod tests {
         edit_clip(&mut s, "Main", "Beach", |c| c.effects.iter_mut().find(|e| e.effect == "opacity").unwrap().masks.push(hole()));
         let e = save_host_file(&mut s).unwrap_err();
         assert!(e.contains("masks-carried") && e.contains("text mask"), "{e}");
+    }
+
+    /// files/989 (Mona 2026-11-09: "Build canvas feather in Film"): on Cut's editor-built project with Beach scaled unevenly (160 % wide,
+    /// 80 % tall) and its rectangle feathered and its ellipse grown in the canvas's pixels, Beach's masks open in Film as its own (not
+    /// carried), measured in the canvas's pixels with Cut's numbers; an unedited save is the file, and Film's change of the feather is
+    /// written as Cut's canvas feather and nothing else.
+    #[test]
+    fn cut_s_canvas_feather_on_an_uneven_scale_opens_in_film_as_its_own() {
+        use filmcraft_project::MaskUnits;
+        let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-project.otio");
+        let mut cut: Value = serde_json::from_slice(bytes).unwrap();
+        let el = format!("{}/metadata/opencut/element", clip_ptr(&cut, "Beach", "").unwrap());
+        let e = cut.pointer_mut(&el).unwrap();
+        e["masks"].as_array_mut().unwrap().retain(|m| m["type"] != "text");
+        e["transform"]["scaleX"] = serde_json::json!(1.6);
+        e["transform"]["scaleY"] = serde_json::json!(0.8);
+        e["masks"][2]["params"]["feather"] = serde_json::json!(12);
+        e["masks"][3]["params"]["expansion"] = serde_json::json!(4);
+        let file = serde_json::to_vec(&cut).unwrap();
+        let mut s = session();
+        open_host_file(&mut s, "trip.otio", &file).unwrap();
+        let (seq, kind, ti, ci) = find(&s, "Main", "Beach");
+        let clip = &s.project.sequence(seq).unwrap().tracks(kind)[ti].items[ci];
+        let masks = &clip.effects.iter().find(|e| e.effect == "opacity").unwrap().masks;
+        assert_eq!(masks.len(), 8, "Beach's masks are Film's, not carried");
+        let measures = |m: &filmcraft_project::Mask| (m.units, m.feather.value.as_f64(), m.expansion.value.as_f64());
+        assert_eq!(measures(&masks[2]), (MaskUnits::Canvas, Some(12.0), Some(0.0)));
+        assert_eq!(measures(&masks[3]), (MaskUnits::Canvas, Some(0.0), Some(4.0)));
+        let unedited: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap_or_else(|e| panic!("{e}"))).unwrap();
+        assert_eq!(first_difference(&cut, &unedited, ""), None, "an unedited save is the file");
+        edit_clip(&mut s, "Main", "Beach", |c| {
+            c.effects.iter_mut().find(|e| e.effect == "opacity").unwrap().masks[2].feather = filmcraft_project::Param::new(ParamValue::Float(20.0));
+        });
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap_or_else(|e| panic!("{e}"))).unwrap();
+        let mut want = cut.clone();
+        let p = want.pointer_mut(&format!("{el}/masks/2/params")).unwrap();
+        p["feather"] = serde_json::json!(20);
+        p["expansion"] = serde_json::json!(0);
+        assert_eq!(first_difference(&want, &saved, ""), None, "only the rectangle's feather changed, in the canvas's pixels");
     }
 
     fn keys_of(s: &Session, seq: &str, clip: &str, effect: &str, param: &str) -> Vec<filmcraft_project::Keyframe> {

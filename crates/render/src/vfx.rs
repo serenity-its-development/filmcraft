@@ -48,6 +48,9 @@ pub trait FxEnv: Sync {
     fn track(&self, index: usize) -> Option<Image>;
     /// Maps working-layer pixels to output pixels (Motion included).
     fn layer_to_output(&self) -> Affine;
+    /// Maps working-layer pixels to the full-resolution sequence frame's pixels (Motion included): where a mask measured in the
+    /// canvas's pixels is measured.
+    fn layer_to_sequence(&self) -> Affine;
     /// Clip duration on the timeline, in seconds.
     fn clip_seconds(&self) -> f64;
     /// Seconds from the clip's start to now.
@@ -131,6 +134,10 @@ impl FxEnv for ItemEnv<'_> {
     }
     fn layer_to_output(&self) -> Affine {
         self.layer_to_output
+    }
+    fn layer_to_sequence(&self) -> Affine {
+        let o = 1.0 / self.opts.scale as f64;
+        Affine::scale(o, o).then_apply(&self.layer_to_output)
     }
     fn clip_seconds(&self) -> f64 {
         self.item.duration.seconds()

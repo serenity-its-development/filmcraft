@@ -1,5 +1,7 @@
 // Mask coverage + masked-effect mix (same math as filmcraft_render::mask; see its docs).
-// Masks arrive flattened to polygons in working-image pixels, active ones only (mode != None).
+// Masks arrive flattened to polygons in working-image pixels, active ones only (mode != None). Each carries the linear map from
+// working pixels to the pixels its feather, expansion and edge distance are measured in (identity for clip pixels; the clip's map to
+// the sequence frame for canvas pixels).
 
 struct Params {
     width: u32,
@@ -17,6 +19,8 @@ struct MaskInfo {
     expansion: f32,
     opacity: f32,
     _pad: f32,
+    // columns of the map: (a, b) and (c, d)
+    metric: vec4<f32>,
 };
 
 @group(0) @binding(0) var<uniform> params: Params;
@@ -54,9 +58,9 @@ fn combine(mode: u32, a: f32, m: f32) -> f32 {
     }
 }
 
-fn seg_dist2(p: vec2<f32>, a: vec2<f32>, b: vec2<f32>) -> f32 {
-    let d = b - a;
-    let q = p - a;
+fn seg_dist2(p: vec2<f32>, a: vec2<f32>, b: vec2<f32>, metric: mat2x2<f32>) -> f32 {
+    let d = metric * (b - a);
+    let q = metric * (p - a);
     let l2 = dot(d, d);
     var t = 0.0;
     if (l2 > 0.0) {
@@ -72,6 +76,7 @@ fn mask_value(m: MaskInfo, p: vec2<f32>) -> f32 {
     if (m.len >= 3u) {
         var wind = 0;
         var d2 = band * band;
+        let metric = mat2x2<f32>(m.metric.xy, m.metric.zw);
         for (var i = 0u; i < m.len; i = i + 1u) {
             let a = pts[m.start + i];
             let c = pts[m.start + (i + 1u) % m.len];
@@ -81,7 +86,7 @@ fn mask_value(m: MaskInfo, p: vec2<f32>) -> f32 {
                     if (c.y > a.y) { wind = wind + 1; } else { wind = wind - 1; }
                 }
             }
-            d2 = min(d2, seg_dist2(p, a, c));
+            d2 = min(d2, seg_dist2(p, a, c, metric));
         }
         let d = sqrt(d2);
         if (wind != 0) { sd = d; } else { sd = -d; }

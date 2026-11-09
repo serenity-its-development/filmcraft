@@ -5,14 +5,14 @@
 //! which move together; the pen places a free-draw Bézier mask).
 //!
 //! Automation ids: `effectControls.<effect>.mask.{ellipse,polygon,pen}`,
-//! `effectControls.<effect>.mask<k>` (+ `.mode`, `.inverted`, `.delete`, and the parameter rows
+//! `effectControls.<effect>.mask<k>` (+ `.mode`, `.inverted`, `.units`, `.delete`, and the parameter rows
 //! `effectControls.<effect>.mask<k>.<param>.*`), `program.mask.vertex.<i>`, `program.mask.in.<i>`,
 //! `program.mask.out.<i>`, `program.mask.body`, `program.mask.feather`, `program.mask.expansion`,
 //! `program.mask.roundness`, `program.mask.marquee`, `program.maskPen`.
 
 use egui::{Align2, Color32, Pos2, Rect, Sense, Stroke, pos2, vec2};
 use filmcraft_geom::{Affine, Vec2};
-use filmcraft_project::{ClipId, EffectInstance, MaskMode, MaskPath, MaskVertex, TrackItem};
+use filmcraft_project::{ClipId, EffectInstance, Mask, MaskMode, MaskPath, MaskUnits, MaskVertex, TrackItem};
 use filmcraft_time::Tick;
 use serde_json::{Value, json};
 
@@ -173,20 +173,55 @@ pub(crate) fn effect_rows(
             actions.push(("masks.set".into(), json!({"clip": clip.0, "effect": idx, "mask": k, "inverted": inv})));
         }
         app.auto.add(&format!("{base}.inverted"), cr, "Inverted");
+        // Canvas Pixels: feather and expansion measured in the sequence frame's pixels, through the clip's Motion (files/989, Mona
+        // 2026-11-09: "Build canvas feather in Film"), as Cut measures its own masks
+        let (r, _) = ui.allocate_exact_size(vec2(body.width(), ROW_H), Sense::hover());
+        crate::panels::effect_controls::row_line(ui, r, lane, &t);
+        ui.painter().text(pos2(r.min.x + 40.0, r.center().y), Align2::LEFT_CENTER, tl!("Canvas Pixels"), Tokens::ui(12.0), t.text);
+        let cr = Rect::from_min_size(pos2(r.min.x + (r.width() * 0.5).max(150.0), r.min.y + 2.0), vec2(20.0, ROW_H - 4.0));
+        let mut cui = ui.new_child(egui::UiBuilder::new().max_rect(cr).layout(egui::Layout::left_to_right(egui::Align::Center)));
+        crate::panels::effect_controls::fit_to_row(&mut cui);
+        let mut on = m.units == MaskUnits::Canvas;
+        if crate::widgets::accessible_name(cui.checkbox(&mut on, ""), "Measure feather and expansion in canvas pixels").changed() {
+            let units = if on { MaskUnits::Canvas } else { MaskUnits::Clip };
+            actions.push(("masks.set".into(), json!({"clip": clip.0, "effect": idx, "mask": k, "units": units.label()})));
+        }
+        app.auto.add(&format!("{base}.units"), cr, "Canvas Pixels");
     }
 }
 
 /// Only the left button drags on the monitor; a middle or right drag leaves the mask alone.
 const LEFT: egui::PointerButton = egui::PointerButton::Primary;
 
-/// Clip pixels → screen points for the clip's current Motion and the monitor picture rect.
-fn clip_to_screen(app: &FilmcraftApp, it: &TrackItem, mt: Tick, pic: Rect, frame: (u32, u32)) -> Option<Affine> {
+/// Clip pixels → sequence pixels: the clip's current Motion.
+fn clip_to_sequence(app: &FilmcraftApp, it: &TrackItem, mt: Tick, frame: (u32, u32)) -> Option<Affine> {
     let seq = app.session.active_sequence()?;
     let size = filmcraft_render::source_size(&app.session.project, it.item).unwrap_or(frame);
-    let motion = filmcraft_render::motion_matrix(seq, it, size, filmcraft_render::source_par(&app.session.project, it.item), mt);
+    Some(filmcraft_render::motion_matrix(seq, it, size, filmcraft_render::source_par(&app.session.project, it.item), mt))
+}
+
+/// Clip pixels → screen points for the clip's current Motion and the monitor picture rect.
+fn clip_to_screen(app: &FilmcraftApp, it: &TrackItem, mt: Tick, pic: Rect, frame: (u32, u32)) -> Option<Affine> {
+    let motion = clip_to_sequence(app, it, mt, frame)?;
     let view = Affine::translate(pic.min.x as f64, pic.min.y as f64)
         .then_apply(&Affine::scale(pic.width() as f64 / frame.0 as f64, pic.height() as f64 / frame.1 as f64));
     Some(view.then_apply(&motion))
+}
+
+/// The linear map from clip pixels to the pixels a mask's feather and expansion are measured in: the identity for clip pixels, the
+/// clip's Motion (without its move) for the canvas's.
+fn measure_of(app: &FilmcraftApp, it: &TrackItem, mt: Tick, frame: (u32, u32), m: &Mask) -> Option<Affine> {
+    match m.units {
+        MaskUnits::Clip => Some(Affine::IDENTITY),
+        MaskUnits::Canvas => clip_to_sequence(app, it, mt, frame).map(|a| Affine { e: 0.0, f: 0.0, ..a }),
+    }
+}
+
+/// [`offset`] by `d` measured through `measure` (clip pixels → measured pixels), back in clip pixels.
+fn offset_measured(pts: &[Vec2], d: f64, measure: &Affine) -> Vec<Vec2> {
+    let Some(back) = measure.inverse() else { return pts.to_vec() };
+    let m: Vec<Vec2> = pts.iter().map(|p| measure.apply(*p)).collect();
+    offset(&m, d).into_iter().map(|p| back.apply(p)).collect()
 }
 
 fn sp(m: &Affine, v: Vec2) -> Pos2 {
@@ -253,6 +288,7 @@ pub fn monitor_overlay(app: &mut FilmcraftApp, ui: &mut egui::Ui, pic: Rect, fra
     let Some(to_screen) = clip_to_screen(app, &it, mt, pic, frame) else { return };
     let Some(to_clip) = to_screen.inverse() else { return };
     let lin_inv = Affine { e: 0.0, f: 0.0, ..to_clip };
+    let Some(measure) = measure_of(app, &it, mt, frame, m) else { return };
     let path = m.path_at(mt);
     let feather = m.feather.f64_at(mt).max(0.0);
     let expansion = m.expansion.f64_at(mt);
@@ -262,8 +298,8 @@ pub fn monitor_overlay(app: &mut FilmcraftApp, ui: &mut egui::Ui, pic: Rect, fra
     let screen: Vec<Pos2> = flat.iter().map(|v| sp(&to_screen, *v)).collect();
     painter.add(egui::Shape::closed_line(screen.clone(), Stroke::new(1.5, col)));
     // expansion + feather contours (dashed)
-    let exp_pts = offset(&flat, expansion);
-    let fea_pts = offset(&flat, expansion + feather / 2.0);
+    let exp_pts = offset_measured(&flat, expansion, &measure);
+    let fea_pts = offset_measured(&flat, expansion + feather / 2.0, &measure);
     let dashed = |pts: &[Vec2], c: Color32| {
         let mut v: Vec<Pos2> = pts.iter().map(|q| sp(&to_screen, *q)).collect();
         if let Some(f) = v.first().copied() {
@@ -344,7 +380,7 @@ pub fn monitor_overlay(app: &mut FilmcraftApp, ui: &mut egui::Ui, pic: Rect, fra
         ui.ctx().set_cursor_icon(egui::CursorIcon::Move);
     }
     // ---- feather (top) and expansion (bottom) handles
-    feather_expansion_handles(app, ui, &painter, &flat, &to_screen, &lin_inv, expansion, feather, &target, gesture, &mut actions);
+    feather_expansion_handles(app, ui, &painter, &flat, (&to_screen, &lin_inv, &measure), expansion, feather, &target, gesture, &mut actions);
     // ---- corner roundness (masks with sharp corners: rectangles, polygons)
     actions.extend(roundness_handle(app, ui, &painter, &path, &to_screen, &target));
     // ---- tangent handles and vertices
@@ -418,21 +454,22 @@ pub fn monitor_overlay(app: &mut FilmcraftApp, ui: &mut egui::Ui, pic: Rect, fra
 }
 
 /// The feather (top) and expansion (bottom) handles on the selected mask's contour: their
-/// stems, glyphs and the drag that moves them.
+/// stems, glyphs and the drag that moves them. `maps` = (clip → screen, screen → clip without the
+/// move, clip → the pixels the mask is measured in).
 #[allow(clippy::too_many_arguments)]
 fn feather_expansion_handles(
     app: &mut FilmcraftApp,
     ui: &mut egui::Ui,
     painter: &egui::Painter,
     flat: &[Vec2],
-    to_screen: &Affine,
-    lin_inv: &Affine,
+    maps: (&Affine, &Affine, &Affine),
     expansion: f64,
     feather: f64,
     target: &Value,
     gesture: u64,
     actions: &mut Vec<(String, Value)>,
 ) {
+    let (to_screen, lin_inv, measure) = maps;
     let t = app.tokens;
     let screen: Vec<Pos2> = flat.iter().map(|v| sp(to_screen, *v)).collect();
     let col = Color32::from_rgb(0x5a, 0xb4, 0xff);
@@ -453,10 +490,9 @@ fn feather_expansion_handles(
     let top = (0..flat.len()).min_by(|a, b| screen[*a].y.total_cmp(&screen[*b].y));
     let bottom = (0..flat.len()).max_by(|a, b| screen[*a].y.total_cmp(&screen[*b].y));
     if let (Some(ti), Some(bi)) = (top, bottom) {
-        let unit_n = |i: usize| {
-            let o = offset(flat, 1.0)[i] - flat[i];
-            o * (1.0 / o.length().max(1e-9))
-        };
+        // the outward step, in clip pixels, of one measured pixel at vertex i (its measured length is one)
+        let unit = offset_measured(flat, 1.0, measure);
+        let unit_n = |i: usize| unit[i] - flat[i];
         for (which, i, dist) in [("feather", ti, expansion + feather / 2.0), ("expansion", bi, expansion)] {
             let n = unit_n(i);
             let anchor = sp(to_screen, flat[i]);
@@ -479,8 +515,10 @@ fn feather_expansion_handles(
             let r = ui.interact(hr.expand(3.0), egui::Id::unique(("mask-handle", which)), Sense::drag());
             app.auto.add(&format!("program.mask.{which}"), hr, if which == "feather" { "Mask Feather" } else { "Mask Expansion" });
             if r.dragged_by(LEFT) && r.drag_delta() != egui::Vec2::ZERO {
+                // the drag along the outward normal, in the mask's measured pixels
                 let d = clip_delta(r.drag_delta());
-                let along = d[0] * n.x + d[1] * n.y;
+                let (dm, nm) = (measure.apply(Vec2::new(d[0], d[1])), measure.apply(n));
+                let along = dm.x * nm.x + dm.y * nm.y;
                 let (key, v) = if which == "feather" { ("feather", (feather + 2.0 * along).max(0.0)) } else { ("expansion", expansion + along) };
                 actions.push(("masks.set".into(), with(json!({key: v, "merge": format!("{which}-{gesture}")}))));
                 painter.text(hp + vec2(10.0, -10.0), Align2::LEFT_BOTTOM, format!("{v:.1}"), Tokens::ui(10.5), t.hot_text);

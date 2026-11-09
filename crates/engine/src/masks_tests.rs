@@ -159,6 +159,24 @@ fn merged_drag_is_one_undo_step_and_project_round_trips() {
     assert!(s.execute("masks.add", json!({"effect": "motion"})).is_err(), "Motion has no masks");
 }
 
+/// files/989 (Mona 2026-11-09: "Build canvas feather in Film"): a mask's feather and expansion are measured in clip pixels or in the
+/// canvas's, a choice of the person's (and the assistant's) through `masks.set`, kept in the project file and undone as one step.
+#[test]
+fn a_mask_measures_its_feather_in_clip_or_canvas_pixels() {
+    let (mut s, _) = demo();
+    s.execute("masks.add", json!({"shape": "ellipse"})).unwrap();
+    assert_eq!(s.execute("masks.list", json!({})).unwrap()["masks"][0]["units"], "clip", "Film's own masks follow the clip");
+    s.execute("masks.set", json!({"units": "canvas", "feather": 14})).unwrap();
+    let l = s.execute("masks.list", json!({})).unwrap();
+    assert_eq!((&l["masks"][0]["units"], &l["masks"][0]["feather"]), (&json!("canvas"), &json!(14.0)));
+    let back = filmcraft_format::decode(&filmcraft_format::encode(&s.project, false)).unwrap().project;
+    assert_eq!(&back, &*s.project);
+    let e = s.execute("masks.set", json!({"units": "inches"})).unwrap_err().to_string();
+    assert!(e.contains("unknown units `inches`: clip or canvas"), "{e}");
+    s.execute("edit.undo", json!({})).unwrap();
+    assert_eq!(s.execute("masks.list", json!({})).unwrap()["masks"][0]["units"], "clip");
+}
+
 // ---------------------------------------------------------------- tracking
 
 /// A 320×240 24 fps clip of a textured disc moving under a known similarity motion over a static

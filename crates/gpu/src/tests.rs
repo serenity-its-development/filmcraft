@@ -383,7 +383,15 @@ fn test_masks(scale: f32) -> Vec<filmcraft_render::mask::FlatMask> {
     c.mode = MaskMode::Difference;
     c.inverted = true;
     c.feather.value = ParamValue::Float(3.5);
-    filmcraft_render::mask::prepare(&[a, b, c], filmcraft_time::Tick(0), scale)
+    // A mask measured in the canvas's pixels, through a rotated, uneven map to the sequence frame (files/989, "Build canvas feather in
+    // Film").
+    let mut d = Mask::new("d", MaskPath::ellipse(Vec2::new(90.0, 120.0), Vec2::new(60.0, 35.0)));
+    d.units = filmcraft_project::MaskUnits::Canvas;
+    d.mode = MaskMode::Lighten;
+    d.feather.value = ParamValue::Float(18.0);
+    d.expansion.value = ParamValue::Float(-4.0);
+    let to_canvas = Affine::rotate_deg(20.0).then_apply(&Affine::scale(2.4 / scale as f64, 0.7 / scale as f64));
+    filmcraft_render::mask::prepare(&[a, b, c, d], filmcraft_time::Tick(0), scale, &to_canvas)
 }
 
 #[test]

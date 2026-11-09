@@ -373,17 +373,47 @@ impl TrackMethod {
     }
 }
 
+/// Where a mask's feather and expansion are measured (OneOS doctrine files/989, Mona 2026-11-09: "Build canvas feather in Film").
+/// Clip pixels (Film's own) follow the clip through its Motion; canvas pixels (Cut's own masks) are the sequence frame's, so the
+/// feather keeps one width on screen while the clip's scale is keyed, uneven or rotated.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum MaskUnits {
+    #[default]
+    Clip,
+    Canvas,
+}
+
+impl MaskUnits {
+    pub const ALL: [MaskUnits; 2] = [MaskUnits::Clip, MaskUnits::Canvas];
+    pub fn label(self) -> &'static str {
+        match self {
+            MaskUnits::Clip => "clip",
+            MaskUnits::Canvas => "canvas",
+        }
+    }
+    pub fn from_name(s: &str) -> Option<Self> {
+        match s {
+            "clip" => Some(MaskUnits::Clip),
+            "canvas" => Some(MaskUnits::Canvas),
+            _ => None,
+        }
+    }
+    pub fn is_clip(&self) -> bool {
+        *self == MaskUnits::Clip
+    }
+}
+
 /// A mask on an effect instance.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Mask {
     pub name: String,
     /// `ParamValue::Path`.
     pub path: Param,
-    /// Feather width in clip pixels (≥ 0).
+    /// Feather width (≥ 0), in [`Mask::units`].
     pub feather: Param,
     /// 0..100 %.
     pub opacity: Param,
-    /// Clip pixels (negative shrinks).
+    /// In [`Mask::units`] (negative shrinks).
     pub expansion: Param,
     #[serde(default)]
     pub inverted: bool,
@@ -391,6 +421,9 @@ pub struct Mask {
     pub mode: MaskMode,
     #[serde(default)]
     pub track_method: TrackMethod,
+    /// Where `feather` and `expansion` are measured (absent: clip pixels, as every mask before it).
+    #[serde(default, skip_serializing_if = "MaskUnits::is_clip")]
+    pub units: MaskUnits,
 }
 
 /// Mask parameter ids (keyframe commands address them with `"mask": n`).
@@ -407,6 +440,7 @@ impl Mask {
             inverted: false,
             mode: MaskMode::Add,
             track_method: TrackMethod::default(),
+            units: MaskUnits::Clip,
         }
     }
     pub fn param(&self, id: &str) -> Option<&Param> {

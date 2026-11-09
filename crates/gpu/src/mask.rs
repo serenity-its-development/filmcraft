@@ -95,6 +95,9 @@ impl GpuMask {
             for v in [m.feather, m.expansion, m.opacity, 0.0] {
                 infos.extend_from_slice(&v.to_le_bytes());
             }
+            for v in m.metric {
+                infos.extend_from_slice(&v.to_le_bytes());
+            }
         }
         if pts.is_empty() {
             pts.extend([0.0, 0.0]);

@@ -613,3 +613,55 @@ fn in_between_frames_stay_inside_the_source_range() {
         }
     }
 }
+
+/// files/989 (Mona 2026-11-09: "Build canvas feather in Film"): a mask measured in the canvas's pixels keeps its feather's width in
+/// the sequence frame while the clip's scale is uneven (half its height) and keyed (its width from 100 % to 300 %). At each frame it
+/// draws as the clip-pixel mask whose feather is 20 sequence pixels at THAT frame's scale (20 clip pixels across and 40 down at the
+/// first, 20/3 across at the last), each going through the same resampling; at 1:1 (across, at the first frame) its 10 % to 90 % ramp is
+/// the 12.2 pixels of a 20-pixel feather. The same mask in clip pixels widens with the clip instead.
+#[test]
+fn a_canvas_feather_keeps_its_width_in_the_sequence_through_a_keyed_uneven_scale() {
+    use filmcraft_project::{Keyframe, Mask, MaskPath, MaskUnits};
+    let (mut p, red, _o, seq, map) = setup();
+    let id = place(&mut p, seq, 0, red, 0, 48);
+    let r = FrameRate::FPS_24;
+    // the distance, in sequence pixels, over which alpha rises from 10 % to 90 %
+    let width = |a: &[f32]| {
+        let cross = |v: f32| a.windows(2).position(|w| w[0] < v && w[1] >= v).map(|i| i as f32 + (v - a[i]) / (a[i + 1] - a[i])).unwrap();
+        cross(0.9) - cross(0.1)
+    };
+    let widths = |p: &Project, f: i64| -> (f32, f32) {
+        let img = render_sequence(p, seq, r.tick_of(f), RenderOptions::default(), &map);
+        let across: Vec<f32> = (130..190).map(|x| img.get(x, 120)[3]).collect();
+        let down: Vec<f32> = (60..120).map(|y| img.get(250, y)[3]).collect();
+        (width(&across), width(&down))
+    };
+    let set = |p: &mut Project, units: MaskUnits, feather: f64| {
+        let (_, it) = p.sequence_mut(seq).unwrap().find_item_mut(id).unwrap();
+        let m = it.effect_mut("motion").unwrap();
+        m.params.get_mut("uniform_scale").unwrap().value = ParamValue::Bool(false);
+        m.params.get_mut("scale").unwrap().value = ParamValue::Float(50.0);
+        let w = m.params.get_mut("scale_width").unwrap();
+        w.keyframes = vec![Keyframe::new(Tick::ZERO, ParamValue::Float(100.0)), Keyframe::new(r.tick_of(24), ParamValue::Float(300.0))];
+        let mut mask = Mask::new("m", MaskPath::rect(160.0, 90.0, 1000.0, 1000.0));
+        mask.feather.value = ParamValue::Float(feather);
+        mask.units = units;
+        it.effect_mut("opacity").unwrap().masks = vec![mask];
+    };
+    let near = |a: f32, b: f32| (a - b).abs() < 0.05;
+    set(&mut p, MaskUnits::Canvas, 20.0);
+    let (first, last) = (widths(&p, 0), widths(&p, 24));
+    // Film's falloff is a smoothstep across the feather: 10 % at u = 0.196, 90 % at u = 0.804
+    assert!((first.0 - 20.0 * (0.804 - 0.196)).abs() < 0.3, "at 1:1 a 20-pixel feather ramps over 12.2 pixels: {}", first.0);
+    set(&mut p, MaskUnits::Clip, 20.0);
+    let clip_first = widths(&p, 0);
+    let clip_last = widths(&p, 24);
+    assert!(near(first.0, clip_first.0), "frame 0 across: canvas {} vs 20 clip pixels {}", first.0, clip_first.0);
+    assert!(clip_last.0 > 2.5 * clip_first.0, "a clip-pixel feather widens with the clip: {} then {}", clip_first.0, clip_last.0);
+    set(&mut p, MaskUnits::Clip, 40.0);
+    assert!(near(first.1, widths(&p, 0).1), "frame 0 down: canvas {} vs 40 clip pixels at 50 %", first.1);
+    set(&mut p, MaskUnits::Clip, 20.0 / 3.0);
+    let third = widths(&p, 24).0;
+    assert!(near(last.0, third), "frame 24 across: canvas {} vs 20/3 clip pixels at 300 % {third}", last.0);
+    assert!(near(last.1, first.1), "down is 50 % at both frames: {} then {}", first.1, last.1);
+}

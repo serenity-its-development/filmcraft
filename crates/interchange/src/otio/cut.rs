@@ -276,12 +276,12 @@ struct Frame {
     el: Option<ElementBox>,
 }
 
-/// Where the element's own pixels are in Film's clip: a medium's are its pixels (Cut fits it in the canvas, `fit`); a graphic of Cut's is
-/// drawn on a 512 px square at the frame's centre.
+/// Where the element's own pixels are in Film's clip: a medium's are its pixels; a graphic of Cut's is drawn on a 512 px square at the
+/// frame's centre.
 fn element_box(kind: Kind, px: Option<(f64, f64)>, f: Frame) -> Option<ElementBox> {
     match kind {
-        Kind::Video | Kind::Image => px.filter(|(w, h)| *w > 0.0 && *h > 0.0).map(|(w, h)| ElementBox { x: 0.0, y: 0.0, w, h, fit: (f.w / w).min(f.h / h) }),
-        Kind::Shape => Some(ElementBox { x: f.w / 2.0 - 256.0, y: f.h / 2.0 - 256.0, w: 512.0, h: 512.0, fit: f.w.min(f.h) / 512.0 }),
+        Kind::Video | Kind::Image => px.filter(|(w, h)| *w > 0.0 && *h > 0.0).map(|(w, h)| ElementBox { x: 0.0, y: 0.0, w, h }),
+        Kind::Shape => Some(ElementBox { x: f.w / 2.0 - 256.0, y: f.h / 2.0 - 256.0, w: 512.0, h: 512.0 }),
         _ => None,
     }
 }
@@ -297,21 +297,6 @@ fn medium_px(root: &Map<String, Value>, c: &Value) -> Option<(f64, f64)> {
             size(root.get("opencut")?.get("media")?.as_array()?.iter().find(|m| m.get("id").and_then(Value::as_str) == Some(id)))
         })
         .or_else(|| size(r.pointer("/metadata/filmcraft/info/video")))
-}
-
-/// The canvas's pixels per clip pixel of the element now, when one number holds it (Cut's scale even and not keyed): what turns a mask of
-/// Cut's measured in the canvas's pixels into Film's clip pixels.
-fn canvas_per_clip(f: Frame, ti: &TrackItem, scale_keyed_in_file: bool) -> Option<f64> {
-    let b = f.el?;
-    let m = fx(ti, "motion")?;
-    if scale_keyed_in_file || ["scale", "scale_width"].iter().any(|k| m.params.get(*k).is_some_and(Param::is_animated)) {
-        return None;
-    }
-    let s = float(m, "scale").ok()?;
-    if !boolean(m, "uniform_scale").unwrap_or(true) && float(m, "scale_width").ok()? != s {
-        return None;
-    }
-    Some(b.fit * s.abs() / 100.0)
 }
 
 fn fx<'a>(ti: &'a TrackItem, id: &str) -> Option<&'a EffectInstance> {
@@ -583,7 +568,7 @@ fn effects_field() -> Field {
 
 /// The element's masks as Film's masks on the clip (its Opacity's masks), written back in Cut's shape (`cut_masks`). Cut's masks Film
 /// cannot show yet (a text mask) are carried as the file holds them, and Film adds none beside them.
-fn masks_field(scale_keyed: bool) -> Field {
+fn masks_field() -> Field {
     field(
         "/masks",
         Value::Null,
@@ -601,20 +586,19 @@ fn masks_field(scale_keyed: bool) -> Field {
                 }
                 return Err(format!("mask-size-unknown: the file does not carry the pixel size of \"{}\"'s medium, so Film's mask has no place in Cut's fractions of it", ti.name));
             };
-            let k = canvas_per_clip(f, ti, scale_keyed);
-            if let Err(why) = cut_masks::film_masks(&origin_masks, &b, k) {
+            if let Err(why) = cut_masks::film_masks(&origin_masks, &b) {
                 if film.is_empty() {
                     return Ok(carried());
                 }
                 return Err(format!("masks-carried: \"{}\" holds {why}, carried as the file holds it, so Film's masks are not written beside it", ti.name));
             }
-            let out = cut_masks::cut_masks(film, &origin_masks, &b, k)?;
+            let out = cut_masks::cut_masks(film, &origin_masks, &b)?;
             Ok(if out.is_empty() && was.is_none() { Value::Null } else { Value::Array(out) })
         },
         move |f, ti, v| {
             let (Some(b), Some(list)) = (f.el, v.as_array()) else { return Ok(()) };
             // Cut's masks Film cannot show yet stay carried as the file holds them (the field reads them back as they are).
-            if let Ok(masks) = cut_masks::film_masks(list, &b, canvas_per_clip(f, ti, scale_keyed)) {
+            if let Ok(masks) = cut_masks::film_masks(list, &b) {
                 fx_mut(ti, "opacity")?.masks = masks;
             }
             Ok(())
@@ -734,8 +718,7 @@ fn fields_for(kind: Kind, origin: &Value) -> Vec<Field> {
             }
             v.push(effects_field());
             if kind != Kind::Text {
-                let keyed = origin.pointer(&format!("{ELEMENT}/animations/bindings")).and_then(Value::as_object).is_some_and(|b| b.keys().any(|k| k.starts_with("transform.scale")));
-                v.push(masks_field(keyed));
+                v.push(masks_field());
             }
         }
     }

@@ -7,29 +7,28 @@
 //! (pinned against the editor's own `buildPath`, `tests/it/oneos/mask-paths.json`). Both draw a mask the same way: feathered across its
 //! edge after it is grown by its expansion, made `opacity · (inverted ? 1 − c : c)`, combined top to bottom by its mode (Cut's
 //! `masks/combine.ts` is Film's [`MaskMode`]). Cut measures a mask's feather and expansion in the canvas's pixels (its own masks) or in
-//! clip pixels (`units: "clip"`, the masks Film draws); Film in clip pixels, so a mask of Cut's in canvas pixels opens in Film only where
-//! one number turns the one into the other (the element's scale is one, unkeyed scale).
+//! clip pixels (`units: "clip"`, the masks Film draws), and so does Film ([`MaskUnits`], Mona 2026-11-09: "Build canvas feather in
+//! Film"): a mask of Cut's in canvas pixels is Film's canvas mask with the same numbers, drawn through the clip's Motion frame by frame,
+//! on any scale, keyed or uneven.
 //!
 //! A save writes each mask back in Cut's shape: a mask Film did not change exactly as the file held it; a changed one with only what
-//! changed rewritten (a path Film reshaped becomes Cut's custom path of the same curve, a feather or expansion Film set is written in clip
-//! pixels); a mask Film added as Cut's custom path. What Cut has no place for is refused by name: keyframes on a mask
+//! changed rewritten (a path Film reshaped becomes Cut's custom path of the same curve, a feather or expansion Film set is written in
+//! the mask's own units); a mask Film added as Cut's custom path. What Cut has no place for is refused by name: keyframes on a mask
 //! (`mask-keyframes-not-in-cut`), a mask on an effect rather than the clip (`effect-mask-not-in-cut`).
 
 use std::f64::consts::PI;
 
 use filmcraft_geom::Vec2;
-use filmcraft_project::{Mask, MaskMode, MaskPath, MaskVertex, Param, ParamValue, TrackMethod};
+use filmcraft_project::{Mask, MaskMode, MaskPath, MaskUnits, MaskVertex, Param, ParamValue, TrackMethod};
 use serde_json::{Map, Value, json};
 
-/// The element's own pixels in Film's clip pixels (where Cut's fractions of the element are), and the canvas's pixels per clip pixel at
-/// the element's unscaled size (Cut fits an element in the canvas, as Film's scale-to-frame does).
+/// The element's own pixels in Film's clip pixels (where Cut's fractions of the element are).
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(super) struct ElementBox {
     pub x: f64,
     pub y: f64,
     pub w: f64,
     pub h: f64,
-    pub fit: f64,
 }
 
 /// Film's circle tangent (the same as [`filmcraft_project::mask::KAPPA`]).
@@ -236,32 +235,24 @@ fn track_name(t: TrackMethod) -> &'static str {
     }
 }
 
-/// One of Cut's masks as Film's (a mask in the canvas's pixels converted by `canvas_per_clip`, the canvas's pixels per clip pixel now).
-pub(super) fn film_mask(mask: &Value, b: &ElementBox, canvas_per_clip: Option<f64>) -> Result<Mask, String> {
+/// One of Cut's masks as Film's, its feather and expansion in the units Cut measures them in.
+pub(super) fn film_mask(mask: &Value, b: &ElementBox) -> Result<Mask, String> {
     let ty = mask.get("type").and_then(Value::as_str).unwrap_or("");
     let p = mask.get("params").ok_or("a mask without params")?;
     let mut path = cut_mask_path(mask, b.w, b.h)?;
     for v in &mut path.vertices {
         v.p = Vec2::new(v.p.x + b.x, v.p.y + b.y);
     }
-    let clip = match p.get("units").and_then(Value::as_str) {
-        None | Some("canvas") => false,
-        Some("clip") => true,
+    let units = match p.get("units").and_then(Value::as_str) {
+        None | Some("canvas") => MaskUnits::Canvas,
+        Some("clip") => MaskUnits::Clip,
         Some(u) => return Err(format!("a mask measured in \"{u}\"")),
-    };
-    let measure = |k: &str| -> Result<f64, String> {
-        let x = num(p, k, 0.0);
-        if clip || x == 0.0 {
-            return Ok(x);
-        }
-        canvas_per_clip.map(|c| x / c).ok_or_else(|| {
-            format!("a {} mask whose {k} is in the canvas's pixels on an element whose scale is keyed or uneven, so no one width in Film's clip pixels draws it", label(ty))
-        })
     };
     let open = ty == "custom" && !path.closed;
     let mut m = Mask::new(mask.get("name").and_then(Value::as_str).unwrap_or(label(ty)), path);
-    m.feather = Param::new(ParamValue::Float(measure("feather")?));
-    m.expansion = Param::new(ParamValue::Float(measure("expansion")?));
+    m.units = units;
+    m.feather = Param::new(ParamValue::Float(num(p, "feather", 0.0)));
+    m.expansion = Param::new(ParamValue::Float(num(p, "expansion", 0.0)));
     m.opacity = Param::new(ParamValue::Float(num(p, "opacity", 1.0) * 100.0));
     m.inverted = p.get("inverted").and_then(Value::as_bool).unwrap_or(false);
     m.mode = if open { MaskMode::None } else { mode_of(p.get("mode").and_then(Value::as_str))? };
@@ -270,8 +261,8 @@ pub(super) fn film_mask(mask: &Value, b: &ElementBox, canvas_per_clip: Option<f6
 }
 
 /// Cut's masks as Film's.
-pub(super) fn film_masks(masks: &[Value], b: &ElementBox, canvas_per_clip: Option<f64>) -> Result<Vec<Mask>, String> {
-    masks.iter().map(|m| film_mask(m, b, canvas_per_clip)).collect()
+pub(super) fn film_masks(masks: &[Value], b: &ElementBox) -> Result<Vec<Mask>, String> {
+    masks.iter().map(|m| film_mask(m, b)).collect()
 }
 
 fn r9(x: f64) -> Value {
@@ -302,9 +293,9 @@ fn custom_points(path: &MaskPath, b: &ElementBox) -> Value {
 }
 
 /// Film's masks written back in Cut's shape over `origin` (Cut's masks as the file holds them): what Film did not change comes back
-/// exactly; a changed mask has only what changed rewritten; a mask Film added is Cut's custom path in clip pixels.
-pub(super) fn cut_masks(film: &[Mask], origin: &[Value], b: &ElementBox, canvas_per_clip: Option<f64>) -> Result<Vec<Value>, String> {
-    let expected: Vec<Option<Mask>> = origin.iter().map(|o| film_mask(o, b, canvas_per_clip).ok()).collect();
+/// exactly; a changed mask has only what changed rewritten; a mask Film added is Cut's custom path in its own units.
+pub(super) fn cut_masks(film: &[Mask], origin: &[Value], b: &ElementBox) -> Result<Vec<Value>, String> {
+    let expected: Vec<Option<Mask>> = origin.iter().map(|o| film_mask(o, b).ok()).collect();
     let mut out = Vec::with_capacity(film.len());
     for (i, m) in film.iter().enumerate() {
         let e = expected.get(i).cloned().flatten();
@@ -338,9 +329,11 @@ pub(super) fn cut_masks(film: &[Mask], origin: &[Value], b: &ElementBox, canvas_
                 params.insert(k.into(), v);
             }
         }
+        if e.as_ref().is_none_or(|e| e.units != m.units) {
+            params.insert("units".into(), json!(m.units.label()));
+        }
         let measured_changed = e.as_ref().is_none_or(|e| e.feather != m.feather || e.expansion != m.expansion);
         if measured_changed {
-            params.insert("units".into(), json!("clip"));
             params.insert("feather".into(), r9(feather));
             params.insert("expansion".into(), r9(expansion));
         }
@@ -406,7 +399,7 @@ mod tests {
     }
 
     fn b() -> ElementBox {
-        ElementBox { x: 0.0, y: 0.0, w: 1920.0, h: 1080.0, fit: 1.0 }
+        ElementBox { x: 0.0, y: 0.0, w: 1920.0, h: 1080.0 }
     }
 
     fn masks() -> Vec<Value> {
@@ -416,16 +409,16 @@ mod tests {
     #[test]
     fn cut_s_masks_unchanged_in_film_are_written_back_exactly() {
         let o = masks();
-        let film = film_masks(&o, &b(), Some(1.0)).unwrap();
-        assert_eq!(cut_masks(&film, &o, &b(), Some(1.0)).unwrap(), o);
+        let film = film_masks(&o, &b()).unwrap();
+        assert_eq!(cut_masks(&film, &o, &b()).unwrap(), o);
     }
 
     #[test]
     fn film_s_edit_of_a_cut_mask_is_written_in_cut_s_shape_and_reads_back_as_film_s() {
         let mut o = masks();
         o[4]["params"]["feather"] = json!(8);
-        let mut film = film_masks(&o, &b(), Some(2.0)).unwrap();
-        assert_eq!(film[4].feather.value.as_f64(), Some(4.0), "8 canvas pixels at two canvas pixels per clip pixel");
+        let mut film = film_masks(&o, &b()).unwrap();
+        assert_eq!((film[4].units, film[4].feather.value.as_f64()), (MaskUnits::Canvas, Some(8.0)), "Cut's 8 canvas pixels are Film's");
         // Film reshapes the rectangle, sets the ellipse's mode, opacity, expansion and feather, and adds a mask of its own.
         let ParamValue::Path(p) = &mut film[4].path.value else { panic!() };
         p.vertices[0].p = Vec2::new(600.0, 200.0);
@@ -435,7 +428,7 @@ mod tests {
         film[6].feather = Param::new(ParamValue::Float(5.0));
         film[6].name = "Hole".into();
         film.push(Mask::new("Custom", MaskPath::ellipse(Vec2::new(300.0, 300.0), Vec2::new(50.0, 40.0))));
-        let cut = cut_masks(&film, &o, &b(), Some(2.0)).unwrap();
+        let cut = cut_masks(&film, &o, &b()).unwrap();
         assert_eq!(cut[4]["type"], "custom");
         assert_eq!(cut[4]["id"], o[4]["id"]);
         assert_eq!(cut[4]["params"]["feather"], 8, "the feather Film did not change stays in the canvas's pixels");
@@ -443,7 +436,7 @@ mod tests {
         assert_eq!(cut[6]["type"], "ellipse", "a mask Film did not reshape keeps its type");
         assert_eq!(cut[6]["params"]["mode"], "subtract");
         assert_eq!(cut[6]["params"]["opacity"], 0.5);
-        assert_eq!((&cut[6]["params"]["units"], &cut[6]["params"]["expansion"], &cut[6]["params"]["feather"]), (&json!("clip"), &json!(3), &json!(5)));
+        assert_eq!((cut[6]["params"].get("units"), &cut[6]["params"]["expansion"], &cut[6]["params"]["feather"]), (None, &json!(3), &json!(5)), "Film's feather in the canvas's pixels, Cut's own");
         assert_eq!(cut[6]["name"], "Hole");
         assert_eq!(cut[16]["type"], "custom");
         assert_eq!(cut[16]["params"]["units"], "clip");
@@ -454,14 +447,14 @@ mod tests {
             }
         }
         // What Film wrote opens in Film as what Film had (the same curve, the same look).
-        let again = film_masks(&cut, &b(), Some(2.0)).unwrap();
+        let again = film_masks(&cut, &b()).unwrap();
         for (a, f) in again.iter().zip(&film) {
             let (ParamValue::Path(pa), ParamValue::Path(pf)) = (&a.path.value, &f.path.value) else { panic!() };
             assert_eq!(pa.vertices.len(), pf.vertices.len());
             for (x, y) in pa.vertices.iter().zip(&pf.vertices) {
                 assert!((x.p - y.p).length() < 1e-6 && (x.t_in - y.t_in).length() < 1e-6 && (x.t_out - y.t_out).length() < 1e-6, "{}: {x:?} {y:?}", a.name);
             }
-            assert_eq!((a.mode, a.inverted, &a.name, a.track_method), (f.mode, f.inverted, &f.name, f.track_method));
+            assert_eq!((a.mode, a.inverted, &a.name, a.track_method, a.units), (f.mode, f.inverted, &f.name, f.track_method, f.units));
             for (p, q) in [(&a.feather, &f.feather), (&a.expansion, &f.expansion), (&a.opacity, &f.opacity)] {
                 assert!((p.value.as_f64().unwrap() - q.value.as_f64().unwrap()).abs() < 1e-9, "{}", a.name);
             }
@@ -471,15 +464,38 @@ mod tests {
     #[test]
     fn what_cut_cannot_hold_of_a_film_mask_is_refused_by_name() {
         let o = masks();
-        let mut film = film_masks(&o, &b(), Some(1.0)).unwrap();
+        let mut film = film_masks(&o, &b()).unwrap();
         let mut k = film[2].feather.clone();
         k.keyframes.push(filmcraft_project::Keyframe::new(filmcraft_time::Tick(0), ParamValue::Float(2.0)));
         film[2].feather = k;
-        assert!(cut_masks(&film, &o, &b(), Some(1.0)).unwrap_err().starts_with("mask-keyframes-not-in-cut: "));
-        let mut feathered = o.clone();
-        feathered[2]["params"]["feather"] = json!(4);
-        assert!(film_masks(&feathered, &b(), None).unwrap_err().contains("scale is keyed or uneven"));
-        feathered[2]["params"]["units"] = json!("clip");
-        assert_eq!(film_masks(&feathered, &b(), None).unwrap()[2].feather.value.as_f64(), Some(4.0), "a mask in clip pixels needs no scale");
+        assert!(cut_masks(&film, &o, &b()).unwrap_err().starts_with("mask-keyframes-not-in-cut: "));
+        let mut odd = o.clone();
+        odd[2]["params"]["units"] = json!("inches");
+        assert_eq!(film_masks(&odd, &b()).unwrap_err(), "a mask measured in \"inches\"");
+    }
+
+    /// files/989 (Mona 2026-11-09: "Build canvas feather in Film"): a feather and expansion Cut measures in the canvas's pixels open in
+    /// Film as its canvas mask with the same numbers, needing no scale; one in clip pixels as its clip mask. A person switching a mask's
+    /// units in Film writes the units Cut reads; Film's edit of a canvas feather stays in the canvas's pixels.
+    #[test]
+    fn a_canvas_feather_is_film_s_canvas_feather_both_ways() {
+        let mut o = masks();
+        o[2]["params"]["feather"] = json!(4);
+        o[2]["params"]["expansion"] = json!(-1.5);
+        o[3]["params"]["units"] = json!("clip");
+        o[3]["params"]["feather"] = json!(6);
+        let mut film = film_masks(&o, &b()).unwrap();
+        let measures = |m: &Mask| (m.units, m.feather.value.as_f64(), m.expansion.value.as_f64());
+        assert_eq!(measures(&film[2]), (MaskUnits::Canvas, Some(4.0), Some(-1.5)));
+        assert_eq!(measures(&film[3]), (MaskUnits::Clip, Some(6.0), Some(0.0)));
+        assert_eq!(cut_masks(&film, &o, &b()).unwrap(), o, "unchanged, written back exactly");
+        film[2].feather = Param::new(ParamValue::Float(9.0));
+        film[3].units = MaskUnits::Canvas;
+        film[5].units = MaskUnits::Clip;
+        let cut = cut_masks(&film, &o, &b()).unwrap();
+        assert_eq!((cut[2]["params"].get("units"), &cut[2]["params"]["feather"]), (None, &json!(9)), "Film's edit of a canvas feather");
+        assert_eq!((&cut[3]["params"]["units"], &cut[3]["params"]["feather"]), (&json!("canvas"), &json!(6)));
+        assert_eq!(&cut[5]["params"]["units"], &json!("clip"));
+        assert_eq!(film_masks(&cut, &b()).unwrap().iter().map(|m| m.units).collect::<Vec<_>>(), film.iter().map(|m| m.units).collect::<Vec<_>>());
     }
 }

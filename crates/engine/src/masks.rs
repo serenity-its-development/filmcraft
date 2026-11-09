@@ -10,7 +10,7 @@
 //! key folds a continuous drag into one step).
 
 use filmcraft_geom::{Affine, Vec2};
-use filmcraft_project::{ClipId, EffectInstance, Mask, MaskMode, MaskPath, MaskVertex, ParamValue, TrackKind, TrackMethod};
+use filmcraft_project::{ClipId, EffectInstance, Mask, MaskMode, MaskPath, MaskUnits, MaskVertex, ParamValue, TrackKind, TrackMethod};
 use filmcraft_time::Tick;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -45,7 +45,7 @@ pub(crate) fn commands() -> Vec<CommandSpec> {
         spec(
             "masks.set",
             "Change Mask",
-            r#"{"clip":id?,"effect":index|id?,"mask":n?,"name":str?,"inverted":bool?,"mode":"none|add|subtract|intersect|lighten|darken|difference"?,"trackMethod":"position|positionRotation|positionScaleRotation"?,"feather":px?,"opacity":pct?,"expansion":px?,"path":path?,"time":ticks?,"merge":key?}"#,
+            r#"{"clip":id?,"effect":index|id?,"mask":n?,"name":str?,"inverted":bool?,"mode":"none|add|subtract|intersect|lighten|darken|difference"?,"trackMethod":"position|positionRotation|positionScaleRotation"?,"units":"clip|canvas"?,"feather":px?,"opacity":pct?,"expansion":px?,"path":path?,"time":ticks?,"merge":key?}"#,
             set,
         ),
         spec(
@@ -289,6 +289,11 @@ fn set(s: &mut Session, p: &Value) -> Result<Value> {
         Some(m) => Some(TrackMethod::from_name(m).ok_or_else(|| bad("masks.set", format!("unknown tracking method `{m}`")))?),
         None => None,
     };
+    // Where feather and expansion are measured: clip pixels, or the canvas's (the sequence frame's) through the clip's Motion.
+    let units = match str_p(p, "units") {
+        Some(u) => Some(MaskUnits::from_name(u).ok_or_else(|| bad("masks.set", format!("unknown units `{u}`: clip or canvas")))?),
+        None => None,
+    };
     let name = str_p(p, "name").map(str::to_string);
     let inverted = bool_p(p, "inverted");
     let nums: Vec<(&str, f64)> = ["feather", "opacity", "expansion"].into_iter().filter_map(|k| f64_p(p, k).map(|v| (k, v))).collect();
@@ -304,6 +309,9 @@ fn set(s: &mut Session, p: &Value) -> Result<Value> {
         }
         if let Some(me) = method {
             m.track_method = me;
+        }
+        if let Some(u) = units {
+            m.units = u;
         }
         for (k, v) in nums {
             let v = match k {
@@ -569,6 +577,7 @@ fn list(s: &mut Session, p: &Value) -> Result<Value> {
                         "mode": m.mode.label(),
                         "inverted": m.inverted,
                         "trackMethod": m.track_method.label(),
+                        "units": m.units.label(),
                         "feather": m.feather.f64_at(mt),
                         "opacity": m.opacity.f64_at(mt),
                         "expansion": m.expansion.f64_at(mt),
