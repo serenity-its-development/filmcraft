@@ -686,9 +686,20 @@ fn oneos_a_whole_film_project_through_otio_value_for_value() {
     p.search_bins.push(filmcraft_project::SearchBin { id: sb, name: "Interviews".into(), query: Default::default() });
     let unused = media(&mut p, "/m/unused.mov", true, true, r);
     let a = p.items.values().find(|i| i.name.contains("a.mov") || i.name == "a").map(|i| i.id).unwrap();
-    p.transcripts.insert(a, std::sync::Arc::new(filmcraft_project::Transcript { language: "en".into(), source: "manual".into(), speakers: vec![], words: vec![] }));
+    p.transcripts
+        .insert(a, std::sync::Arc::new(filmcraft_project::Transcript { language: "en".into(), source: "manual".into(), speakers: vec![], words: vec![] }));
     p.source_graphics.insert(a, Default::default());
-    p.narrations.insert(unused, filmcraft_project::Narration { text: "Hello".into(), language: "en-US".into(), voice: "v".into(), pitch: Default::default(), pace: 1.0, speech_duration: r.tick_of(24) });
+    p.narrations.insert(
+        unused,
+        filmcraft_project::Narration {
+            text: "Hello".into(),
+            language: "en-US".into(),
+            voice: "v".into(),
+            pitch: Default::default(),
+            pace: 1.0,
+            speech_duration: r.tick_of(24),
+        },
+    );
     let other = sequence(&mut p, "Another timeline", r, false);
     let _ = (bin, other);
 
@@ -696,7 +707,11 @@ fn oneos_a_whole_film_project_through_otio_value_for_value() {
     let (bytes, rep) = filmcraft_interchange::export_project(&p, &ExportOptions::default()).expect("export the whole project");
     let text = String::from_utf8(bytes.clone()).unwrap();
     assert!(text.contains("\"OTIO_SCHEMA\": \"SerializableCollection.1\""));
-    assert_eq!(text.matches("\"OTIO_SCHEMA\": \"Timeline.1\"").count(), p.items.values().filter(|i| i.as_sequence().is_some()).count(), "one Timeline per sequence");
+    assert_eq!(
+        text.matches("\"OTIO_SCHEMA\": \"Timeline.1\"").count(),
+        p.items.values().filter(|i| i.as_sequence().is_some()).count(),
+        "one Timeline per sequence"
+    );
     let (imp, rep2) = import(&bytes, Format::Otio, None).expect("import the whole project");
     assert!(!rep2.has_warnings(), "{rep2}");
     let q = &imp.project;
@@ -708,24 +723,39 @@ fn oneos_a_whole_film_project_through_otio_value_for_value() {
         v
     };
     let vals = |v: Value| -> Vec<String> {
-        let mut out: Vec<String> = match v { Value::Object(m) => m.into_iter().map(|(_, x)| x.to_string()).collect(), Value::Array(a) => a.into_iter().map(|x| x.to_string()).collect(), x => vec![x.to_string()] };
+        let mut out: Vec<String> = match v {
+            Value::Object(m) => m.into_iter().map(|(_, x)| x.to_string()).collect(),
+            Value::Array(a) => a.into_iter().map(|x| x.to_string()).collect(),
+            x => vec![x.to_string()],
+        };
         out.sort();
         out
     };
     let mut lost: Vec<&str> = Vec::new();
-    let mut check = |field: &'static str, same: bool| if !same { lost.push(field) };
+    let mut check = |field: &'static str, same: bool| {
+        if !same {
+            lost.push(field)
+        }
+    };
     check("name", q.name == p.name);
     check("notes", q.notes == p.notes);
     check("custom_colors", q.custom_colors == p.custom_colors);
     check("custom_color_names", q.custom_color_names == p.custom_color_names);
     check("settings", q.settings == p.settings);
     check("luts", q.luts == p.luts);
-    check("search_bins", serde_json::to_value(&q.search_bins).unwrap().as_array().map(|a| a.len()) == serde_json::to_value(&p.search_bins).unwrap().as_array().map(|a| a.len()));
+    check(
+        "search_bins",
+        serde_json::to_value(&q.search_bins).unwrap().as_array().map(|a| a.len()) == serde_json::to_value(&p.search_bins).unwrap().as_array().map(|a| a.len()),
+    );
     check("transcripts", vals(serde_json::to_value(&q.transcripts).unwrap()) == vals(serde_json::to_value(&p.transcripts).unwrap()));
     check("source_graphics", vals(serde_json::to_value(&q.source_graphics).unwrap()) == vals(serde_json::to_value(&p.source_graphics).unwrap()));
     check("narrations", vals(serde_json::to_value(&q.narrations).unwrap()) == vals(serde_json::to_value(&p.narrations).unwrap()));
     check("root bins", {
-        let b = |p: &Project| { let mut v: Vec<String> = serde_json::to_value(&p.root).unwrap()["bins"].as_array().into_iter().flatten().map(|b| b["name"].to_string()).collect(); v.sort(); v };
+        let b = |p: &Project| {
+            let mut v: Vec<String> = serde_json::to_value(&p.root).unwrap()["bins"].as_array().into_iter().flatten().map(|b| b["name"].to_string()).collect();
+            v.sort();
+            v
+        };
         b(q) == b(&p)
     });
     check("items: media", names(q, &|i| i.as_media().is_some()) == names(&p, &|i| i.as_media().is_some()));
@@ -775,7 +805,11 @@ fn oneos_film_writes_the_file_cut_reads() {
         std::fs::write(path, &bytes).unwrap();
     }
     let golden = std::fs::read(path).expect("the golden Film-written file (FILMCRAFT_BLESS=1 writes it)");
-    assert_eq!(serde_json::from_slice::<Value>(&golden).unwrap(), serde_json::from_slice::<Value>(&bytes).unwrap(), "Film writes the shared file as it is pinned");
+    assert_eq!(
+        serde_json::from_slice::<Value>(&golden).unwrap(),
+        serde_json::from_slice::<Value>(&bytes).unwrap(),
+        "Film writes the shared file as it is pinned"
+    );
 }
 
 /// files/989 step 2 (Mona 2026-11-09: "yes, so this becomes a tool choice not a file type choicer"): Film's own clips ANIMATED, in Film's
@@ -785,8 +819,8 @@ fn oneos_film_writes_the_file_cut_reads() {
 /// `FILMCRAFT_BLESS=1` writes the golden file; otherwise the writer must give it again, value for value.
 #[test]
 fn oneos_film_writes_its_keyframes_for_cut() {
-    use filmcraft_project::{Interpolation, find_effect};
     use filmcraft_geom::Vec2;
+    use filmcraft_project::{Interpolation, find_effect};
     use serde_json::Value;
     let r = FrameRate::FPS_24;
     let mut p = Project::new("Keys");
@@ -794,44 +828,86 @@ fn oneos_film_writes_its_keyframes_for_cut() {
     let s = sequence(&mut p, "Edit", r, false);
     let v = clip(&mut p, s, TrackKind::Video, 0, a, 0..48, 24);
     let au = clip(&mut p, s, TrackKind::Audio, 0, a, 0..48, 24);
-    let (w, h) = { let q = p.sequence(s).unwrap(); (q.settings.width as f64, q.settings.height as f64) };
-    let key = |f: i64, value: ParamValue, interp: Interpolation, out_influence: f64, in_influence: f64| Keyframe { time: r.tick_of(f), value, interp, out_influence, in_influence, out_rise: None, in_rise: None, linear_light: false };
+    let (w, h) = {
+        let q = p.sequence(s).unwrap();
+        (q.settings.width as f64, q.settings.height as f64)
+    };
+    let key = |f: i64, value: ParamValue, interp: Interpolation, out_influence: f64, in_influence: f64| Keyframe {
+        time: r.tick_of(f),
+        value,
+        interp,
+        out_influence,
+        in_influence,
+        out_rise: None,
+        in_rise: None,
+        linear_light: false,
+    };
     let third = 1.0 / 3.0;
     {
         let q = p.sequence_mut(s).unwrap();
         let ti = q.video_tracks[0].items.iter_mut().find(|i| i.id == v).unwrap();
         ti.name = "Keyed".into();
         let motion = ti.effects.iter_mut().find(|e| e.effect == "motion").unwrap();
-        motion.params.insert("position".into(), Param { value: ParamValue::Vec2(Vec2::new(w / 2.0 + 100.0, h / 2.0)), keyframes: vec![
-            key(0, ParamValue::Vec2(Vec2::new(w / 2.0 + 100.0, h / 2.0)), Interpolation::Linear, third, third),
-            key(12, ParamValue::Vec2(Vec2::new(w / 2.0 + 40.0, h / 2.0 - 40.0)), Interpolation::EaseOut, 0.5, third),
-            key(24, ParamValue::Vec2(Vec2::new(w / 2.0, h / 2.0)), Interpolation::Linear, third, third),
-        ] });
-        motion.params.insert("scale".into(), Param { value: ParamValue::Float(100.0), keyframes: vec![
-            key(0, ParamValue::Float(100.0), Interpolation::Bezier, 0.25, third),
-            key(24, ParamValue::Float(150.0), Interpolation::Bezier, third, 0.75),
-        ] });
+        motion.params.insert(
+            "position".into(),
+            Param {
+                value: ParamValue::Vec2(Vec2::new(w / 2.0 + 100.0, h / 2.0)),
+                keyframes: vec![
+                    key(0, ParamValue::Vec2(Vec2::new(w / 2.0 + 100.0, h / 2.0)), Interpolation::Linear, third, third),
+                    key(12, ParamValue::Vec2(Vec2::new(w / 2.0 + 40.0, h / 2.0 - 40.0)), Interpolation::EaseOut, 0.5, third),
+                    key(24, ParamValue::Vec2(Vec2::new(w / 2.0, h / 2.0)), Interpolation::Linear, third, third),
+                ],
+            },
+        );
+        motion.params.insert(
+            "scale".into(),
+            Param {
+                value: ParamValue::Float(100.0),
+                keyframes: vec![
+                    key(0, ParamValue::Float(100.0), Interpolation::Bezier, 0.25, third),
+                    key(24, ParamValue::Float(150.0), Interpolation::Bezier, third, 0.75),
+                ],
+            },
+        );
         motion.params.insert("rotation".into(), Param::new(ParamValue::Float(15.0)));
         let opacity = ti.effects.iter_mut().find(|e| e.effect == "opacity").unwrap();
-        opacity.params.insert("opacity".into(), Param { value: ParamValue::Float(100.0), keyframes: vec![
-            key(0, ParamValue::Float(0.0), Interpolation::Hold, third, third),
-            key(6, ParamValue::Float(50.0), Interpolation::Linear, third, third),
-            key(18, ParamValue::Float(100.0), Interpolation::Linear, third, third),
-        ] });
+        opacity.params.insert(
+            "opacity".into(),
+            Param {
+                value: ParamValue::Float(100.0),
+                keyframes: vec![
+                    key(0, ParamValue::Float(0.0), Interpolation::Hold, third, third),
+                    key(6, ParamValue::Float(50.0), Interpolation::Linear, third, third),
+                    key(18, ParamValue::Float(100.0), Interpolation::Linear, third, third),
+                ],
+            },
+        );
         let mut blur = find_effect("gaussian_blur").unwrap().instance();
-        blur.params.insert("blurriness".into(), Param { value: ParamValue::Float(10.0), keyframes: vec![
-            key(0, ParamValue::Float(0.0), Interpolation::Linear, third, third),
-            key(24, ParamValue::Float(20.0), Interpolation::Linear, third, third),
-        ] });
+        blur.params.insert(
+            "blurriness".into(),
+            Param {
+                value: ParamValue::Float(10.0),
+                keyframes: vec![
+                    key(0, ParamValue::Float(0.0), Interpolation::Linear, third, third),
+                    key(24, ParamValue::Float(20.0), Interpolation::Linear, third, third),
+                ],
+            },
+        );
         ti.effects.push(blur);
         let ta = q.audio_tracks[0].items.iter_mut().find(|i| i.id == au).unwrap();
         ta.name = "Keyed sound".into();
         ta.gain_db = -3.0;
         let vol = ta.effects.iter_mut().find(|e| e.effect == "volume").unwrap();
-        vol.params.insert("level".into(), Param { value: ParamValue::Float(0.0), keyframes: vec![
-            key(0, ParamValue::Float(0.0), Interpolation::Linear, third, third),
-            key(24, ParamValue::Float(-6.0), Interpolation::Linear, third, third),
-        ] });
+        vol.params.insert(
+            "level".into(),
+            Param {
+                value: ParamValue::Float(0.0),
+                keyframes: vec![
+                    key(0, ParamValue::Float(0.0), Interpolation::Linear, third, third),
+                    key(24, ParamValue::Float(-6.0), Interpolation::Linear, third, third),
+                ],
+            },
+        );
     }
     let (bytes, _) = filmcraft_interchange::export_project(&p, &ExportOptions::default()).expect("Film writes the whole project");
     let path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/it/oneos/film-keyed.otio");
@@ -840,4 +916,61 @@ fn oneos_film_writes_its_keyframes_for_cut() {
     }
     let golden = std::fs::read(path).expect("the golden Film-keyed file (FILMCRAFT_BLESS=1 writes it)");
     assert_eq!(serde_json::from_slice::<Value>(&golden).unwrap(), serde_json::from_slice::<Value>(&bytes).unwrap(), "Film writes its keyframes as pinned");
+}
+
+/// files/989 part 2 ("Masks, both ways", tool choice: Cut edits the masks on Film's OWN clips): Film's clip MASKED, in Film's shape, the
+/// file the OpenCut fork's `oneos-tests/film-own-masks.test.ts` opens in Cut and edits there (pinned there as `fixtures/film-masked.otio`).
+/// One video clip of a 1920 x 1080 medium whose Opacity holds an ellipse (Film's own, feathered in clip pixels), a polygon that subtracts
+/// (inverted, half opaque, grown by 8, its feather in the canvas's pixels), an open path that is off (mode None) and a text mask, every
+/// kind of mask Film draws. `FILMCRAFT_BLESS=1` writes the golden file; otherwise the writer must give it again, value for value.
+#[test]
+fn oneos_film_writes_its_masks_for_cut() {
+    use filmcraft_geom::Vec2;
+    use filmcraft_project::{Mask, MaskMode, MaskPath, MaskText, MaskUnits, MaskVertex, TrackMethod};
+    use serde_json::Value;
+    let r = FrameRate::FPS_24;
+    let mut p = Project::new("Masks");
+    let a = media(&mut p, "oneos:file/01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1", true, true, r);
+    let s = sequence(&mut p, "Edit", r, false);
+    let v = clip(&mut p, s, TrackKind::Video, 0, a, 0..48, 24);
+    {
+        let q = p.sequence_mut(s).unwrap();
+        let ti = q.video_tracks[0].items.iter_mut().find(|i| i.id == v).unwrap();
+        ti.name = "Masked".into();
+        let opacity = ti.effects.iter_mut().find(|e| e.effect == "opacity").unwrap();
+        let oval = Mask::new("Oval", MaskPath::ellipse(Vec2::new(960.0, 540.0), Vec2::new(480.0, 300.0)));
+        let mut cut = Mask::new("Cut out", MaskPath::polygon(&[Vec2::new(200.0, 100.0), Vec2::new(700.0, 150.0), Vec2::new(450.0, 600.0)]));
+        cut.mode = MaskMode::Subtract;
+        cut.inverted = true;
+        cut.opacity = Param::new(ParamValue::Float(50.0));
+        cut.expansion = Param::new(ParamValue::Float(8.0));
+        cut.feather = Param::new(ParamValue::Float(20.0));
+        cut.units = MaskUnits::Canvas;
+        cut.track_method = TrackMethod::Position;
+        let mut line = Mask::new(
+            "Line",
+            MaskPath {
+                vertices: vec![
+                    MaskVertex::corner(Vec2::new(100.0, 900.0)),
+                    MaskVertex::smooth(Vec2::new(900.0, 800.0), Vec2::new(120.0, -40.0)),
+                    MaskVertex::corner(Vec2::new(1700.0, 950.0)),
+                ],
+                closed: false,
+            },
+        );
+        line.mode = MaskMode::None;
+        let mut title = MaskText::new("FILM", [0.0, 0.0, 1920.0, 1080.0]);
+        title.size = 30.0;
+        title.center = Vec2::new(0.1, -0.2);
+        title.bold = true;
+        let words = Mask::text("Title", title);
+        opacity.masks = vec![oval, cut, line, words];
+    }
+    let (bytes, _) = filmcraft_interchange::export_project(&p, &ExportOptions::default()).expect("Film writes the whole project");
+    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/it/oneos/film-masked.otio");
+    if std::env::var_os("FILMCRAFT_BLESS").is_some() {
+        std::fs::write(path, &bytes).unwrap();
+    }
+    let golden = std::fs::read(path).expect("the golden Film-masked file (FILMCRAFT_BLESS=1 writes it)");
+    assert_eq!(serde_json::from_slice::<Value>(&golden).unwrap(), serde_json::from_slice::<Value>(&bytes).unwrap(), "Film writes its masks as pinned");
 }

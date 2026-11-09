@@ -647,6 +647,35 @@ mod tests {
         assert_eq!(first_difference(&cut, &saved, ""), None, "unedited, Cut's edit comes back value for value");
     }
 
+    /// files/989 part 2 ("Masks, both ways"; tool choice: Cut edits the masks on Film's OWN clips): Cut's edit of Film's masked clip (the
+    /// OpenCut fork's `cut-masked-film.otio`: the ellipse's feather 30, the text "CUT", the open path removed, a rectangle Cut drew added)
+    /// opens in Film as Film's own masks, nothing locked or carried, and saves back value for value. Cut's rectangle is Film's path of the
+    /// same corners in clip pixels, its feather measured in the canvas's pixels as Cut measures its own.
+    #[test]
+    fn a_cut_edit_of_film_s_masks_opens_in_film_as_film_s_own() {
+        use filmcraft_project::{MaskMode, MaskUnits};
+        let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-masked-film.otio");
+        let cut: Value = serde_json::from_slice(bytes).unwrap();
+        let mut s = session();
+        open_host_file(&mut s, "Masks.otio", bytes).unwrap_or_else(|e| panic!("{e}"));
+        let (id, kind, ti, ci) = find(&s, "Edit", "Masked");
+        let c = &s.project.sequence(id).unwrap().tracks(kind)[ti].items[ci];
+        let masks = &c.effects.iter().find(|e| e.effect == "opacity").unwrap().masks;
+        assert_eq!(masks.iter().map(|m| m.name.as_str()).collect::<Vec<_>>(), vec!["Oval", "Cut out", "Title", "Rectangle"]);
+        assert_eq!(masks[0].feather.value, ParamValue::Float(30.0));
+        assert_eq!((masks[1].mode, masks[1].units, masks[1].inverted), (MaskMode::Subtract, MaskUnits::Canvas, true));
+        assert_eq!(masks[2].text.as_ref().map(|t| t.content.as_str()), Some("CUT"));
+        let ParamValue::Path(rect) = &masks[3].path.value else { panic!("the rectangle has no path") };
+        assert_eq!(
+            rect.vertices.iter().map(|v| (v.p.x, v.p.y)).collect::<Vec<_>>(),
+            vec![(1200.0, 270.0), (1680.0, 270.0), (1680.0, 810.0), (1200.0, 810.0)],
+            "Cut's rectangle (centre a quarter right, a quarter wide, half high) on the 1920 x 1080 medium"
+        );
+        assert_eq!((masks[3].units, masks[3].feather.value.clone(), masks[3].mode), (MaskUnits::Canvas, ParamValue::Float(6.0), MaskMode::Add));
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
+        assert_eq!(first_difference(&cut, &saved, ""), None, "unedited, Cut's edit comes back value for value");
+    }
+
     /// Mona 2026-11-09 (files/989): "Build text animation in Cut" and "Add slopes to Film". On Cut's editor-built project, the title's
     /// animated typography opens as Film's own keyframes on its text layer: size (Cut's pixels at Film's scale, its first segment leaving on
     /// a sloped handle) and tracking eased; content, font, alignment, weight, style and decoration held. Cut shows a held channel's own value
