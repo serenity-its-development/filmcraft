@@ -15,6 +15,8 @@
 //! | track (video, image, text, graphic, effect, audio) | a track; stacked lanes are one track each, grouped as one of Cut's |
 //! | hidden / muted | the track's output (eye) / mute |
 //! | video, image, audio element | a clip of the OneOS medium |
+//! | a video element's sound (on) | its picture's linked audio clip on the track's sound lane: volume, mute, volume channel (files/989 step 2b) |
+//! | link label (`element.link`) | the clips' link (one number per label) |
 //! | text element | a graphic clip with a text layer (content, font, size, colour, alignment, weight, style, decoration, tracking, background) |
 //! | graphic element (rectangle, ellipse, polygon) | a graphic clip with a shape layer (fill, stroke, stroke width, corner radius, sides) |
 //! | effect element (blur) | an adjustment layer with Gaussian Blur |
@@ -43,7 +45,7 @@ use super::cut_keys::{CutKey, cut_to_film, film_to_cut, same_curve};
 use super::cut_masks::{self, ElementBox};
 use super::oneos::{Split, oneos_media};
 use super::{read_tr, schema_name};
-use crate::common::{empty_sequence, rate_from_f64, settings_for};
+use crate::common::{MediaSpec, empty_sequence, media_info, rate_from_f64, settings_for};
 use crate::is_oneos_media;
 
 /// Cut's clock: ticks per second.
@@ -119,6 +121,9 @@ struct CutTrack {
     origin: Value,
     f0: Fields,
     ty: String,
+    /// The sound of its video elements (files/989 step 2b, "Build linked audio"): one audio track per lane, holding each sounding
+    /// picture's linked audio clip (empty when no element of the track plays its sound).
+    sound: Vec<TrackId>,
 }
 
 #[derive(Debug, Clone)]
@@ -133,6 +138,17 @@ struct CutClip {
     time0: (Tick, Tick, Tick),
     /// The element's own pixels in the clip, as when it was opened (`Frame::el`).
     el: Option<ElementBox>,
+    /// A video element whose sound is on: its sound as Film's linked audio clip on the track's sound lane (files/989 step 2b).
+    sound: Option<Sound>,
+}
+
+/// The sound of one of Cut's video elements in Film: an audio clip linked to the picture, holding the element's volume, mute and volume
+/// channel (Cut's ONE element is Film's picture and its linked sound, as Film links them).
+#[derive(Debug, Clone)]
+struct Sound {
+    id: ClipId,
+    f0: Fields,
+    a0: Anims,
 }
 
 #[derive(Debug, Clone)]
@@ -156,6 +172,10 @@ pub struct CutParts {
     clips: BTreeMap<ClipId, CutClip>,
     marks: BTreeMap<MarkerId, Mark>,
     pub locked: Vec<Locked>,
+    /// Each of Cut's link labels (`element.link`, files/989 "Build linked audio") as the link number Film reads it as, and the numbers
+    /// Film gave a sounding picture and its sound only (written as Cut's one element, never as a label).
+    labels: BTreeMap<String, u64>,
+    pairs: BTreeSet<u64>,
 }
 
 /// What a render made of each of Cut's parts (it becomes what the file holds once saved).
@@ -811,6 +831,17 @@ fn audio_fields() -> Vec<Field> {
     ]
 }
 
+/// A video element of Cut's whose sound is on (OpenCut `isSourceAudioEnabled !== false`): in Film its picture and a linked audio clip, the
+/// sound holding the element's volume, mute and volume channel (files/989 step 2b). A clip Film made (no element yet) is not one.
+fn sounding(kind: Kind, origin: &Value) -> bool {
+    kind == Kind::Video && origin.pointer(ELEMENT).is_some() && origin.pointer(&format!("{ELEMENT}/isSourceAudioEnabled")) != Some(&json!(false))
+}
+
+/// What a sounding picture's element holds when it is written with its sound on.
+fn sounding_stub() -> Value {
+    json!({"metadata": {"opencut": {"element": {"isSourceAudioEnabled": true}}}})
+}
+
 fn fields_for(kind: Kind, origin: &Value) -> Vec<Field> {
     let mut v = Vec::new();
     match kind {
@@ -818,7 +849,8 @@ fn fields_for(kind: Kind, origin: &Value) -> Vec<Field> {
         Kind::Effect => v.push(scaled("/params/intensity", 15.0, "gaussian_blur", "blurriness", blur_k)),
         _ => {
             v.extend(look_fields(origin));
-            if kind == Kind::Video {
+            // A silent picture's volume is its clip's gain, as before; a sounding one's is its linked sound's (`audio_fields`).
+            if kind == Kind::Video && !sounding(kind, origin) {
                 v.push(volume_field());
             }
             v.push(effects_field());
@@ -1538,7 +1570,44 @@ fn read_clip(
     }
     let a0 = read_anims(kind, f, &mut ti, c).map_err(|e| format!("holds \"{}\" which {e}", ti.name))?;
     let h0 = read_held(kind, &mut ti, c).map_err(|e| format!("holds \"{}\" which {e}", ti.name))?;
-    Ok((ti, CutClip { origin: c.clone(), f0, a0, h0, kind, time0: (start, src, dur), el: f.el }))
+    Ok((ti, CutClip { origin: c.clone(), f0, a0, h0, kind, time0: (start, src, dur), el: f.el, sound: None }))
+}
+
+/// A sounding picture's sound (files/989 step 2b): an audio clip of the same medium, in step with the picture and linked to it, holding the
+/// element's volume, mute and volume channel; a reason when Film cannot hold them exactly.
+fn read_sound(p: &mut Project, c: &Value, pic: &TrackItem, f: Frame, rate: FrameRate) -> Result<(TrackItem, Sound), String> {
+    // The medium Film opened for the picture also holds a sound, read as Film reads an audio file the OneOS file names.
+    if let Some(m) = p.item_mut(pic.item).and_then(|i| i.as_media_mut())
+        && m.info.audio_streams.is_empty()
+    {
+        let spec = MediaSpec { audio: Some((48_000, 2)), ..Default::default() };
+        m.info.audio_streams = media_info(&m.info.name, &spec).audio_streams;
+    }
+    let mut ti = p
+        .make_track_item(pic.item, TrackKind::Audio, pic.start, TimeRange::new(pic.source_in, pic.duration), rate)
+        .ok_or_else(|| format!("could not place the sound of \"{}\"", pic.name))?;
+    ti.name = pic.name.clone();
+    ti.duration = pic.duration;
+    ti.source_in = pic.source_in;
+    ti.link = pic.link;
+    for x in audio_fields() {
+        let v = c.pointer(&x.ptr).cloned().filter(|v| !v.is_null()).unwrap_or_else(|| x.default.clone());
+        (x.set)(f, &mut ti, &v).map_err(|e| format!("holds \"{}\" whose sound's {} Film cannot show: {e}", pic.name, x.ptr.trim_start_matches(ELEMENT)))?;
+    }
+    let f0 = read_fields(Kind::Audio, f, &ti, c).map_err(|e| format!("holds \"{}\" whose sound {e}", pic.name))?;
+    for x in audio_fields() {
+        let file = c.pointer(&x.ptr).cloned().unwrap_or_else(|| x.default.clone());
+        let film = f0.get(&x.ptr).cloned().unwrap_or(Value::Null);
+        if !same(&file, &film) {
+            return Err(format!(
+                "holds \"{}\" whose {} reads back from Film as {film} where the file says {file}",
+                pic.name,
+                x.ptr.trim_start_matches(ELEMENT)
+            ));
+        }
+    }
+    let a0 = read_anims(Kind::Audio, f, &mut ti, c).map_err(|e| format!("holds \"{}\" whose sound {e}", pic.name))?;
+    Ok((ti.clone(), Sound { id: ti.id, f0, a0 }))
 }
 
 fn track_type(t: &Value) -> String {
@@ -1548,7 +1617,7 @@ fn track_type(t: &Value) -> String {
     })
 }
 
-fn track_fields(ty: &str, s: &filmcraft_project::Sequence, lanes: &[TrackId]) -> Fields {
+fn track_fields(ty: &str, s: &filmcraft_project::Sequence, lanes: &[TrackId], sound: &[TrackId]) -> Fields {
     let mut f = Fields::new();
     let Some(first) = lanes.first().and_then(|id| s.track(*id)) else { return f };
     if lanes.len() == 1 {
@@ -1558,6 +1627,10 @@ fn track_fields(ty: &str, s: &filmcraft_project::Sequence, lanes: &[TrackId]) ->
         f.insert("/metadata/opencut/track/muted".into(), json!(first.muted));
     } else {
         f.insert("/metadata/opencut/track/hidden".into(), json!(!first.enabled));
+        // A video track's mute silences its pictures' sound: the mute of their sound lane (files/989 step 2b).
+        if let Some(snd) = sound.first().and_then(|id| s.track(*id)) {
+            f.insert("/metadata/opencut/track/muted".into(), json!(snd.muted));
+        }
     }
     f
 }
@@ -1648,9 +1721,11 @@ impl CutParts {
         }
         let Some(mut seq) = p.sequence(seq_id).cloned() else { return };
         let mut ids = Vec::new();
+        let mut sound_ids = Vec::new();
         let mut clips = Vec::new();
         let switches = t.pointer("/metadata/opencut/track").cloned().unwrap_or(json!({}));
         for l in &lanes {
+            let mut sound_lane: Option<Track> = None;
             let id = TrackId(p.alloc_id());
             let mut tr = Track::new(id, kind, l.get("name").and_then(Value::as_str).unwrap_or("").to_string());
             if ty == "audio" {
@@ -1670,7 +1745,33 @@ impl CutParts {
                             return lock(self, "it holds a clip without a source range".into());
                         };
                         match read_clip(p, &self.root, c, kind, f, rate, (pos, src, dur)) {
-                            Ok((ti, cc)) => {
+                            Ok((mut ti, mut cc)) => {
+                                // Cut's link label (files/989 "Build linked audio") is Film's link: one number per label.
+                                let label = c.pointer(&format!("{ELEMENT}/link")).and_then(Value::as_str).map(str::to_string);
+                                cc.f0.insert(format!("{ELEMENT}/link"), label.clone().map(Value::String).unwrap_or(Value::Null));
+                                if let Some(l) = label {
+                                    let n = *self.labels.entry(l).or_insert_with(|| p.alloc_id());
+                                    ti.link = Some(n);
+                                }
+                                if sounding(cc.kind, c) {
+                                    if ti.link.is_none() {
+                                        let n = p.alloc_id();
+                                        self.pairs.insert(n);
+                                        ti.link = Some(n);
+                                    }
+                                    match read_sound(p, c, &ti, f, rate) {
+                                        Ok((sti, snd)) => {
+                                            let lane = sound_lane.get_or_insert_with(|| {
+                                                let mut st = Track::new(TrackId(p.alloc_id()), TrackKind::Audio, format!("{} (sound)", tr.name));
+                                                st.muted = switches.get("muted").and_then(Value::as_bool).unwrap_or(false);
+                                                st
+                                            });
+                                            lane.items.push(sti);
+                                            cc.sound = Some(snd);
+                                        }
+                                        Err(why) => return lock(self, format!("it {why}")),
+                                    }
+                                }
                                 clips.push((ti.id, cc));
                                 tr.items.push(ti);
                             }
@@ -1684,8 +1785,13 @@ impl CutParts {
             tr.sort();
             ids.push(id);
             seq.tracks_mut(kind).push(tr);
+            if let Some(mut st) = sound_lane {
+                st.sort();
+                sound_ids.push(st.id);
+                seq.tracks_mut(TrackKind::Audio).push(st);
+            }
         }
-        let f0 = track_fields(&ty, &seq, &ids);
+        let f0 = track_fields(&ty, &seq, &ids, &sound_ids);
         for (ptr, v) in &f0 {
             let file = t.pointer(ptr).cloned().unwrap_or_else(|| track_default(ptr));
             if !same(&file, v) {
@@ -1696,7 +1802,7 @@ impl CutParts {
             item.kind = ItemKind::Sequence(Arc::new(seq));
         }
         self.clips.extend(clips);
-        self.tracks.push(CutTrack { seq: seq_id, lanes: ids, kind, after, order, origin: t.clone(), f0, ty });
+        self.tracks.push(CutTrack { seq: seq_id, lanes: ids, kind, after, order, origin: t.clone(), f0, ty, sound: sound_ids });
     }
 
     fn read_mark(&mut self, p: &mut Project, seq_id: ItemId, m: &Value) -> Result<(), String> {
@@ -1779,7 +1885,7 @@ impl CutParts {
             remove_from_bins(&mut q.root, s.seq);
         }
         let lanes: BTreeSet<TrackId> =
-            self.tracks.iter().filter(|t| !self.scenes.iter().any(|s| s.seq == t.seq)).flat_map(|t| t.lanes.iter().copied()).collect();
+            self.tracks.iter().filter(|t| !self.scenes.iter().any(|s| s.seq == t.seq)).flat_map(|t| t.lanes.iter().chain(&t.sound).copied()).collect();
         let ids: Vec<ItemId> = q.items.keys().copied().collect();
         for id in ids {
             if let Some(s) = q.sequence_mut(id) {
@@ -1907,6 +2013,8 @@ struct Out<'a> {
     p: &'a Project,
     parts: &'a CutParts,
     r: Rendered,
+    /// The clips on the sound lanes of the track being written, each taken by the picture whose sound it is.
+    sounds: BTreeMap<ClipId, TrackItem>,
 }
 
 impl Out<'_> {
@@ -1930,31 +2038,36 @@ impl Out<'_> {
             }
         };
         let f = Frame { el, picture: matches!(kind, Kind::Video | Kind::Image), ..f };
-        let empty = json!({});
-        let origin = prior.map(|c| &c.origin).unwrap_or(&empty);
-        let now = read_fields(kind, f, ti, origin).map_err(|e| format!("\"{}\" {e}", ti.name))?;
+        // A picture's sound (files/989 step 2b): its linked audio clip on the track's sound lane, in step with it.
+        let sound = if kind == Kind::Video { self.take_sound(ti, prior)? } else { None };
+        let (empty, stub) = (json!({}), sounding_stub());
+        let origin = match prior {
+            Some(c) => &c.origin,
+            None if sound.is_some() => &stub,
+            None => &empty,
+        };
+        let link_ptr = format!("{ELEMENT}/link");
+        let mut now = read_fields(kind, f, ti, origin).map_err(|e| format!("\"{}\" {e}", ti.name))?;
+        now.insert(link_ptr.clone(), self.label_now(ti, sound.is_some()));
         let time = (ti.start, ti.source_in, ti.duration);
+        let mut snd: Option<Sound> = None;
         let mut c = match prior {
             Some(pr) => {
                 let mut c = pr.origin.clone();
                 let changed: Vec<&String> = now.keys().filter(|k| !pr.f0.get(*k).is_some_and(|v| same(v, &now[*k]))).collect();
-                // Interim until step 2b: a video element's sound is Cut's own (its volume channel has no place on Film's video clip until it is
-                // Film's linked audio), so Film does not change the volume Cut animates.
-                if kind == Kind::Video
-                    && changed.iter().any(|k| k.ends_with("/volume"))
-                    && c.pointer(&format!("{ELEMENT}/animations/bindings/volume")).is_some()
-                {
-                    return Err(format!(
-                        "volume-keyframed-in-cut: \"{}\"'s volume is animated in Cut, which Film shows on a video clip once its sound is linked audio",
-                        ti.name
-                    ));
-                }
                 for k in changed {
                     put(&mut c, k, now[k].clone());
                 }
                 let a = write_anims(kind, f, ti, &mut c, &pr.a0, &ti.name)?;
                 let h = write_held(kind, ti, &mut c, &pr.h0, &ti.name)?;
-                self.r.clips.insert(ti.id, CutClip { origin: Value::Null, f0: Fields::new(), a0: a, h0: h, kind, time0: time, el });
+                self.r.clips.insert(ti.id, CutClip { origin: Value::Null, f0: Fields::new(), a0: a, h0: h, kind, time0: time, el, sound: None });
+                if sounding(kind, &pr.origin) {
+                    match (&sound, &pr.sound) {
+                        (Some(st), Some(s0)) => snd = Some(self.write_sound(f, st, &mut c, s0, &ti.name)?),
+                        // Film took the picture's sound away: Cut's element plays none (its volume and channel are kept for when it is back).
+                        _ => put(&mut c, &format!("{ELEMENT}/isSourceAudioEnabled"), json!(false)),
+                    }
+                }
                 if (pr.time0.1, pr.time0.2) != (time.1, time.2) {
                     let rate = c.pointer("/source_range/duration/rate").and_then(Value::as_f64).unwrap_or(lane_rate);
                     c["source_range"] = time_range(ti.source_in, ti.duration, rate)?;
@@ -1971,16 +2084,78 @@ impl Out<'_> {
                 let mut c = self.fresh(ti, kind, &now, lane_rate)?;
                 let a = write_anims(kind, f, ti, &mut c, &Anims::new(), &ti.name)?;
                 let h = write_held(kind, ti, &mut c, &Held::new(), &ti.name)?;
-                self.r.clips.insert(ti.id, CutClip { origin: Value::Null, f0: Fields::new(), a0: a, h0: h, kind, time0: time, el });
+                self.r.clips.insert(ti.id, CutClip { origin: Value::Null, f0: Fields::new(), a0: a, h0: h, kind, time0: time, el, sound: None });
+                if kind == Kind::Video {
+                    // Film's picture plays no sound of its own: Cut's element plays one only when Film linked it a sound in step with it.
+                    put(&mut c, &format!("{ELEMENT}/isSourceAudioEnabled"), json!(sound.is_some()));
+                    if let Some(st) = &sound {
+                        let s0 = Sound { id: st.id, f0: Fields::new(), a0: Anims::new() };
+                        snd = Some(self.write_sound(f, st, &mut c, &s0, &ti.name)?);
+                    }
+                }
                 c
             }
         };
         if !c.is_object() {
             c = json!({});
         }
+        // What the element is now, as Film reads it (the next save is measured against it).
+        let mut now = read_fields(kind, f, ti, &c).map_err(|e| format!("\"{}\" {e}", ti.name))?;
+        now.insert(link_ptr, c.pointer(&format!("{ELEMENT}/link")).cloned().unwrap_or(Value::Null));
         let (a0, h0) = self.r.clips.remove(&ti.id).map(|x| (x.a0, x.h0)).unwrap_or_default();
-        self.r.clips.insert(ti.id, CutClip { origin: c.clone(), f0: now, a0, h0, kind, time0: time, el });
+        self.r.clips.insert(ti.id, CutClip { origin: c.clone(), f0: now, a0, h0, kind, time0: time, el, sound: snd });
         Ok(c)
+    }
+
+    /// The sound of the picture `ti` on the track's sound lane: the one it opened with (gone when Film removed it), or, for a picture Film
+    /// made, a clip linked to it in step with it. Refused by name when Film moved, trimmed or unlinked it apart from its picture: Cut's video
+    /// element holds its sound in step with its picture.
+    fn take_sound(&mut self, ti: &TrackItem, prior: Option<&CutClip>) -> Result<Option<TrackItem>, String> {
+        let in_step = |s: &TrackItem| {
+            s.link.is_some()
+                && s.link == ti.link
+                && (s.start, s.source_in, s.duration, s.reverse) == (ti.start, ti.source_in, ti.duration, ti.reverse)
+                && s.speed == ti.speed
+        };
+        match prior {
+            Some(c) => {
+                let Some(id) = c.sound.as_ref().map(|s| s.id) else { return Ok(None) };
+                let Some(st) = self.sounds.remove(&id) else { return Ok(None) };
+                if !in_step(&st) {
+                    return Err(format!(
+                        "sound-not-in-cut: \"{}\"'s sound was moved, trimmed or unlinked apart from its picture in Film; Cut's video element holds its sound in step with its picture",
+                        ti.name
+                    ));
+                }
+                Ok(Some(st))
+            }
+            None => {
+                let id = self.sounds.iter().find(|(_, s)| in_step(s)).map(|(id, _)| *id);
+                Ok(id.and_then(|id| self.sounds.remove(&id)))
+            }
+        }
+    }
+
+    /// A sound's volume, mute and volume channel written into its picture's element where Film changed them since `s0`.
+    fn write_sound(&mut self, f: Frame, st: &TrackItem, c: &mut Value, s0: &Sound, name: &str) -> Result<Sound, String> {
+        let now = read_fields(Kind::Audio, f, st, c).map_err(|e| format!("\"{name}\"'s sound {e}"))?;
+        for (k, v) in &now {
+            if !s0.f0.get(k).is_some_and(|w| same(w, v)) {
+                put(c, k, v.clone());
+            }
+        }
+        let a0 = write_anims(Kind::Audio, f, st, c, &s0.a0, name)?;
+        Ok(Sound { id: st.id, f0: now, a0 })
+    }
+
+    /// The link label Cut's element holds for Film's link (files/989 "Build linked audio"): the label Film read for that number; none for a
+    /// picture and its own sound (one element in Cut) or no link; else a label of Film's number.
+    fn label_now(&self, ti: &TrackItem, paired: bool) -> Value {
+        let Some(n) = ti.link else { return Value::Null };
+        if let Some((l, _)) = self.parts.labels.iter().find(|(_, m)| **m == n) {
+            return json!(l);
+        }
+        if paired || self.parts.pairs.contains(&n) { Value::Null } else { json!(format!("film-{n}")) }
     }
 
     /// One of Film's clips written as Cut writes a new element.
@@ -2108,6 +2283,8 @@ impl Out<'_> {
                 json!({"OTIO_SCHEMA": "Track.1", "name": first.name, "kind": if kind == TrackKind::Audio { "Audio" } else { "Video" }, "source_range": null, "effects": [], "markers": [], "enabled": true, "metadata": meta, "children": []})
             }
         };
+        self.sounds =
+            ct.map(|t| t.sound.iter().filter_map(|id| seq.track(*id)).flat_map(|t| t.items.iter().map(|it| (it.id, it.clone()))).collect()).unwrap_or_default();
         let stacked = schema_name(&body) == "Stack";
         if stacked != (lanes.len() > 1) && ct.is_some() && lanes.len() > 1 {
             return Err("track-not-in-cut: a track of Cut's was split into lanes in Film".into());
@@ -2135,7 +2312,13 @@ impl Out<'_> {
             body["children"] = Value::Array(self.lane(&first.items, kind, &was, rate)?);
             ids_in_order.extend(first.items.iter().map(|it| it.id));
         }
-        let now = track_fields(&ty, seq, lanes);
+        if let Some(it) = self.sounds.values().next() {
+            return Err(format!(
+                "sound-not-in-cut: the sound lane of the track \"{}\" holds \"{}\", which is not the sound of one of its pictures in step with it (Cut's video element holds its sound with its picture)",
+                first.name, it.name
+            ));
+        }
+        let now = track_fields(&ty, seq, lanes, ct.map(|t| t.sound.as_slice()).unwrap_or(&[]));
         for (k, v) in &now {
             let changed = match ct {
                 Some(t) => !t.f0.get(k).is_some_and(|w| same(w, v)),
@@ -2212,9 +2395,9 @@ impl Out<'_> {
             if ct.lanes.iter().all(|id| seq.track(*id).is_none()) {
                 continue;
             }
-            held.extend(ct.lanes.iter().copied());
+            held.extend(ct.lanes.iter().chain(&ct.sound).copied());
             let body = self.track(seq, Some(ct), &ct.lanes, ct.kind)?;
-            self.r.tracks.push(CutTrack { origin: body.clone(), f0: track_fields(&ct.ty, seq, &ct.lanes), ..ct.clone() });
+            self.r.tracks.push(CutTrack { origin: body.clone(), f0: track_fields(&ct.ty, seq, &ct.lanes, &ct.sound), ..ct.clone() });
             placed.push((ct.order, body));
         }
         for l in &self.parts.locked {
@@ -2240,8 +2423,9 @@ impl Out<'_> {
                     after: None,
                     order: next,
                     origin: body.clone(),
-                    f0: track_fields(&ty, seq, &[t.id]),
+                    f0: track_fields(&ty, seq, &[t.id], &[]),
                     ty,
+                    sound: Vec::new(),
                 });
                 placed.push((next, body));
                 next += 1;
@@ -2258,18 +2442,23 @@ impl Out<'_> {
 impl CutParts {
     /// Put Cut's parts, in Cut's shape, into `doc` (Film's own part as Film writes it; `film_seqs` its timelines in order).
     pub(super) fn place(&self, p: &Project, film_seqs: &[ItemId], doc: &mut Value) -> Result<Rendered, String> {
-        let mut o = Out { p, parts: self, r: Rendered::default() };
+        let mut o = Out { p, parts: self, r: Rendered::default(), sounds: BTreeMap::new() };
         for (i, seq_id) in film_seqs.iter().enumerate() {
             let Some(seq) = p.sequence(*seq_id) else { continue };
-            let order: Vec<TrackId> =
-                seq.video_tracks.iter().chain(seq.audio_tracks.iter()).map(|t| t.id).filter(|id| !self.tracks.iter().any(|t| t.lanes.contains(id))).collect();
+            let order: Vec<TrackId> = seq
+                .video_tracks
+                .iter()
+                .chain(seq.audio_tracks.iter())
+                .map(|t| t.id)
+                .filter(|id| !self.tracks.iter().any(|t| t.lanes.contains(id) || t.sound.contains(id)))
+                .collect();
             let mut inserts: Vec<(Option<TrackId>, usize, Value)> = Vec::new();
             for ct in self.tracks.iter().filter(|t| t.seq == *seq_id) {
                 if ct.lanes.iter().all(|id| seq.track(*id).is_none()) {
                     continue;
                 }
                 let body = o.track(seq, Some(ct), &ct.lanes, ct.kind)?;
-                o.r.tracks.push(CutTrack { origin: body.clone(), f0: track_fields(&ct.ty, seq, &ct.lanes), ..ct.clone() });
+                o.r.tracks.push(CutTrack { origin: body.clone(), f0: track_fields(&ct.ty, seq, &ct.lanes, &ct.sound), ..ct.clone() });
                 inserts.push((ct.after, ct.order, body));
             }
             for l in &self.locked {

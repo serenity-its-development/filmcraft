@@ -367,6 +367,136 @@ mod tests {
         assert!(e.contains("volume-not-in-cut"), "{e}");
     }
 
+    /// The clip named `name` on `seq`'s tracks of `kind`.
+    fn clip_of(s: &Session, seq: &str, kind: TrackKind, name: &str) -> filmcraft_project::TrackItem {
+        let q = s.project.items.values().find(|i| i.name == seq && i.as_sequence().is_some()).and_then(|i| i.as_sequence()).unwrap();
+        q.tracks(kind).iter().flat_map(|t| t.items.iter()).find(|c| c.name == name).cloned().unwrap_or_else(|| panic!("no {kind:?} clip {name}"))
+    }
+
+    /// Edit every clip named `name` on `seq` (a picture and its sound alike) with the track it is on.
+    fn edit_all(s: &mut Session, seq: &str, name: &str, f: impl Fn(TrackKind, &mut filmcraft_project::TrackItem)) {
+        let p = std::sync::Arc::make_mut(&mut s.project);
+        let id = p.items.values().find(|i| i.name == seq && i.as_sequence().is_some()).unwrap().id;
+        let q = p.sequence_mut(id).unwrap();
+        for kind in [TrackKind::Video, TrackKind::Audio] {
+            for t in q.tracks_mut(kind) {
+                for c in t.items.iter_mut().filter(|c| c.name == name) {
+                    f(kind, c);
+                }
+            }
+        }
+    }
+
+    /// files/989 step 2b (Mona: "Build linked audio, lock multicam"), Film's half: Cut's video element with its sound on (Beach, on Cut's
+    /// editor-built project) opens in Film as a picture and a linked audio clip in step with it, the sound holding the element's volume
+    /// (Film's gain), mute and volume channel (Film's Volume level over the gain); the picture holds none. An unedited save is the file;
+    /// Film's change of the sound is written as the ONE element's volume, mute and channel; a sound moved apart from its picture is refused
+    /// by name (`sound-not-in-cut`); the sound Film removes turns the element's sound off; a split in Film (picture and sound cut together)
+    /// writes the right halves as one new element with its sound on.
+    #[test]
+    fn cut_s_video_with_sound_opens_in_film_as_a_picture_and_its_linked_audio() {
+        let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-project.otio");
+        let cut: Value = serde_json::from_slice(bytes).unwrap();
+        let mut s = session();
+        open_host_file(&mut s, "trip.otio", bytes).unwrap();
+        let (pic, snd) = (clip_of(&s, "Main", TrackKind::Video, "Beach"), clip_of(&s, "Main", TrackKind::Audio, "Beach"));
+        assert!(pic.link.is_some() && pic.link == snd.link, "the picture and its sound are linked: {:?} {:?}", pic.link, snd.link);
+        assert_eq!((pic.start, pic.source_in, pic.duration), (snd.start, snd.source_in, snd.duration), "in step");
+        assert_eq!((pic.gain_db, snd.gain_db, snd.enabled), (0.0, 0.7, true), "Cut's volume and mute are the sound's");
+        let level = |c: &filmcraft_project::TrackItem| c.effects.iter().find(|e| e.effect == "volume").unwrap().params["level"].keyframes.clone();
+        let keys = level(&snd);
+        assert_eq!(keys.len(), 1, "Cut's volume channel is the sound's Volume level");
+        assert!((keys[0].value.as_f64().unwrap() - (0.2 - 0.7)).abs() < 1e-9, "{:?}", keys[0].value);
+        let beach = clip_ptr(&cut, "Beach", "").unwrap();
+        let el = format!("{beach}/metadata/opencut/element");
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap_or_else(|e| panic!("{e}"))).unwrap();
+        assert_eq!(first_difference(&cut, &saved, ""), None, "unedited: the file value for value");
+
+        // Film's edit of the sound is the element's volume, mute and channel.
+        edit_all(&mut s, "Main", "Beach", |k, c| {
+            if k == TrackKind::Audio {
+                c.gain_db = -6.0;
+                c.enabled = false;
+            }
+        });
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap_or_else(|e| panic!("{e}"))).unwrap();
+        assert_eq!(saved.pointer(&format!("{el}/volume")), Some(&serde_json::json!(-6)));
+        assert_eq!(saved.pointer(&format!("{el}/muted")), Some(&serde_json::json!(true)));
+        let key = format!("{el}/animations/channels/volume:value/keys/0/value");
+        let v = saved.pointer(&key).and_then(Value::as_f64).unwrap();
+        assert!((v - (0.2 - 0.7 - 6.0)).abs() < 1e-6, "the channel is Film's level over the new gain: {v}");
+        let mut want = cut.clone();
+        for k in ["volume", "muted"] {
+            *want.pointer_mut(&format!("{el}/{k}")).unwrap() = saved.pointer(&format!("{el}/{k}")).unwrap().clone();
+        }
+        *want.pointer_mut(&key).unwrap() = saved.pointer(&key).unwrap().clone();
+        assert_eq!(first_difference(&want, &saved, ""), None, "only the sound changed, as the one element's");
+
+        // A sound moved apart from its picture is refused by name; in step again, it saves.
+        edit_all(&mut s, "Main", "Beach", |k, c| {
+            if k == TrackKind::Audio {
+                c.start += filmcraft_time::Tick(1_000);
+            }
+        });
+        let e = save_host_file(&mut s).unwrap_err();
+        assert!(e.contains("sound-not-in-cut"), "{e}");
+        edit_all(&mut s, "Main", "Beach", |k, c| {
+            if k == TrackKind::Audio {
+                c.start -= filmcraft_time::Tick(1_000);
+            }
+        });
+        save_host_file(&mut s).unwrap_or_else(|e| panic!("{e}"));
+
+        // Film splits Beach (its picture and sound together): the right halves are ONE new element of Cut's, its sound on.
+        {
+            let p = std::sync::Arc::make_mut(&mut s.project);
+            let id = p.items.values().find(|i| i.name == "Main" && i.as_sequence().is_some()).unwrap().id;
+            let link = p.alloc_id();
+            let mut rights = Vec::new();
+            for kind in [TrackKind::Video, TrackKind::Audio] {
+                let q = p.sequence(id).unwrap();
+                let (ti, ci) = q.tracks(kind).iter().enumerate().find_map(|(t, tr)| tr.items.iter().position(|c| c.name == "Beach").map(|c| (t, c))).unwrap();
+                let mut right = q.tracks(kind)[ti].items[ci].clone();
+                let half = filmcraft_time::Tick(right.duration.0 / 2);
+                right.id = filmcraft_project::ClipId(p.alloc_id());
+                right.start += half;
+                right.source_in += half;
+                right.duration -= half;
+                right.link = Some(link);
+                rights.push((kind, ti, ci, half, right));
+            }
+            let q = p.sequence_mut(id).unwrap();
+            for (kind, ti, ci, half, right) in rights {
+                let t = &mut q.tracks_mut(kind)[ti];
+                t.items[ci].duration = half;
+                t.items.push(right);
+                t.sort();
+            }
+        }
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap_or_else(|e| panic!("{e}"))).unwrap();
+        let main = saved.pointer("/children/0/tracks/children/0/children").and_then(Value::as_array).unwrap();
+        let halves: Vec<&Value> = main.iter().filter(|c| c.get("name").and_then(Value::as_str) == Some("Beach")).collect();
+        assert_eq!(halves.len(), 2, "the halves are two elements: {main:?}");
+        let right = halves[1].pointer("/metadata/opencut/element").unwrap();
+        assert_eq!(right.get("isSourceAudioEnabled"), Some(&serde_json::json!(true)), "the right half plays its sound");
+        assert_eq!((right.get("volume"), right.get("muted")), (Some(&serde_json::json!(-6)), Some(&serde_json::json!(true))), "its sound's");
+        assert_eq!(right.get("link"), None, "a picture and its own sound are one element in Cut, no link label");
+
+        // The sound Film removes: Cut's element plays none.
+        {
+            let p = std::sync::Arc::make_mut(&mut s.project);
+            let id = p.items.values().find(|i| i.name == "Main" && i.as_sequence().is_some()).unwrap().id;
+            for t in p.sequence_mut(id).unwrap().audio_tracks.iter_mut() {
+                t.items.retain(|c| c.name != "Beach");
+            }
+        }
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap_or_else(|e| panic!("{e}"))).unwrap();
+        let main = saved.pointer("/children/0/tracks/children/0/children").and_then(Value::as_array).unwrap();
+        for c in main.iter().filter(|c| c.get("name").and_then(Value::as_str) == Some("Beach")) {
+            assert_eq!(c.pointer("/metadata/opencut/element/isSourceAudioEnabled"), Some(&serde_json::json!(false)), "{c}");
+        }
+    }
+
     /// The JSON pointer of the first clip named `name` in `v`.
     fn clip_ptr(v: &Value, name: &str, at: &str) -> Option<String> {
         match v {
