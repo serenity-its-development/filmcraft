@@ -1190,18 +1190,49 @@ mod tests {
         assert_eq!(clips(now)[0], clips(was)[0], "an unchanged caption is its own clip");
         assert_eq!(clips(now)[1]["metadata"]["opencut"], clips(was)[1]["metadata"]["opencut"], "an edited caption keeps Cut's element");
         assert_eq!(now["metadata"]["filmcraft"]["caption_track"]["style"]["color"], serde_json::json!([0, 255, 0, 255]));
-        let mut want = cut.clone();
-        *want.pointer_mut(ptr).unwrap() = now.clone();
-        // Measured: a Film edit that makes a part (here a caption's id) moves Film's id counter, so Film's own (empty) project snapshot is
-        // written beside Cut's, as for any part Film makes in a pure Cut project; it holds nothing of Film's own.
-        assert_eq!(edited.pointer("/metadata/filmcraft/project/items"), Some(&serde_json::json!({})), "Film's own part is empty");
-        want["metadata"]["filmcraft"] = edited["metadata"]["filmcraft"].clone();
-        assert_eq!(first_difference(&want, &edited, ""), None, "only the caption track differs (and Film's empty snapshot)");
+        let want = {
+            let mut w = cut.clone();
+            *w.pointer_mut(ptr).unwrap() = now.clone();
+            w
+        };
+        // Mona 2026-11-10 "Skip while empty": the part Film made moved Film's id counter, but Film's own part holds nothing, so no snapshot
+        // of Film's project is written: the caption track is the ONLY difference.
+        assert_eq!(edited.pointer("/metadata/filmcraft"), None, "no Film metadata on a Cut project Film's own part leaves empty");
+        assert_eq!(first_difference(&want, &edited, ""), None, "only the caption track differs");
         let mut s2 = session();
         open_host_file(&mut s2, "subs.otio", &out).expect("Film reopens its own save");
         let q2 = s2.project.items.values().find(|i| i.name == "Main" && i.as_sequence().is_some()).and_then(|i| i.as_sequence()).unwrap();
         assert_eq!(q2.caption_tracks[0].captions.len(), 3);
         let again: Value = serde_json::from_slice(&save_host_file(&mut s2).unwrap()).unwrap();
         assert_eq!(first_difference(&edited, &again, ""), None, "Film's own save comes back value for value");
+        // With no counter in the file, Film's next id is read past every `film-<id>` the file names: a caption Film makes in the next
+        // session never takes the name of the one it made in this one, even when Cut removed parts in between (fewer ids read).
+        let mut fewer = edited.clone();
+        let track = fewer.pointer_mut(ptr).unwrap();
+        let first = track["children"].as_array().unwrap().iter().position(|c| c["metadata"]["opencut"]["element"]["id"] == "cap-1").unwrap();
+        track["children"].as_array_mut().unwrap().remove(first);
+        track["metadata"]["opencut"]["order"].as_array_mut().unwrap().remove(0);
+        let mut s3 = session();
+        open_host_file(&mut s3, "subs.otio", &serde_json::to_vec(&fewer).unwrap()).expect("Film opens Cut's removal");
+        {
+            let p = std::sync::Arc::make_mut(&mut s3.project);
+            let id = filmcraft_project::ClipId(p.alloc_id());
+            let main3 = p.items.values().find(|i| i.name == "Main" && i.as_sequence().is_some()).unwrap().id;
+            p.sequence_mut(main3).unwrap().caption_tracks[0].captions.push(filmcraft_project::Caption {
+                id,
+                start: at(9.0),
+                duration: at(1.0),
+                text: "Encore.".into(),
+                speaker: None,
+                cue_id: None,
+                settings: String::new(),
+            });
+        }
+        let third: Value = serde_json::from_slice(&save_host_file(&mut s3).unwrap_or_else(|e| panic!("Film refused the save: {e}"))).unwrap();
+        let names: Vec<Value> = clips(third.pointer(ptr).unwrap()).iter().map(|c| c["metadata"]["opencut"]["element"]["id"].clone()).collect();
+        assert_eq!(names.len(), 3);
+        assert_eq!(names[1], ids[2], "the caption Film made before keeps its name");
+        assert!(names[2].as_str().is_some_and(|i| i.starts_with("film-")) && names[2] != ids[2], "a new name: {names:?}");
+        assert_eq!(third.pointer("/metadata/filmcraft"), None, "still nothing of Film's own");
     }
 }

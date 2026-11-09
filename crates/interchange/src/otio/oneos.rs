@@ -554,6 +554,10 @@ fn damage(file: &Value, then: &Value, at: &str, ctx: Ctx, snapshot: bool) -> Opt
                     (Some(_), None) if ctx == Ctx::Metadata && k != "filmcraft" => {}
                     // Film's own data the file did not hold (a Cut project Film has not written to).
                     (None, Some(_)) if ctx == Ctx::Metadata && k == "filmcraft" => {}
+                    // An empty snapshot of Film's project an earlier Film wrote, which Film now leaves out ("Skip while empty"): carried.
+                    (Some(v), None) if here == "/metadata/filmcraft/project" && empty_snapshot(v) => {}
+                    (Some(Value::Object(v)), None)
+                        if ctx == Ctx::Metadata && k == "filmcraft" && v.len() == 1 && v.get("project").is_some_and(empty_snapshot) => {}
                     (Some(_), None) | (None, Some(_)) => return Some(here),
                     (Some(a), Some(b)) => {
                         if ctx == Ctx::Film && MIRRORS.contains(&k.as_str()) {
@@ -681,7 +685,55 @@ fn render(p: &Project, s: &Shared) -> Result<(Value, super::cut::Rendered), Shar
     let mut doc: Value = serde_json::from_str(&text).map_err(|e| SharedError::Unreadable(e.to_string()))?;
     let film_seqs = sequences_of(&stripped);
     let made = s.cut.place(p, &film_seqs, &mut doc).map_err(SharedError::NotRoundTrip)?;
+    if holds_nothing(&stripped) {
+        leave_out_film_s_project(&mut doc);
+    }
     Ok((doc, made))
+}
+
+/// Film's own part holds nothing of Film's (files/989, Mona 2026-11-10: "Skip while empty"): no item, bin, LUT, colour, transcript,
+/// narration, note or setting of its own; at most its id counter moved (a part Film made in Cut's shape takes an id).
+fn holds_nothing(p: &Project) -> bool {
+    let mut fresh = Project::new(&p.name);
+    fresh.next_id = p.next_id;
+    fresh.root.name.clone_from(&p.root.name);
+    match (serde_json::to_value(p), serde_json::to_value(&fresh)) {
+        (Ok(a), Ok(b)) => same_value(&a, &b),
+        _ => false,
+    }
+}
+
+/// `doc` without Film's project snapshot, and without Film's metadata when that was all it held: a file Film only touched stays clean.
+fn leave_out_film_s_project(doc: &mut Value) {
+    let Some(Value::Object(meta)) = doc.get_mut("metadata") else { return };
+    if let Some(Value::Object(film)) = meta.get_mut("filmcraft") {
+        film.remove("project");
+        if film.is_empty() {
+            meta.remove("filmcraft");
+        }
+    }
+}
+
+/// The file's snapshot of Film's project, read, holds nothing of Film's (an empty snapshot an earlier Film wrote): carried, not damage.
+fn empty_snapshot(v: &Value) -> bool {
+    serde_json::from_value::<Project>(v.clone()).is_ok_and(|p| holds_nothing(&p))
+}
+
+/// The largest Film id a part Film made in Cut's shape is named by (`film-<id>`, `film-fx-<id>-…`, `film-<id>-…`). Film keeps no
+/// snapshot of an empty part ("Skip while empty"), so its id counter is not in the file: Film's next id is read past these instead, and
+/// a part Film makes later never takes a name the file already holds.
+fn largest_film_name(v: &Value) -> u64 {
+    match v {
+        Value::String(s) => s
+            .strip_prefix("film-")
+            .map(|r| r.strip_prefix("fx-").unwrap_or(r))
+            .and_then(|r| r.split('-').next())
+            .and_then(|n| n.parse::<u64>().ok())
+            .unwrap_or(0),
+        Value::Array(a) => a.iter().map(largest_film_name).max().unwrap_or(0),
+        Value::Object(m) => m.values().map(largest_film_name).max().unwrap_or(0),
+        _ => 0,
+    }
 }
 
 /// Open the shared file: Film's project with Cut's parts as Film's own types, the first sequence to show, and what Film holds open.
@@ -698,6 +750,7 @@ pub fn open_shared(name: &str, bytes: &[u8]) -> Result<(Project, Option<ItemId>,
             return Err(SharedError::MediaNotReferenced(item.name.clone()));
         }
     }
+    p.next_id = p.next_id.max(largest_film_name(&file) + 1);
     let film_items: BTreeSet<ItemId> = p.items.keys().copied().collect();
     let film_seqs = sequences_of(&p);
     let cut = CutParts::read(&mut p, &film_seqs, split, &file).map_err(SharedError::NotRoundTrip)?;

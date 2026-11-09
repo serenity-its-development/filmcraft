@@ -3196,47 +3196,6 @@
     }
   ],
   "metadata": {
-    "filmcraft": {
-      "project": {
-        "items": {},
-        "name": "Trip",
-        "next_id": 44,
-        "root": {
-          "children": [],
-          "id": 0,
-          "name": "Trip"
-        },
-        "settings": {
-          "action_safe": [
-            10.0,
-            10.0
-          ],
-          "audio_display_samples": true,
-          "capture_format": "DV",
-          "default_audio_transition_duration": 254016000000,
-          "default_still_duration": 1270080000000,
-          "default_transition_duration_frames": 24,
-          "ingest": {
-            "action": "createProxies",
-            "destination": null,
-            "enabled": false,
-            "preset": ""
-          },
-          "renderer": "FilmCraft GPU Acceleration (wgpu)",
-          "scratch": {
-            "audioPreviews": null,
-            "autoSave": null,
-            "captured": null,
-            "videoPreviews": null
-          },
-          "title_safe": [
-            20.0,
-            20.0
-          ],
-          "video_display": "Timecode"
-        }
-      }
-    },
     "opencut": {
       "media": [
         {
