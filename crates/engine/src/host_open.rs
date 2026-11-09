@@ -317,6 +317,72 @@ mod tests {
         assert_eq!(first_difference(&cut, &saved, ""), None, "Cut's split comes back from Film value for value");
     }
 
+    /// files/989 (2026-11-10, the gap "a copy of Film's clip is Film's clip" left): Film's keyed clips (`film-keyed.otio`) split by the
+    /// editor's own split in Cut 0.375 s in, and the picture duplicated and pasted onto Film's second track, as the OpenCut fork's
+    /// `oneos-tests/editor/film-copy-keys.test.ts` writes them (`cut-split-keyed.otio`). In Film each copy is Film's clip, nothing locked,
+    /// and every keyed parameter draws at each moment of the medium as the clip it came from did (to the editor's whole-tick handles: a
+    /// few millionths of the parameter's range); an unedited save is the file.
+    #[test]
+    fn a_film_clip_cut_split_keeps_its_keyframes_at_their_moment() {
+        use filmcraft_project::ParamValue;
+        let before = include_bytes!("../../interchange/tests/it/oneos/film-keyed.otio");
+        let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-split-keyed.otio");
+        let cut: Value = serde_json::from_slice(bytes).unwrap();
+        let mut was = session();
+        open_host_file(&mut was, "Keys.otio", before).unwrap();
+        let mut s = session();
+        open_host_file(&mut s, "Keys.otio", bytes).unwrap();
+        assert_eq!(s.host_shared.locked(), Vec::<String>::new(), "nothing is locked");
+        let clips = |s: &Session, name: &str| -> Vec<filmcraft_project::TrackItem> {
+            let seq = s.project.items.values().find(|i| i.name == "Edit").unwrap().as_sequence().unwrap();
+            let mut v: Vec<_> = seq.video_tracks.iter().chain(&seq.audio_tracks).flat_map(|t| t.items.iter()).filter(|c| c.name == name).cloned().collect();
+            v.sort_by_key(|c| (c.start, c.source_in));
+            v
+        };
+        let comps = |v: &ParamValue| -> Vec<f64> { v.as_f64().map(|x| vec![x]).or_else(|| v.as_vec2().map(|p| vec![p.x, p.y])).expect("a number or a point") };
+        let mut drawn = 0;
+        for (name, copies) in [("Keyed", 4), ("Keyed sound", 2)] {
+            let from = clips(&was, name);
+            assert_eq!(from.len(), 1);
+            let from = &from[0];
+            let to = clips(&s, name);
+            assert_eq!(to.len(), copies, "{name}: the halves (and the picture's duplicate and paste)");
+            for c in &to {
+                for fx in from.effects.iter() {
+                    for (pname, p) in fx.params.iter().filter(|(_, p)| p.is_animated()) {
+                        let q = c
+                            .effects
+                            .iter()
+                            .filter(|e| e.effect == fx.effect)
+                            .find_map(|e| e.params.get(pname))
+                            .unwrap_or_else(|| panic!("{name}: {} {pname} is kept", fx.effect));
+                        assert!(q.is_animated(), "{name} at {:?}: {} {pname} stays keyed", c.start, fx.effect);
+                        let vals: Vec<f64> = p.keyframes.iter().flat_map(|k| comps(&k.value)).collect();
+                        let range = (vals.iter().cloned().fold(f64::MIN, f64::max) - vals.iter().cloned().fold(f64::MAX, f64::min)).max(1.0);
+                        for i in 0..=8 {
+                            let local = filmcraft_time::Tick(c.duration.0 * i / 8);
+                            let medium = c.source_in.0 + local.0;
+                            let want = comps(&p.value_at(filmcraft_time::Tick(medium - from.source_in.0)));
+                            let got = comps(&q.value_at(local));
+                            for (g, w) in got.iter().zip(&want) {
+                                assert!(
+                                    (g - w).abs() <= 1e-5 * range,
+                                    "{name} at {:?}: {} {pname} at medium tick {medium} is {g}, {w} before",
+                                    c.start,
+                                    fx.effect
+                                );
+                            }
+                            drawn += 1;
+                        }
+                    }
+                }
+            }
+        }
+        assert!(drawn > 0, "the copies were drawn");
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
+        assert_eq!(first_difference(&cut, &saved, ""), None, "Cut's split comes back from Film value for value");
+    }
+
     /// Film edits the clip Cut trimmed: it is written at Film's rate with Film's exact mirrors, and Cut's own data on it rides along.
     #[test]
     fn film_trims_the_clip_cut_trimmed_and_cut_s_data_on_it_is_kept() {

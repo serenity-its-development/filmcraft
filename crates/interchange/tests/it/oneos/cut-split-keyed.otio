@@ -1,0 +1,2466 @@
+{
+    "OTIO_SCHEMA": "SerializableCollection.1",
+    "children": [
+        {
+            "OTIO_SCHEMA": "Timeline.1",
+            "global_start_time": {
+                "OTIO_SCHEMA": "RationalTime.1",
+                "rate": 24,
+                "value": 0
+            },
+            "metadata": {
+                "filmcraft": {
+                    "custom_color_names": {},
+                    "custom_colors": [],
+                    "custom_label_color": null,
+                    "item": 9,
+                    "label": "Forest",
+                    "master_effects": [],
+                    "master_volume_db": 0,
+                    "settings": {
+                        "audio_master": "Stereo",
+                        "color": {
+                            "auto_tone_map": true,
+                            "wide_gamut": false,
+                            "working": "Rec709"
+                        },
+                        "drop_frame": false,
+                        "frame_rate": {
+                            "den": 1,
+                            "num": 24
+                        },
+                        "height": 1080,
+                        "max_bit_depth": false,
+                        "max_render_quality": false,
+                        "par": [
+                            1,
+                            1
+                        ],
+                        "preset": "HD 1080p 23.976",
+                        "preview_codec": "ProRes 422",
+                        "sample_rate": 48000,
+                        "width": 1920,
+                        "working_space": "Rec. 709"
+                    },
+                    "start_timecode": 0
+                }
+            },
+            "name": "Edit",
+            "tracks": {
+                "OTIO_SCHEMA": "Stack.1",
+                "children": [
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "children": [
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "effects": [],
+                                "enabled": true,
+                                "markers": [],
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "ExternalReference.1",
+                                        "available_image_bounds": null,
+                                        "available_range": {
+                                            "OTIO_SCHEMA": "TimeRange.1",
+                                            "duration": {
+                                                "OTIO_SCHEMA": "RationalTime.1",
+                                                "rate": 24,
+                                                "value": 14400
+                                            },
+                                            "start_time": {
+                                                "OTIO_SCHEMA": "RationalTime.1",
+                                                "rate": 24,
+                                                "value": 0
+                                            }
+                                        },
+                                        "metadata": {
+                                            "filmcraft": {
+                                                "custom_label_color": null,
+                                                "info": {
+                                                    "audio_streams": [
+                                                        {
+                                                            "bits_per_sample": null,
+                                                            "channels": 2,
+                                                            "codec": "aac",
+                                                            "sample_rate": 48000
+                                                        }
+                                                    ],
+                                                    "container": "mp4",
+                                                    "duration": 152409600000000,
+                                                    "file_size": null,
+                                                    "kind": "Movie",
+                                                    "name": "01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1",
+                                                    "start_timecode": null,
+                                                    "video": {
+                                                        "bitrate": null,
+                                                        "codec": "h264",
+                                                        "color": {
+                                                            "matrix": "Bt709",
+                                                            "primaries": "Bt709",
+                                                            "range": "Limited",
+                                                            "transfer": "Bt709"
+                                                        },
+                                                        "frame_rate": {
+                                                            "den": 1,
+                                                            "num": 24
+                                                        },
+                                                        "has_alpha": false,
+                                                        "height": 1080,
+                                                        "par": [
+                                                            1,
+                                                            1
+                                                        ],
+                                                        "pixel_format": "yuv420p",
+                                                        "width": 1920
+                                                    }
+                                                },
+                                                "item": 1,
+                                                "label": "Iris",
+                                                "offline": false
+                                            }
+                                        },
+                                        "name": "01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1",
+                                        "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1"
+                                    }
+                                },
+                                "metadata": {
+                                    "filmcraft": {
+                                        "custom_label_color": null,
+                                        "duration_ticks": 508032000000,
+                                        "effects": [
+                                            {
+                                                "effect": "motion",
+                                                "enabled": true,
+                                                "params": {
+                                                    "anchor": {
+                                                        "value": {
+                                                            "Vec2": {
+                                                                "x": null,
+                                                                "y": null
+                                                            }
+                                                        }
+                                                    },
+                                                    "anti_flicker": {
+                                                        "value": {
+                                                            "Float": 0
+                                                        }
+                                                    },
+                                                    "position": {
+                                                        "keyframes": [
+                                                            {
+                                                                "time": 0,
+                                                                "value": {
+                                                                    "Vec2": {
+                                                                        "x": 1060,
+                                                                        "y": 540
+                                                                    }
+                                                                },
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "in_influence": 0.3333333333333333
+                                                            },
+                                                            {
+                                                                "time": 95256000000,
+                                                                "value": {
+                                                                    "Vec2": {
+                                                                        "x": 1015,
+                                                                        "y": 510
+                                                                    }
+                                                                },
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "in_influence": 0.3333333333333333
+                                                            }
+                                                        ],
+                                                        "value": {
+                                                            "Vec2": {
+                                                                "x": 1060,
+                                                                "y": 540
+                                                            }
+                                                        }
+                                                    },
+                                                    "rotation": {
+                                                        "value": {
+                                                            "Float": 15
+                                                        }
+                                                    },
+                                                    "scale": {
+                                                        "value": {
+                                                            "Float": 100
+                                                        },
+                                                        "keyframes": [
+                                                            {
+                                                                "time": 0,
+                                                                "value": {
+                                                                    "Float": 100
+                                                                },
+                                                                "interp": "Bezier",
+                                                                "out_influence": 0.38455555555555554,
+                                                                "in_influence": 0.3333333333333333
+                                                            },
+                                                            {
+                                                                "time": 95256000000,
+                                                                "value": {
+                                                                    "Float": 130.716647413
+                                                                },
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "in_influence": 0.4527111111111111,
+                                                                "in_rise": [
+                                                                    -14.08020268
+                                                                ]
+                                                            }
+                                                        ]
+                                                    },
+                                                    "scale_width": {
+                                                        "value": {
+                                                            "Float": 100
+                                                        }
+                                                    },
+                                                    "uniform_scale": {
+                                                        "value": {
+                                                            "Bool": true
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "effect": "opacity",
+                                                "enabled": true,
+                                                "params": {
+                                                    "blend": {
+                                                        "value": {
+                                                            "Choice": 0
+                                                        }
+                                                    },
+                                                    "opacity": {
+                                                        "keyframes": [
+                                                            {
+                                                                "time": 0,
+                                                                "value": {
+                                                                    "Float": 0
+                                                                },
+                                                                "interp": "Hold",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "in_influence": 0.3333333333333333
+                                                            },
+                                                            {
+                                                                "time": 63504000000,
+                                                                "value": {
+                                                                    "Float": 50
+                                                                },
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "in_influence": 0.3333333333333333
+                                                            },
+                                                            {
+                                                                "time": 95256000000,
+                                                                "value": {
+                                                                    "Float": 62.5
+                                                                },
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "in_influence": 0.3333333333333333
+                                                            }
+                                                        ],
+                                                        "value": {
+                                                            "Float": 100
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "effect": "time_remap",
+                                                "enabled": true,
+                                                "params": {
+                                                    "speed": {
+                                                        "value": {
+                                                            "Float": 100
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "effect": "gaussian_blur",
+                                                "enabled": true,
+                                                "params": {
+                                                    "blurriness": {
+                                                        "keyframes": [
+                                                            {
+                                                                "time": 0,
+                                                                "value": {
+                                                                    "Float": 0
+                                                                },
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "in_influence": 0.3333333333333333
+                                                            },
+                                                            {
+                                                                "time": 95256000000,
+                                                                "value": {
+                                                                    "Float": 7.5
+                                                                },
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "in_influence": 0.3333333333333333
+                                                            }
+                                                        ],
+                                                        "value": {
+                                                            "Float": 10
+                                                        }
+                                                    },
+                                                    "dimensions": {
+                                                        "value": {
+                                                            "Choice": 0
+                                                        }
+                                                    },
+                                                    "repeat_edge": {
+                                                        "value": {
+                                                            "Bool": false
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ],
+                                        "gain_db": 0,
+                                        "group": null,
+                                        "label": "Iris",
+                                        "link": null,
+                                        "scale_to_frame": false,
+                                        "source_in_ticks": 254016000000
+                                    },
+                                    "opencut": {
+                                        "element": {}
+                                    }
+                                },
+                                "name": "Keyed",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 24,
+                                        "value": 24
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 24,
+                                        "value": 9
+                                    }
+                                }
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "effects": [],
+                                "enabled": true,
+                                "markers": [],
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "ExternalReference.1",
+                                        "available_image_bounds": null,
+                                        "available_range": {
+                                            "OTIO_SCHEMA": "TimeRange.1",
+                                            "duration": {
+                                                "OTIO_SCHEMA": "RationalTime.1",
+                                                "rate": 24,
+                                                "value": 14400
+                                            },
+                                            "start_time": {
+                                                "OTIO_SCHEMA": "RationalTime.1",
+                                                "rate": 24,
+                                                "value": 0
+                                            }
+                                        },
+                                        "metadata": {
+                                            "filmcraft": {
+                                                "custom_label_color": null,
+                                                "info": {
+                                                    "audio_streams": [
+                                                        {
+                                                            "bits_per_sample": null,
+                                                            "channels": 2,
+                                                            "codec": "aac",
+                                                            "sample_rate": 48000
+                                                        }
+                                                    ],
+                                                    "container": "mp4",
+                                                    "duration": 152409600000000,
+                                                    "file_size": null,
+                                                    "kind": "Movie",
+                                                    "name": "01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1",
+                                                    "start_timecode": null,
+                                                    "video": {
+                                                        "bitrate": null,
+                                                        "codec": "h264",
+                                                        "color": {
+                                                            "matrix": "Bt709",
+                                                            "primaries": "Bt709",
+                                                            "range": "Limited",
+                                                            "transfer": "Bt709"
+                                                        },
+                                                        "frame_rate": {
+                                                            "den": 1,
+                                                            "num": 24
+                                                        },
+                                                        "has_alpha": false,
+                                                        "height": 1080,
+                                                        "par": [
+                                                            1,
+                                                            1
+                                                        ],
+                                                        "pixel_format": "yuv420p",
+                                                        "width": 1920
+                                                    }
+                                                },
+                                                "item": 1,
+                                                "label": "Iris",
+                                                "offline": false
+                                            }
+                                        },
+                                        "name": "01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1",
+                                        "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1"
+                                    }
+                                },
+                                "metadata": {
+                                    "filmcraft": {
+                                        "custom_label_color": null,
+                                        "duration_ticks": 508032000000,
+                                        "effects": [
+                                            {
+                                                "effect": "motion",
+                                                "enabled": true,
+                                                "params": {
+                                                    "anchor": {
+                                                        "value": {
+                                                            "Vec2": {
+                                                                "x": null,
+                                                                "y": null
+                                                            }
+                                                        }
+                                                    },
+                                                    "anti_flicker": {
+                                                        "value": {
+                                                            "Float": 0
+                                                        }
+                                                    },
+                                                    "position": {
+                                                        "keyframes": [
+                                                            {
+                                                                "time": 0,
+                                                                "value": {
+                                                                    "Vec2": {
+                                                                        "x": 1015,
+                                                                        "y": 510
+                                                                    }
+                                                                },
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "in_influence": 0.3333333333333333
+                                                            },
+                                                            {
+                                                                "time": 31752000000,
+                                                                "value": {
+                                                                    "Vec2": {
+                                                                        "x": 1000,
+                                                                        "y": 500
+                                                                    }
+                                                                },
+                                                                "interp": "EaseOut",
+                                                                "out_influence": 0.5,
+                                                                "in_influence": 0.3333333333333333
+                                                            },
+                                                            {
+                                                                "time": 158760000000,
+                                                                "value": {
+                                                                    "Vec2": {
+                                                                        "x": 960,
+                                                                        "y": 540
+                                                                    }
+                                                                },
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "in_influence": 0.3333333333333333
+                                                            }
+                                                        ],
+                                                        "value": {
+                                                            "Vec2": {
+                                                                "x": 1060,
+                                                                "y": 540
+                                                            }
+                                                        }
+                                                    },
+                                                    "rotation": {
+                                                        "value": {
+                                                            "Float": 15
+                                                        }
+                                                    },
+                                                    "scale": {
+                                                        "value": {
+                                                            "Float": 100
+                                                        },
+                                                        "keyframes": [
+                                                            {
+                                                                "time": 0,
+                                                                "value": {
+                                                                    "Float": 130.716647413
+                                                                },
+                                                                "interp": "EaseOut",
+                                                                "out_influence": 0.19928,
+                                                                "in_influence": 0.3333333333333333,
+                                                                "out_rise": [
+                                                                    10.329565097
+                                                                ]
+                                                            },
+                                                            {
+                                                                "time": 158760000000,
+                                                                "value": {
+                                                                    "Float": 150
+                                                                },
+                                                                "interp": "Bezier",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "in_influence": 0.5078133333333333
+                                                            }
+                                                        ]
+                                                    },
+                                                    "scale_width": {
+                                                        "value": {
+                                                            "Float": 100
+                                                        }
+                                                    },
+                                                    "uniform_scale": {
+                                                        "value": {
+                                                            "Bool": true
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "effect": "opacity",
+                                                "enabled": true,
+                                                "params": {
+                                                    "blend": {
+                                                        "value": {
+                                                            "Choice": 0
+                                                        }
+                                                    },
+                                                    "opacity": {
+                                                        "keyframes": [
+                                                            {
+                                                                "time": 0,
+                                                                "value": {
+                                                                    "Float": 62.5
+                                                                },
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "in_influence": 0.3333333333333333
+                                                            },
+                                                            {
+                                                                "time": 95256000000,
+                                                                "value": {
+                                                                    "Float": 100
+                                                                },
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "in_influence": 0.3333333333333333
+                                                            }
+                                                        ],
+                                                        "value": {
+                                                            "Float": 100
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "effect": "time_remap",
+                                                "enabled": true,
+                                                "params": {
+                                                    "speed": {
+                                                        "value": {
+                                                            "Float": 100
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "effect": "gaussian_blur",
+                                                "enabled": true,
+                                                "params": {
+                                                    "blurriness": {
+                                                        "keyframes": [
+                                                            {
+                                                                "time": 0,
+                                                                "value": {
+                                                                    "Float": 7.5
+                                                                },
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "in_influence": 0.3333333333333333
+                                                            },
+                                                            {
+                                                                "time": 158760000000,
+                                                                "value": {
+                                                                    "Float": 20
+                                                                },
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "in_influence": 0.3333333333333333
+                                                            }
+                                                        ],
+                                                        "value": {
+                                                            "Float": 10
+                                                        }
+                                                    },
+                                                    "dimensions": {
+                                                        "value": {
+                                                            "Choice": 0
+                                                        }
+                                                    },
+                                                    "repeat_edge": {
+                                                        "value": {
+                                                            "Bool": false
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ],
+                                        "gain_db": 0,
+                                        "group": null,
+                                        "label": "Iris",
+                                        "link": null,
+                                        "scale_to_frame": false,
+                                        "source_in_ticks": 254016000000
+                                    },
+                                    "opencut": {
+                                        "element": {}
+                                    }
+                                },
+                                "name": "Keyed",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 24,
+                                        "value": 33
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 24,
+                                        "value": 39
+                                    }
+                                }
+                            }
+                        ],
+                        "effects": [],
+                        "enabled": true,
+                        "kind": "Video",
+                        "markers": [],
+                        "metadata": {
+                            "filmcraft": {
+                                "channels": "Stereo",
+                                "effects": [],
+                                "locked": false,
+                                "muted": false,
+                                "pan": 0,
+                                "solo": false,
+                                "sync_lock": true,
+                                "volume_db": 0
+                            }
+                        },
+                        "name": "Video 1",
+                        "source_range": null
+                    },
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "children": [
+                            {
+                                "OTIO_SCHEMA": "Gap.1",
+                                "name": "",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 30,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 30,
+                                        "value": 60
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "metadata": {}
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "effects": [],
+                                "enabled": true,
+                                "markers": [],
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "ExternalReference.1",
+                                        "available_image_bounds": null,
+                                        "available_range": {
+                                            "OTIO_SCHEMA": "TimeRange.1",
+                                            "duration": {
+                                                "OTIO_SCHEMA": "RationalTime.1",
+                                                "rate": 24,
+                                                "value": 14400
+                                            },
+                                            "start_time": {
+                                                "OTIO_SCHEMA": "RationalTime.1",
+                                                "rate": 24,
+                                                "value": 0
+                                            }
+                                        },
+                                        "metadata": {
+                                            "filmcraft": {
+                                                "custom_label_color": null,
+                                                "info": {
+                                                    "audio_streams": [
+                                                        {
+                                                            "bits_per_sample": null,
+                                                            "channels": 2,
+                                                            "codec": "aac",
+                                                            "sample_rate": 48000
+                                                        }
+                                                    ],
+                                                    "container": "mp4",
+                                                    "duration": 152409600000000,
+                                                    "file_size": null,
+                                                    "kind": "Movie",
+                                                    "name": "01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1",
+                                                    "start_timecode": null,
+                                                    "video": {
+                                                        "bitrate": null,
+                                                        "codec": "h264",
+                                                        "color": {
+                                                            "matrix": "Bt709",
+                                                            "primaries": "Bt709",
+                                                            "range": "Limited",
+                                                            "transfer": "Bt709"
+                                                        },
+                                                        "frame_rate": {
+                                                            "den": 1,
+                                                            "num": 24
+                                                        },
+                                                        "has_alpha": false,
+                                                        "height": 1080,
+                                                        "par": [
+                                                            1,
+                                                            1
+                                                        ],
+                                                        "pixel_format": "yuv420p",
+                                                        "width": 1920
+                                                    }
+                                                },
+                                                "item": 1,
+                                                "label": "Iris",
+                                                "offline": false
+                                            }
+                                        },
+                                        "name": "01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1",
+                                        "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1"
+                                    }
+                                },
+                                "metadata": {
+                                    "filmcraft": {
+                                        "custom_label_color": null,
+                                        "duration_ticks": 508032000000,
+                                        "effects": [
+                                            {
+                                                "effect": "motion",
+                                                "enabled": true,
+                                                "params": {
+                                                    "anchor": {
+                                                        "value": {
+                                                            "Vec2": {
+                                                                "x": null,
+                                                                "y": null
+                                                            }
+                                                        }
+                                                    },
+                                                    "anti_flicker": {
+                                                        "value": {
+                                                            "Float": 0
+                                                        }
+                                                    },
+                                                    "position": {
+                                                        "keyframes": [
+                                                            {
+                                                                "in_influence": 0.3333333333333333,
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "time": 0,
+                                                                "value": {
+                                                                    "Vec2": {
+                                                                        "x": 1060,
+                                                                        "y": 540
+                                                                    }
+                                                                }
+                                                            },
+                                                            {
+                                                                "in_influence": 0.3333333333333333,
+                                                                "interp": "EaseOut",
+                                                                "out_influence": 0.5,
+                                                                "time": 127008000000,
+                                                                "value": {
+                                                                    "Vec2": {
+                                                                        "x": 1000,
+                                                                        "y": 500
+                                                                    }
+                                                                }
+                                                            },
+                                                            {
+                                                                "in_influence": 0.3333333333333333,
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "time": 254016000000,
+                                                                "value": {
+                                                                    "Vec2": {
+                                                                        "x": 960,
+                                                                        "y": 540
+                                                                    }
+                                                                }
+                                                            }
+                                                        ],
+                                                        "value": {
+                                                            "Vec2": {
+                                                                "x": 1060,
+                                                                "y": 540
+                                                            }
+                                                        }
+                                                    },
+                                                    "rotation": {
+                                                        "value": {
+                                                            "Float": 15
+                                                        }
+                                                    },
+                                                    "scale": {
+                                                        "keyframes": [
+                                                            {
+                                                                "in_influence": 0.3333333333333333,
+                                                                "interp": "Bezier",
+                                                                "out_influence": 0.25,
+                                                                "time": 0,
+                                                                "value": {
+                                                                    "Float": 100
+                                                                }
+                                                            },
+                                                            {
+                                                                "in_influence": 0.75,
+                                                                "interp": "Bezier",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "time": 254016000000,
+                                                                "value": {
+                                                                    "Float": 150
+                                                                }
+                                                            }
+                                                        ],
+                                                        "value": {
+                                                            "Float": 100
+                                                        }
+                                                    },
+                                                    "scale_width": {
+                                                        "value": {
+                                                            "Float": 100
+                                                        }
+                                                    },
+                                                    "uniform_scale": {
+                                                        "value": {
+                                                            "Bool": true
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "effect": "opacity",
+                                                "enabled": true,
+                                                "params": {
+                                                    "blend": {
+                                                        "value": {
+                                                            "Choice": 0
+                                                        }
+                                                    },
+                                                    "opacity": {
+                                                        "keyframes": [
+                                                            {
+                                                                "in_influence": 0.3333333333333333,
+                                                                "interp": "Hold",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "time": 0,
+                                                                "value": {
+                                                                    "Float": 0
+                                                                }
+                                                            },
+                                                            {
+                                                                "in_influence": 0.3333333333333333,
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "time": 63504000000,
+                                                                "value": {
+                                                                    "Float": 50
+                                                                }
+                                                            },
+                                                            {
+                                                                "in_influence": 0.3333333333333333,
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "time": 190512000000,
+                                                                "value": {
+                                                                    "Float": 100
+                                                                }
+                                                            }
+                                                        ],
+                                                        "value": {
+                                                            "Float": 100
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "effect": "time_remap",
+                                                "enabled": true,
+                                                "params": {
+                                                    "speed": {
+                                                        "value": {
+                                                            "Float": 100
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "effect": "gaussian_blur",
+                                                "enabled": true,
+                                                "params": {
+                                                    "blurriness": {
+                                                        "keyframes": [
+                                                            {
+                                                                "in_influence": 0.3333333333333333,
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "time": 0,
+                                                                "value": {
+                                                                    "Float": 0
+                                                                }
+                                                            },
+                                                            {
+                                                                "in_influence": 0.3333333333333333,
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "time": 254016000000,
+                                                                "value": {
+                                                                    "Float": 20
+                                                                }
+                                                            }
+                                                        ],
+                                                        "value": {
+                                                            "Float": 10
+                                                        }
+                                                    },
+                                                    "dimensions": {
+                                                        "value": {
+                                                            "Choice": 0
+                                                        }
+                                                    },
+                                                    "repeat_edge": {
+                                                        "value": {
+                                                            "Bool": false
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ],
+                                        "gain_db": 0,
+                                        "group": null,
+                                        "label": "Iris",
+                                        "link": null,
+                                        "scale_to_frame": false,
+                                        "source_in_ticks": 254016000000
+                                    },
+                                    "opencut": {
+                                        "element": {}
+                                    }
+                                },
+                                "name": "Keyed",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 24,
+                                        "value": 24
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 24,
+                                        "value": 48
+                                    }
+                                }
+                            },
+                            {
+                                "OTIO_SCHEMA": "Gap.1",
+                                "name": "",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 30,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 30,
+                                        "value": 60
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "metadata": {}
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "effects": [],
+                                "enabled": true,
+                                "markers": [],
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "ExternalReference.1",
+                                        "available_image_bounds": null,
+                                        "available_range": {
+                                            "OTIO_SCHEMA": "TimeRange.1",
+                                            "duration": {
+                                                "OTIO_SCHEMA": "RationalTime.1",
+                                                "rate": 24,
+                                                "value": 14400
+                                            },
+                                            "start_time": {
+                                                "OTIO_SCHEMA": "RationalTime.1",
+                                                "rate": 24,
+                                                "value": 0
+                                            }
+                                        },
+                                        "metadata": {
+                                            "filmcraft": {
+                                                "custom_label_color": null,
+                                                "info": {
+                                                    "audio_streams": [
+                                                        {
+                                                            "bits_per_sample": null,
+                                                            "channels": 2,
+                                                            "codec": "aac",
+                                                            "sample_rate": 48000
+                                                        }
+                                                    ],
+                                                    "container": "mp4",
+                                                    "duration": 152409600000000,
+                                                    "file_size": null,
+                                                    "kind": "Movie",
+                                                    "name": "01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1",
+                                                    "start_timecode": null,
+                                                    "video": {
+                                                        "bitrate": null,
+                                                        "codec": "h264",
+                                                        "color": {
+                                                            "matrix": "Bt709",
+                                                            "primaries": "Bt709",
+                                                            "range": "Limited",
+                                                            "transfer": "Bt709"
+                                                        },
+                                                        "frame_rate": {
+                                                            "den": 1,
+                                                            "num": 24
+                                                        },
+                                                        "has_alpha": false,
+                                                        "height": 1080,
+                                                        "par": [
+                                                            1,
+                                                            1
+                                                        ],
+                                                        "pixel_format": "yuv420p",
+                                                        "width": 1920
+                                                    }
+                                                },
+                                                "item": 1,
+                                                "label": "Iris",
+                                                "offline": false
+                                            }
+                                        },
+                                        "name": "01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1",
+                                        "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1"
+                                    }
+                                },
+                                "metadata": {
+                                    "filmcraft": {
+                                        "custom_label_color": null,
+                                        "duration_ticks": 508032000000,
+                                        "effects": [
+                                            {
+                                                "effect": "motion",
+                                                "enabled": true,
+                                                "params": {
+                                                    "anchor": {
+                                                        "value": {
+                                                            "Vec2": {
+                                                                "x": null,
+                                                                "y": null
+                                                            }
+                                                        }
+                                                    },
+                                                    "anti_flicker": {
+                                                        "value": {
+                                                            "Float": 0
+                                                        }
+                                                    },
+                                                    "position": {
+                                                        "keyframes": [
+                                                            {
+                                                                "in_influence": 0.3333333333333333,
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "time": 0,
+                                                                "value": {
+                                                                    "Vec2": {
+                                                                        "x": 1060,
+                                                                        "y": 540
+                                                                    }
+                                                                }
+                                                            },
+                                                            {
+                                                                "in_influence": 0.3333333333333333,
+                                                                "interp": "EaseOut",
+                                                                "out_influence": 0.5,
+                                                                "time": 127008000000,
+                                                                "value": {
+                                                                    "Vec2": {
+                                                                        "x": 1000,
+                                                                        "y": 500
+                                                                    }
+                                                                }
+                                                            },
+                                                            {
+                                                                "in_influence": 0.3333333333333333,
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "time": 254016000000,
+                                                                "value": {
+                                                                    "Vec2": {
+                                                                        "x": 960,
+                                                                        "y": 540
+                                                                    }
+                                                                }
+                                                            }
+                                                        ],
+                                                        "value": {
+                                                            "Vec2": {
+                                                                "x": 1060,
+                                                                "y": 540
+                                                            }
+                                                        }
+                                                    },
+                                                    "rotation": {
+                                                        "value": {
+                                                            "Float": 15
+                                                        }
+                                                    },
+                                                    "scale": {
+                                                        "keyframes": [
+                                                            {
+                                                                "in_influence": 0.3333333333333333,
+                                                                "interp": "Bezier",
+                                                                "out_influence": 0.25,
+                                                                "time": 0,
+                                                                "value": {
+                                                                    "Float": 100
+                                                                }
+                                                            },
+                                                            {
+                                                                "in_influence": 0.75,
+                                                                "interp": "Bezier",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "time": 254016000000,
+                                                                "value": {
+                                                                    "Float": 150
+                                                                }
+                                                            }
+                                                        ],
+                                                        "value": {
+                                                            "Float": 100
+                                                        }
+                                                    },
+                                                    "scale_width": {
+                                                        "value": {
+                                                            "Float": 100
+                                                        }
+                                                    },
+                                                    "uniform_scale": {
+                                                        "value": {
+                                                            "Bool": true
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "effect": "opacity",
+                                                "enabled": true,
+                                                "params": {
+                                                    "blend": {
+                                                        "value": {
+                                                            "Choice": 0
+                                                        }
+                                                    },
+                                                    "opacity": {
+                                                        "keyframes": [
+                                                            {
+                                                                "in_influence": 0.3333333333333333,
+                                                                "interp": "Hold",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "time": 0,
+                                                                "value": {
+                                                                    "Float": 0
+                                                                }
+                                                            },
+                                                            {
+                                                                "in_influence": 0.3333333333333333,
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "time": 63504000000,
+                                                                "value": {
+                                                                    "Float": 50
+                                                                }
+                                                            },
+                                                            {
+                                                                "in_influence": 0.3333333333333333,
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "time": 190512000000,
+                                                                "value": {
+                                                                    "Float": 100
+                                                                }
+                                                            }
+                                                        ],
+                                                        "value": {
+                                                            "Float": 100
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "effect": "time_remap",
+                                                "enabled": true,
+                                                "params": {
+                                                    "speed": {
+                                                        "value": {
+                                                            "Float": 100
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "effect": "gaussian_blur",
+                                                "enabled": true,
+                                                "params": {
+                                                    "blurriness": {
+                                                        "keyframes": [
+                                                            {
+                                                                "in_influence": 0.3333333333333333,
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "time": 0,
+                                                                "value": {
+                                                                    "Float": 0
+                                                                }
+                                                            },
+                                                            {
+                                                                "in_influence": 0.3333333333333333,
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "time": 254016000000,
+                                                                "value": {
+                                                                    "Float": 20
+                                                                }
+                                                            }
+                                                        ],
+                                                        "value": {
+                                                            "Float": 10
+                                                        }
+                                                    },
+                                                    "dimensions": {
+                                                        "value": {
+                                                            "Choice": 0
+                                                        }
+                                                    },
+                                                    "repeat_edge": {
+                                                        "value": {
+                                                            "Bool": false
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ],
+                                        "gain_db": 0,
+                                        "group": null,
+                                        "label": "Iris",
+                                        "link": null,
+                                        "scale_to_frame": false,
+                                        "source_in_ticks": 254016000000
+                                    },
+                                    "opencut": {
+                                        "element": {}
+                                    }
+                                },
+                                "name": "Keyed",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 24,
+                                        "value": 24
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 24,
+                                        "value": 48
+                                    }
+                                }
+                            }
+                        ],
+                        "effects": [],
+                        "enabled": true,
+                        "kind": "Video",
+                        "markers": [],
+                        "metadata": {
+                            "filmcraft": {
+                                "channels": "Stereo",
+                                "effects": [],
+                                "locked": false,
+                                "muted": false,
+                                "pan": 0,
+                                "solo": false,
+                                "sync_lock": true,
+                                "volume_db": 0
+                            }
+                        },
+                        "name": "Video 2",
+                        "source_range": null
+                    },
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "children": [],
+                        "effects": [],
+                        "enabled": true,
+                        "kind": "Video",
+                        "markers": [],
+                        "metadata": {
+                            "filmcraft": {
+                                "channels": "Stereo",
+                                "effects": [],
+                                "locked": false,
+                                "muted": false,
+                                "pan": 0,
+                                "solo": false,
+                                "sync_lock": true,
+                                "volume_db": 0
+                            }
+                        },
+                        "name": "Video 3",
+                        "source_range": null
+                    },
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "children": [
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "effects": [],
+                                "enabled": true,
+                                "markers": [],
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "ExternalReference.1",
+                                        "available_image_bounds": null,
+                                        "available_range": {
+                                            "OTIO_SCHEMA": "TimeRange.1",
+                                            "duration": {
+                                                "OTIO_SCHEMA": "RationalTime.1",
+                                                "rate": 24,
+                                                "value": 14400
+                                            },
+                                            "start_time": {
+                                                "OTIO_SCHEMA": "RationalTime.1",
+                                                "rate": 24,
+                                                "value": 0
+                                            }
+                                        },
+                                        "metadata": {
+                                            "filmcraft": {
+                                                "custom_label_color": null,
+                                                "info": {
+                                                    "audio_streams": [
+                                                        {
+                                                            "bits_per_sample": null,
+                                                            "channels": 2,
+                                                            "codec": "aac",
+                                                            "sample_rate": 48000
+                                                        }
+                                                    ],
+                                                    "container": "mp4",
+                                                    "duration": 152409600000000,
+                                                    "file_size": null,
+                                                    "kind": "Movie",
+                                                    "name": "01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1",
+                                                    "start_timecode": null,
+                                                    "video": {
+                                                        "bitrate": null,
+                                                        "codec": "h264",
+                                                        "color": {
+                                                            "matrix": "Bt709",
+                                                            "primaries": "Bt709",
+                                                            "range": "Limited",
+                                                            "transfer": "Bt709"
+                                                        },
+                                                        "frame_rate": {
+                                                            "den": 1,
+                                                            "num": 24
+                                                        },
+                                                        "has_alpha": false,
+                                                        "height": 1080,
+                                                        "par": [
+                                                            1,
+                                                            1
+                                                        ],
+                                                        "pixel_format": "yuv420p",
+                                                        "width": 1920
+                                                    }
+                                                },
+                                                "item": 1,
+                                                "label": "Iris",
+                                                "offline": false
+                                            }
+                                        },
+                                        "name": "01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1",
+                                        "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1"
+                                    }
+                                },
+                                "metadata": {
+                                    "filmcraft": {
+                                        "custom_label_color": null,
+                                        "duration_ticks": 508032000000,
+                                        "effects": [
+                                            {
+                                                "effect": "volume",
+                                                "enabled": true,
+                                                "params": {
+                                                    "bypass": {
+                                                        "value": {
+                                                            "Bool": false
+                                                        }
+                                                    },
+                                                    "level": {
+                                                        "keyframes": [
+                                                            {
+                                                                "time": 0,
+                                                                "value": {
+                                                                    "Float": 0
+                                                                },
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "in_influence": 0.3333333333333333
+                                                            },
+                                                            {
+                                                                "time": 95256000000,
+                                                                "value": {
+                                                                    "Float": -2.25
+                                                                },
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "in_influence": 0.3333333333333333
+                                                            }
+                                                        ],
+                                                        "value": {
+                                                            "Float": 0
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "effect": "channel_volume",
+                                                "enabled": true,
+                                                "params": {
+                                                    "bypass": {
+                                                        "value": {
+                                                            "Bool": false
+                                                        }
+                                                    },
+                                                    "left": {
+                                                        "value": {
+                                                            "Float": 0
+                                                        }
+                                                    },
+                                                    "right": {
+                                                        "value": {
+                                                            "Float": 0
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "effect": "panner",
+                                                "enabled": true,
+                                                "params": {
+                                                    "balance": {
+                                                        "value": {
+                                                            "Float": 0
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ],
+                                        "gain_db": -3,
+                                        "group": null,
+                                        "label": "Iris",
+                                        "link": null,
+                                        "scale_to_frame": false,
+                                        "source_in_ticks": 254016000000
+                                    },
+                                    "opencut": {
+                                        "element": {}
+                                    }
+                                },
+                                "name": "Keyed sound",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 24,
+                                        "value": 24
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 24,
+                                        "value": 9
+                                    }
+                                }
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "effects": [],
+                                "enabled": true,
+                                "markers": [],
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "ExternalReference.1",
+                                        "available_image_bounds": null,
+                                        "available_range": {
+                                            "OTIO_SCHEMA": "TimeRange.1",
+                                            "duration": {
+                                                "OTIO_SCHEMA": "RationalTime.1",
+                                                "rate": 24,
+                                                "value": 14400
+                                            },
+                                            "start_time": {
+                                                "OTIO_SCHEMA": "RationalTime.1",
+                                                "rate": 24,
+                                                "value": 0
+                                            }
+                                        },
+                                        "metadata": {
+                                            "filmcraft": {
+                                                "custom_label_color": null,
+                                                "info": {
+                                                    "audio_streams": [
+                                                        {
+                                                            "bits_per_sample": null,
+                                                            "channels": 2,
+                                                            "codec": "aac",
+                                                            "sample_rate": 48000
+                                                        }
+                                                    ],
+                                                    "container": "mp4",
+                                                    "duration": 152409600000000,
+                                                    "file_size": null,
+                                                    "kind": "Movie",
+                                                    "name": "01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1",
+                                                    "start_timecode": null,
+                                                    "video": {
+                                                        "bitrate": null,
+                                                        "codec": "h264",
+                                                        "color": {
+                                                            "matrix": "Bt709",
+                                                            "primaries": "Bt709",
+                                                            "range": "Limited",
+                                                            "transfer": "Bt709"
+                                                        },
+                                                        "frame_rate": {
+                                                            "den": 1,
+                                                            "num": 24
+                                                        },
+                                                        "has_alpha": false,
+                                                        "height": 1080,
+                                                        "par": [
+                                                            1,
+                                                            1
+                                                        ],
+                                                        "pixel_format": "yuv420p",
+                                                        "width": 1920
+                                                    }
+                                                },
+                                                "item": 1,
+                                                "label": "Iris",
+                                                "offline": false
+                                            }
+                                        },
+                                        "name": "01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1",
+                                        "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1"
+                                    }
+                                },
+                                "metadata": {
+                                    "filmcraft": {
+                                        "custom_label_color": null,
+                                        "duration_ticks": 508032000000,
+                                        "effects": [
+                                            {
+                                                "effect": "volume",
+                                                "enabled": true,
+                                                "params": {
+                                                    "bypass": {
+                                                        "value": {
+                                                            "Bool": false
+                                                        }
+                                                    },
+                                                    "level": {
+                                                        "keyframes": [
+                                                            {
+                                                                "time": 0,
+                                                                "value": {
+                                                                    "Float": -2.25
+                                                                },
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "in_influence": 0.3333333333333333
+                                                            },
+                                                            {
+                                                                "time": 158760000000,
+                                                                "value": {
+                                                                    "Float": -6
+                                                                },
+                                                                "interp": "Linear",
+                                                                "out_influence": 0.3333333333333333,
+                                                                "in_influence": 0.3333333333333333
+                                                            }
+                                                        ],
+                                                        "value": {
+                                                            "Float": 0
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "effect": "channel_volume",
+                                                "enabled": true,
+                                                "params": {
+                                                    "bypass": {
+                                                        "value": {
+                                                            "Bool": false
+                                                        }
+                                                    },
+                                                    "left": {
+                                                        "value": {
+                                                            "Float": 0
+                                                        }
+                                                    },
+                                                    "right": {
+                                                        "value": {
+                                                            "Float": 0
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "effect": "panner",
+                                                "enabled": true,
+                                                "params": {
+                                                    "balance": {
+                                                        "value": {
+                                                            "Float": 0
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ],
+                                        "gain_db": -3,
+                                        "group": null,
+                                        "label": "Iris",
+                                        "link": null,
+                                        "scale_to_frame": false,
+                                        "source_in_ticks": 254016000000
+                                    },
+                                    "opencut": {
+                                        "element": {}
+                                    }
+                                },
+                                "name": "Keyed sound",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 24,
+                                        "value": 33
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 24,
+                                        "value": 39
+                                    }
+                                }
+                            }
+                        ],
+                        "effects": [],
+                        "enabled": true,
+                        "kind": "Audio",
+                        "markers": [],
+                        "metadata": {
+                            "filmcraft": {
+                                "channels": "Stereo",
+                                "effects": [],
+                                "locked": false,
+                                "muted": false,
+                                "pan": 0,
+                                "solo": false,
+                                "sync_lock": true,
+                                "volume_db": 0
+                            }
+                        },
+                        "name": "Audio 1",
+                        "source_range": null
+                    },
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "children": [],
+                        "effects": [],
+                        "enabled": true,
+                        "kind": "Audio",
+                        "markers": [],
+                        "metadata": {
+                            "filmcraft": {
+                                "channels": "Stereo",
+                                "effects": [],
+                                "locked": false,
+                                "muted": false,
+                                "pan": 0,
+                                "solo": false,
+                                "sync_lock": true,
+                                "volume_db": 0
+                            }
+                        },
+                        "name": "Audio 2",
+                        "source_range": null
+                    },
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "children": [],
+                        "effects": [],
+                        "enabled": true,
+                        "kind": "Audio",
+                        "markers": [],
+                        "metadata": {
+                            "filmcraft": {
+                                "channels": "Stereo",
+                                "effects": [],
+                                "locked": false,
+                                "muted": false,
+                                "pan": 0,
+                                "solo": false,
+                                "sync_lock": true,
+                                "volume_db": 0
+                            }
+                        },
+                        "name": "Audio 3",
+                        "source_range": null
+                    },
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "children": [],
+                        "effects": [],
+                        "enabled": true,
+                        "kind": "Audio",
+                        "markers": [],
+                        "metadata": {
+                            "filmcraft": {
+                                "channels": "Stereo",
+                                "effects": [],
+                                "locked": false,
+                                "muted": false,
+                                "pan": 0,
+                                "solo": false,
+                                "sync_lock": true,
+                                "volume_db": 0
+                            }
+                        },
+                        "name": "Audio 4",
+                        "source_range": null
+                    }
+                ],
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "metadata": {},
+                "name": "Edit",
+                "source_range": null
+            }
+        }
+    ],
+    "metadata": {
+        "filmcraft": {
+            "project": {
+                "items": {
+                    "1": {
+                        "created": 1,
+                        "id": 1,
+                        "kind": {
+                            "Media": {
+                                "info": {
+                                    "audio_streams": [
+                                        {
+                                            "bits_per_sample": null,
+                                            "channels": 2,
+                                            "codec": "aac",
+                                            "sample_rate": 48000
+                                        }
+                                    ],
+                                    "container": "mp4",
+                                    "duration": 152409600000000,
+                                    "file_size": null,
+                                    "kind": "Movie",
+                                    "name": "01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1",
+                                    "start_timecode": null,
+                                    "video": {
+                                        "bitrate": null,
+                                        "codec": "h264",
+                                        "color": {
+                                            "matrix": "Bt709",
+                                            "primaries": "Bt709",
+                                            "range": "Limited",
+                                            "transfer": "Bt709"
+                                        },
+                                        "frame_rate": {
+                                            "den": 1,
+                                            "num": 24
+                                        },
+                                        "has_alpha": false,
+                                        "height": 1080,
+                                        "par": [
+                                            1,
+                                            1
+                                        ],
+                                        "pixel_format": "yuv420p",
+                                        "width": 1920
+                                    }
+                                },
+                                "interpret": {
+                                    "frame_rate": null,
+                                    "ignore_alpha": false,
+                                    "invert_alpha": false,
+                                    "par": null
+                                },
+                                "mark_in": null,
+                                "mark_out": null,
+                                "markers": [],
+                                "media": {
+                                    "File": {
+                                        "path": "oneos:file/01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1"
+                                    }
+                                },
+                                "offline": false,
+                                "proxy": null
+                            }
+                        },
+                        "label": "Iris",
+                        "metadata": {},
+                        "name": "01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1"
+                    },
+                    "9": {
+                        "created": 9,
+                        "id": 9,
+                        "kind": {
+                            "Sequence": {
+                                "audio_tracks": [
+                                    {
+                                        "channels": "Stereo",
+                                        "effects": [],
+                                        "enabled": true,
+                                        "id": 5,
+                                        "items": [
+                                            {
+                                                "duration": 508032000000,
+                                                "effects": [
+                                                    {
+                                                        "effect": "volume",
+                                                        "enabled": true,
+                                                        "params": {
+                                                            "bypass": {
+                                                                "value": {
+                                                                    "Bool": false
+                                                                }
+                                                            },
+                                                            "level": {
+                                                                "keyframes": [
+                                                                    {
+                                                                        "in_influence": 0.3333333333333333,
+                                                                        "interp": "Linear",
+                                                                        "out_influence": 0.3333333333333333,
+                                                                        "time": 0,
+                                                                        "value": {
+                                                                            "Float": 0
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "in_influence": 0.3333333333333333,
+                                                                        "interp": "Linear",
+                                                                        "out_influence": 0.3333333333333333,
+                                                                        "time": 254016000000,
+                                                                        "value": {
+                                                                            "Float": -6
+                                                                        }
+                                                                    }
+                                                                ],
+                                                                "value": {
+                                                                    "Float": 0
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    {
+                                                        "effect": "channel_volume",
+                                                        "enabled": true,
+                                                        "params": {
+                                                            "bypass": {
+                                                                "value": {
+                                                                    "Bool": false
+                                                                }
+                                                            },
+                                                            "left": {
+                                                                "value": {
+                                                                    "Float": 0
+                                                                }
+                                                            },
+                                                            "right": {
+                                                                "value": {
+                                                                    "Float": 0
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    {
+                                                        "effect": "panner",
+                                                        "enabled": true,
+                                                        "params": {
+                                                            "balance": {
+                                                                "value": {
+                                                                    "Float": 0
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                ],
+                                                "enabled": true,
+                                                "frame_hold": null,
+                                                "gain_db": -3,
+                                                "group": null,
+                                                "id": 11,
+                                                "item": 1,
+                                                "label": "Iris",
+                                                "link": null,
+                                                "markers": [],
+                                                "name": "Keyed sound",
+                                                "reverse": false,
+                                                "scale_to_frame": false,
+                                                "source_in": 254016000000,
+                                                "speed": 1,
+                                                "start": 0
+                                            }
+                                        ],
+                                        "kind": "Audio",
+                                        "locked": false,
+                                        "mixer": {
+                                            "input_map": "Stereo",
+                                            "mode": "Read",
+                                            "output": null,
+                                            "record_arm": false,
+                                            "solo_safe": false
+                                        },
+                                        "muted": false,
+                                        "name": "Audio 1",
+                                        "pan": 0,
+                                        "solo": false,
+                                        "sync_lock": true,
+                                        "transitions": [],
+                                        "volume_db": 0
+                                    },
+                                    {
+                                        "channels": "Stereo",
+                                        "effects": [],
+                                        "enabled": true,
+                                        "id": 6,
+                                        "items": [],
+                                        "kind": "Audio",
+                                        "locked": false,
+                                        "mixer": {
+                                            "input_map": "Stereo",
+                                            "mode": "Read",
+                                            "output": null,
+                                            "record_arm": false,
+                                            "solo_safe": false
+                                        },
+                                        "muted": false,
+                                        "name": "Audio 2",
+                                        "pan": 0,
+                                        "solo": false,
+                                        "sync_lock": true,
+                                        "transitions": [],
+                                        "volume_db": 0
+                                    },
+                                    {
+                                        "channels": "Stereo",
+                                        "effects": [],
+                                        "enabled": true,
+                                        "id": 7,
+                                        "items": [],
+                                        "kind": "Audio",
+                                        "locked": false,
+                                        "mixer": {
+                                            "input_map": "Stereo",
+                                            "mode": "Read",
+                                            "output": null,
+                                            "record_arm": false,
+                                            "solo_safe": false
+                                        },
+                                        "muted": false,
+                                        "name": "Audio 3",
+                                        "pan": 0,
+                                        "solo": false,
+                                        "sync_lock": true,
+                                        "transitions": [],
+                                        "volume_db": 0
+                                    },
+                                    {
+                                        "channels": "Stereo",
+                                        "effects": [],
+                                        "enabled": true,
+                                        "id": 8,
+                                        "items": [],
+                                        "kind": "Audio",
+                                        "locked": false,
+                                        "mixer": {
+                                            "input_map": "Stereo",
+                                            "mode": "Read",
+                                            "output": null,
+                                            "record_arm": false,
+                                            "solo_safe": false
+                                        },
+                                        "muted": false,
+                                        "name": "Audio 4",
+                                        "pan": 0,
+                                        "solo": false,
+                                        "sync_lock": true,
+                                        "transitions": [],
+                                        "volume_db": 0
+                                    }
+                                ],
+                                "caption_tracks": [],
+                                "mark_in": null,
+                                "mark_out": null,
+                                "markers": [],
+                                "master_effects": [],
+                                "master_mixer": {
+                                    "input_map": "Stereo",
+                                    "mode": "Read",
+                                    "output": null,
+                                    "record_arm": false,
+                                    "solo_safe": false
+                                },
+                                "master_volume_db": 0,
+                                "settings": {
+                                    "audio_master": "Stereo",
+                                    "color": {
+                                        "auto_tone_map": true,
+                                        "wide_gamut": false,
+                                        "working": "Rec709"
+                                    },
+                                    "drop_frame": false,
+                                    "frame_rate": {
+                                        "den": 1,
+                                        "num": 24
+                                    },
+                                    "height": 1080,
+                                    "max_bit_depth": false,
+                                    "max_render_quality": false,
+                                    "par": [
+                                        1,
+                                        1
+                                    ],
+                                    "preset": "HD 1080p 23.976",
+                                    "preview_codec": "ProRes 422",
+                                    "sample_rate": 48000,
+                                    "width": 1920,
+                                    "working_space": "Rec. 709"
+                                },
+                                "start_timecode": 0,
+                                "submix_tracks": [],
+                                "video_tracks": [
+                                    {
+                                        "channels": "Stereo",
+                                        "effects": [],
+                                        "enabled": true,
+                                        "id": 2,
+                                        "items": [
+                                            {
+                                                "duration": 508032000000,
+                                                "effects": [
+                                                    {
+                                                        "effect": "motion",
+                                                        "enabled": true,
+                                                        "params": {
+                                                            "anchor": {
+                                                                "value": {
+                                                                    "Vec2": {
+                                                                        "x": null,
+                                                                        "y": null
+                                                                    }
+                                                                }
+                                                            },
+                                                            "anti_flicker": {
+                                                                "value": {
+                                                                    "Float": 0
+                                                                }
+                                                            },
+                                                            "position": {
+                                                                "keyframes": [
+                                                                    {
+                                                                        "in_influence": 0.3333333333333333,
+                                                                        "interp": "Linear",
+                                                                        "out_influence": 0.3333333333333333,
+                                                                        "time": 0,
+                                                                        "value": {
+                                                                            "Vec2": {
+                                                                                "x": 1060,
+                                                                                "y": 540
+                                                                            }
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "in_influence": 0.3333333333333333,
+                                                                        "interp": "EaseOut",
+                                                                        "out_influence": 0.5,
+                                                                        "time": 127008000000,
+                                                                        "value": {
+                                                                            "Vec2": {
+                                                                                "x": 1000,
+                                                                                "y": 500
+                                                                            }
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "in_influence": 0.3333333333333333,
+                                                                        "interp": "Linear",
+                                                                        "out_influence": 0.3333333333333333,
+                                                                        "time": 254016000000,
+                                                                        "value": {
+                                                                            "Vec2": {
+                                                                                "x": 960,
+                                                                                "y": 540
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                ],
+                                                                "value": {
+                                                                    "Vec2": {
+                                                                        "x": 1060,
+                                                                        "y": 540
+                                                                    }
+                                                                }
+                                                            },
+                                                            "rotation": {
+                                                                "value": {
+                                                                    "Float": 15
+                                                                }
+                                                            },
+                                                            "scale": {
+                                                                "keyframes": [
+                                                                    {
+                                                                        "in_influence": 0.3333333333333333,
+                                                                        "interp": "Bezier",
+                                                                        "out_influence": 0.25,
+                                                                        "time": 0,
+                                                                        "value": {
+                                                                            "Float": 100
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "in_influence": 0.75,
+                                                                        "interp": "Bezier",
+                                                                        "out_influence": 0.3333333333333333,
+                                                                        "time": 254016000000,
+                                                                        "value": {
+                                                                            "Float": 150
+                                                                        }
+                                                                    }
+                                                                ],
+                                                                "value": {
+                                                                    "Float": 100
+                                                                }
+                                                            },
+                                                            "scale_width": {
+                                                                "value": {
+                                                                    "Float": 100
+                                                                }
+                                                            },
+                                                            "uniform_scale": {
+                                                                "value": {
+                                                                    "Bool": true
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    {
+                                                        "effect": "opacity",
+                                                        "enabled": true,
+                                                        "params": {
+                                                            "blend": {
+                                                                "value": {
+                                                                    "Choice": 0
+                                                                }
+                                                            },
+                                                            "opacity": {
+                                                                "keyframes": [
+                                                                    {
+                                                                        "in_influence": 0.3333333333333333,
+                                                                        "interp": "Hold",
+                                                                        "out_influence": 0.3333333333333333,
+                                                                        "time": 0,
+                                                                        "value": {
+                                                                            "Float": 0
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "in_influence": 0.3333333333333333,
+                                                                        "interp": "Linear",
+                                                                        "out_influence": 0.3333333333333333,
+                                                                        "time": 63504000000,
+                                                                        "value": {
+                                                                            "Float": 50
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "in_influence": 0.3333333333333333,
+                                                                        "interp": "Linear",
+                                                                        "out_influence": 0.3333333333333333,
+                                                                        "time": 190512000000,
+                                                                        "value": {
+                                                                            "Float": 100
+                                                                        }
+                                                                    }
+                                                                ],
+                                                                "value": {
+                                                                    "Float": 100
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    {
+                                                        "effect": "time_remap",
+                                                        "enabled": true,
+                                                        "params": {
+                                                            "speed": {
+                                                                "value": {
+                                                                    "Float": 100
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    {
+                                                        "effect": "gaussian_blur",
+                                                        "enabled": true,
+                                                        "params": {
+                                                            "blurriness": {
+                                                                "keyframes": [
+                                                                    {
+                                                                        "in_influence": 0.3333333333333333,
+                                                                        "interp": "Linear",
+                                                                        "out_influence": 0.3333333333333333,
+                                                                        "time": 0,
+                                                                        "value": {
+                                                                            "Float": 0
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "in_influence": 0.3333333333333333,
+                                                                        "interp": "Linear",
+                                                                        "out_influence": 0.3333333333333333,
+                                                                        "time": 254016000000,
+                                                                        "value": {
+                                                                            "Float": 20
+                                                                        }
+                                                                    }
+                                                                ],
+                                                                "value": {
+                                                                    "Float": 10
+                                                                }
+                                                            },
+                                                            "dimensions": {
+                                                                "value": {
+                                                                    "Choice": 0
+                                                                }
+                                                            },
+                                                            "repeat_edge": {
+                                                                "value": {
+                                                                    "Bool": false
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                ],
+                                                "enabled": true,
+                                                "frame_hold": null,
+                                                "gain_db": 0,
+                                                "group": null,
+                                                "id": 10,
+                                                "item": 1,
+                                                "label": "Iris",
+                                                "link": null,
+                                                "markers": [],
+                                                "name": "Keyed",
+                                                "reverse": false,
+                                                "scale_to_frame": false,
+                                                "source_in": 254016000000,
+                                                "speed": 1,
+                                                "start": 0
+                                            }
+                                        ],
+                                        "kind": "Video",
+                                        "locked": false,
+                                        "mixer": {
+                                            "input_map": "Stereo",
+                                            "mode": "Read",
+                                            "output": null,
+                                            "record_arm": false,
+                                            "solo_safe": false
+                                        },
+                                        "muted": false,
+                                        "name": "Video 1",
+                                        "pan": 0,
+                                        "solo": false,
+                                        "sync_lock": true,
+                                        "transitions": [],
+                                        "volume_db": 0
+                                    },
+                                    {
+                                        "channels": "Stereo",
+                                        "effects": [],
+                                        "enabled": true,
+                                        "id": 3,
+                                        "items": [],
+                                        "kind": "Video",
+                                        "locked": false,
+                                        "mixer": {
+                                            "input_map": "Stereo",
+                                            "mode": "Read",
+                                            "output": null,
+                                            "record_arm": false,
+                                            "solo_safe": false
+                                        },
+                                        "muted": false,
+                                        "name": "Video 2",
+                                        "pan": 0,
+                                        "solo": false,
+                                        "sync_lock": true,
+                                        "transitions": [],
+                                        "volume_db": 0
+                                    },
+                                    {
+                                        "channels": "Stereo",
+                                        "effects": [],
+                                        "enabled": true,
+                                        "id": 4,
+                                        "items": [],
+                                        "kind": "Video",
+                                        "locked": false,
+                                        "mixer": {
+                                            "input_map": "Stereo",
+                                            "mode": "Read",
+                                            "output": null,
+                                            "record_arm": false,
+                                            "solo_safe": false
+                                        },
+                                        "muted": false,
+                                        "name": "Video 3",
+                                        "pan": 0,
+                                        "solo": false,
+                                        "sync_lock": true,
+                                        "transitions": [],
+                                        "volume_db": 0
+                                    }
+                                ],
+                                "work_area": null
+                            }
+                        },
+                        "label": "Forest",
+                        "metadata": {},
+                        "name": "Edit"
+                    }
+                },
+                "name": "Keys",
+                "next_id": 12,
+                "root": {
+                    "children": [
+                        {
+                            "Item": 1
+                        },
+                        {
+                            "Item": 9
+                        }
+                    ],
+                    "id": 0,
+                    "name": "Keys"
+                },
+                "settings": {
+                    "action_safe": [
+                        10,
+                        10
+                    ],
+                    "audio_display_samples": true,
+                    "capture_format": "DV",
+                    "default_audio_transition_duration": 254016000000,
+                    "default_still_duration": 1270080000000,
+                    "default_transition_duration_frames": 24,
+                    "ingest": {
+                        "action": "createProxies",
+                        "destination": null,
+                        "enabled": false,
+                        "preset": ""
+                    },
+                    "renderer": "FilmCraft GPU Acceleration (wgpu)",
+                    "scratch": {
+                        "audioPreviews": null,
+                        "autoSave": null,
+                        "captured": null,
+                        "videoPreviews": null
+                    },
+                    "title_safe": [
+                        20,
+                        20
+                    ],
+                    "video_display": "Timecode"
+                }
+            }
+        }
+    },
+    "name": "Keys"
+}
