@@ -1019,3 +1019,78 @@ fn oneos_film_writes_its_masks_for_cut() {
     let golden = std::fs::read(path).expect("the golden Film-masked file (FILMCRAFT_BLESS=1 writes it)");
     assert_eq!(serde_json::from_slice::<Value>(&golden).unwrap(), serde_json::from_slice::<Value>(&bytes).unwrap(), "Film writes its masks as pinned");
 }
+
+/// files/989 (Mona 2026-11-10: "Caption track in the .otio"): Film's CAPTIONS as Film writes them, the file the OpenCut fork's
+/// `oneos-tests/captions.test.ts` opens in Cut (pinned there as `fixtures/film-captions.otio`) and edits as its caption track. "Edit" holds a
+/// picture and a caption track "English" of three captions (one with a speaker, a WebVTT cue id and settings, one of two lines with markup),
+/// its style not Film's default. Each caption track is a `Track.1` after the media tracks; each caption a `Clip.2` of a `GeneratorReference.1`
+/// of kind `FilmCraft.caption` named by its text, the caption under `metadata.filmcraft.caption`, the track's style, format and language under
+/// `metadata.filmcraft.caption_track`. Film reads it back whole, and a timeline read alone (no project snapshot) still holds the captions.
+/// `FILMCRAFT_BLESS=1` writes the golden file; otherwise the writer must give it again, value for value.
+#[test]
+fn oneos_film_writes_its_captions_for_cut() {
+    use filmcraft_project::{Caption, CaptionAnchor, CaptionFormat, CaptionTrack, ClipId, TrackId};
+    use serde_json::Value;
+    let r = FrameRate::FPS_24;
+    let mut p = Project::new("Captions");
+    let a = media(&mut p, "oneos:file/01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1", true, false, r);
+    let s = sequence(&mut p, "Edit", r, false);
+    clip(&mut p, s, TrackKind::Video, 0, a, 0..96, 0);
+    let mut ct = CaptionTrack::new(TrackId(p.alloc_id()), "English".into(), CaptionFormat::Subtitle);
+    ct.language = "en-AU".into();
+    ct.style.size = 48.0;
+    ct.style.color = [255, 230, 0, 255];
+    ct.style.anchor = CaptionAnchor::Top;
+    ct.style.background = false;
+    let sec = |n: i64| r.tick_of(n * 24);
+    let mut cap = |start: i64, dur: i64, text: &str| Caption {
+        id: ClipId(p.alloc_id()),
+        start: sec(start),
+        duration: sec(dur),
+        text: text.into(),
+        speaker: None,
+        cue_id: None,
+        settings: String::new(),
+    };
+    let mut first = cap(0, 1, "Hello there.");
+    first.speaker = Some("Ana".into());
+    first.cue_id = Some("intro".into());
+    first.settings = "line:90% align:start".into();
+    let second = cap(1, 1, "Two lines,\n<i>the second in italics</i>.");
+    let third = cap(3, 1, "After a pause.");
+    ct.captions = vec![first, second, third];
+    p.sequence_mut(s).unwrap().caption_tracks.push(ct);
+    let (bytes, _) = filmcraft_interchange::export_project(&p, &ExportOptions::default()).expect("Film writes the whole project");
+    let doc: Value = serde_json::from_slice(&bytes).unwrap();
+    let edit = doc["children"].as_array().unwrap().iter().find(|t| t["name"] == "Edit").expect("the Edit timeline");
+    let tracks = edit["tracks"]["children"].as_array().unwrap();
+    let caps = tracks.last().unwrap();
+    assert_eq!((caps["OTIO_SCHEMA"].as_str(), caps["kind"].as_str(), caps["name"].as_str()), (Some("Track.1"), Some("Video"), Some("English")));
+    assert_eq!(caps["metadata"]["filmcraft"]["caption_track"]["language"], "en-AU");
+    assert_eq!(caps["metadata"]["filmcraft"]["caption_track"]["style"]["size"], 48.0);
+    let kids = caps["children"].as_array().unwrap();
+    let kinds: Vec<&str> = kids.iter().map(|c| c["OTIO_SCHEMA"].as_str().unwrap()).collect();
+    assert_eq!(kinds, ["Clip.2", "Clip.2", "Gap.1", "Clip.2"], "captions placed by gaps");
+    assert_eq!(kids[0]["media_references"]["DEFAULT_MEDIA"]["generator_kind"], "FilmCraft.caption");
+    assert_eq!(kids[0]["name"], "Hello there.", "a caption's clip is named by its text");
+    assert_eq!(kids[0]["metadata"]["filmcraft"]["caption"]["speaker"], "Ana");
+    let (back, _) = import(&bytes, Format::Otio, None).expect("Film reads its file");
+    assert_eq!(serde_json::to_value(&back.project).unwrap(), serde_json::to_value(&p).unwrap(), "Film reads its captions back whole");
+    // The timeline alone (another tool's view: no project snapshot) still holds the captions.
+    let alone = serde_json::to_vec(edit).unwrap();
+    let (one, _) = import(&alone, Format::Otio, None).expect("Film reads the timeline alone");
+    let q = one.project.items.values().find_map(|i| i.as_sequence()).expect("a sequence");
+    let read = &q.caption_tracks[0];
+    let want = &p.sequence(s).unwrap().caption_tracks[0];
+    assert_eq!((read.name.as_str(), read.language.as_str(), &read.style), (want.name.as_str(), want.language.as_str(), &want.style));
+    let texts = |t: &CaptionTrack| {
+        t.captions.iter().map(|c| (c.start, c.duration, c.text.clone(), c.speaker.clone(), c.cue_id.clone(), c.settings.clone())).collect::<Vec<_>>()
+    };
+    assert_eq!(texts(read), texts(want), "each caption at its time, with its text, speaker, cue id and settings");
+    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/it/oneos/film-captions.otio");
+    if std::env::var_os("FILMCRAFT_BLESS").is_some() {
+        std::fs::write(path, &bytes).unwrap();
+    }
+    let golden = std::fs::read(path).expect("the golden Film captions file (FILMCRAFT_BLESS=1 writes it)");
+    assert_eq!(serde_json::from_slice::<Value>(&golden).unwrap(), doc, "Film writes its captions as pinned");
+}

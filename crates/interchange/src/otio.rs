@@ -192,6 +192,8 @@ impl Exp<'_, '_> {
                 tracks.push(self.track_json(t, kind, seq));
             }
         }
+        // OneOS (files/989, Mona 2026-11-10: "Caption track in the .otio"): each caption track, above the media tracks.
+        tracks.extend(seq.caption_tracks.iter().map(|t| caption_track_json(t, rate)));
         let markers: Vec<Value> = seq.markers.iter().map(|m| marker_json(m, rate)).collect();
         json!({
             "OTIO_SCHEMA": "Stack.1",
@@ -353,6 +355,104 @@ impl Exp<'_, '_> {
             "metadata": meta,
         })
     }
+}
+
+// ---------------------------------------------------------------------------------------------
+// OneOS (doctrine files/989, Mona 2026-11-10: "Caption track in the .otio"): a caption track is an OTIO `Track.1` (kind Video) of
+// `Clip.2`s placed by `Gap.1`s, each clip's one medium a `GeneratorReference.1` of kind `FilmCraft.caption` named by its text; the caption
+// (text, speaker, WebVTT cue id and settings) rides in the clip's `metadata.filmcraft.caption`, the track's format, language, style,
+// switches and WebVTT header blocks in the track's `metadata.filmcraft.caption_track`. Any OTIO tool sees timed captions; Cut edits them
+// as its caption track, in this same shape.
+// ---------------------------------------------------------------------------------------------
+
+/// The generator kind of a caption's clip.
+pub(crate) const CAPTION_KIND: &str = "FilmCraft.caption";
+
+/// A caption track as OTIO.
+pub(crate) fn caption_track_json(t: &filmcraft_project::CaptionTrack, rate: FrameRate) -> Value {
+    let mut children = Vec::new();
+    let mut pos = Tick::ZERO;
+    for c in &t.captions {
+        if c.start > pos {
+            children.push(json!({"OTIO_SCHEMA": "Gap.1", "name": "", "source_range": tr(Tick::ZERO, c.start - pos, rate), "effects": [], "markers": [], "enabled": true, "metadata": {}}));
+        }
+        children.push(json!({
+            "OTIO_SCHEMA": "Clip.2",
+            "name": c.text,
+            "source_range": tr(Tick::ZERO, c.duration, rate),
+            "effects": [],
+            "markers": [],
+            "enabled": true,
+            "media_references": {"DEFAULT_MEDIA": {
+                "OTIO_SCHEMA": "GeneratorReference.1", "name": "", "generator_kind": CAPTION_KIND, "parameters": {}, "available_range": null, "metadata": {},
+            }},
+            "active_media_reference_key": "DEFAULT_MEDIA",
+            "metadata": {"filmcraft": {"caption": {"text": c.text, "speaker": c.speaker, "cue_id": c.cue_id, "settings": c.settings}}},
+        }));
+        pos = c.end();
+    }
+    json!({
+        "OTIO_SCHEMA": "Track.1",
+        "name": t.name,
+        "kind": "Video",
+        "children": children,
+        "source_range": null,
+        "effects": [],
+        "markers": [],
+        "enabled": t.enabled,
+        "metadata": {"filmcraft": {"caption_track": {
+            "format": t.format, "language": t.language, "style": t.style, "locked": t.locked, "sync_lock": t.sync_lock, "vtt_blocks": t.vtt_blocks,
+        }}},
+    })
+}
+
+/// Whether an OTIO track is a caption track (its `metadata.filmcraft.caption_track`).
+pub(crate) fn is_caption_track(t: &Value) -> bool {
+    schema_name(t) == "Track" && t.pointer("/metadata/filmcraft/caption_track").is_some_and(Value::is_object)
+}
+
+/// A caption track read from OTIO, its ids from `alloc`; `Err` names what it holds that is not a caption track.
+pub(crate) fn read_caption_track(t: &Value, mut alloc: impl FnMut() -> u64) -> std::result::Result<filmcraft_project::CaptionTrack, String> {
+    use filmcraft_project::{Caption, CaptionTrack, TrackId};
+    let m = t.pointer("/metadata/filmcraft/caption_track").ok_or("has no caption track data")?;
+    let field = |k: &str| m.get(k).cloned().unwrap_or(Value::Null);
+    let format = serde_json::from_value(field("format")).map_err(|e| format!("has a caption format Film cannot read ({e})"))?;
+    let mut track = CaptionTrack::new(TrackId(alloc()), name_of(t), format);
+    track.language = m.get("language").and_then(Value::as_str).unwrap_or("").to_string();
+    if let Some(s) = m.get("style") {
+        track.style = serde_json::from_value(s.clone()).map_err(|e| format!("has a caption style Film cannot read ({e})"))?;
+    }
+    track.enabled = t.get("enabled").and_then(Value::as_bool).unwrap_or(true);
+    track.locked = m.get("locked").and_then(Value::as_bool).unwrap_or(false);
+    track.sync_lock = m.get("sync_lock").and_then(Value::as_bool).unwrap_or(true);
+    if let Some(b) = m.get("vtt_blocks") {
+        track.vtt_blocks = serde_json::from_value(b.clone()).map_err(|e| format!("has WebVTT blocks Film cannot read ({e})"))?;
+    }
+    let mut pos = Tick::ZERO;
+    for c in t.get("children").and_then(Value::as_array).into_iter().flatten() {
+        let (_, dur) = c.get("source_range").and_then(read_tr).ok_or("holds an item without a source range")?;
+        match schema_name(c) {
+            "Gap" => {}
+            "Clip" if c.pointer("/media_references/DEFAULT_MEDIA/generator_kind").and_then(Value::as_str) == Some(CAPTION_KIND) => {
+                let cap = c.pointer("/metadata/filmcraft/caption").ok_or("holds a caption clip without its caption")?;
+                let text = cap.get("text").and_then(Value::as_str).ok_or("holds a caption without its text")?.to_string();
+                let opt = |k: &str| cap.get(k).and_then(Value::as_str).map(str::to_string);
+                track.captions.push(Caption {
+                    id: ClipId(alloc()),
+                    start: pos,
+                    duration: dur,
+                    text,
+                    speaker: opt("speaker"),
+                    cue_id: opt("cue_id"),
+                    settings: opt("settings").unwrap_or_default(),
+                });
+            }
+            other => return Err(format!("holds a {other} that is not a caption")),
+        }
+        pos += dur;
+    }
+    track.check()?;
+    Ok(track)
 }
 
 fn abs_url(path: &str) -> String {
@@ -639,6 +739,13 @@ impl Imp<'_, '_> {
         seq.markers = self.markers(stack);
         for t in stack.get("children").and_then(Value::as_array).into_iter().flatten() {
             match schema_name(t) {
+                "Track" if is_caption_track(t) => {
+                    let b = &mut self.b;
+                    match read_caption_track(t, || b.alloc()) {
+                        Ok(ct) => seq.caption_tracks.push(ct),
+                        Err(why) => self.report.warn(format!("OTIO caption track \"{}\" {why}; it was skipped", name_of(t))),
+                    }
+                }
                 "Track" => {
                     let kind = if t.get("kind").and_then(Value::as_str) == Some("Audio") { TrackKind::Audio } else { TrackKind::Video };
                     self.track(&mut seq, t, kind);

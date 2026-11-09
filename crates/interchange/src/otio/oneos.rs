@@ -21,7 +21,7 @@ use filmcraft_project::{ItemId, ItemKind, MediaRef, Project, TrackKind};
 use filmcraft_time::{TICKS_PER_SECOND, Tick, TimeRange};
 use serde_json::{Map, Value};
 
-use super::{export, export_project, read_tr, same_value, schema, schema_name, sequences_of};
+use super::{export, export_project, is_caption_track, read_caption_track, read_tr, same_value, schema, schema_name, sequences_of};
 use crate::common::{MediaSpec, item_media, media_clip, media_info};
 use crate::{ExportOptions, ImportOptions, Report, is_oneos_media};
 
@@ -345,15 +345,37 @@ fn reconcile(p: &mut Project, seq_id: ItemId, tl: &Value) -> Result<(), String> 
         }
     }
     let empty = Vec::new();
-    let ot = os.get("children").and_then(Value::as_array).unwrap_or(&empty);
-    let et = es.get("children").and_then(Value::as_array).unwrap_or(&empty);
+    let ot_all = os.get("children").and_then(Value::as_array).unwrap_or(&empty);
+    let et_all = es.get("children").and_then(Value::as_array).unwrap_or(&empty);
+    // The media tracks (with their place in the stack), and the caption tracks (Mona 2026-11-10: "Caption track in the .otio").
+    let media = |all: &[Value]| -> Vec<(usize, Value)> { all.iter().enumerate().filter(|(_, t)| !is_caption_track(t)).map(|(i, t)| (i, t.clone())).collect() };
+    let (ot, et) = (media(ot_all), media(et_all));
     if ot.len() != et.len() {
         return Err("had a track of Film's added or removed outside Film".into());
     }
     let mut seq = p.sequence(seq_id).ok_or("is not a sequence of Film's project")?.clone();
     let rate = seq.settings.frame_rate;
     let nv = seq.video_tracks.len();
-    for (k, (ok, ek)) in ot.iter().zip(et).enumerate() {
+    // Captions: another editor may change, add or remove a caption or a caption track; each is read from the file whole (a caption is all
+    // the file says of it), keeping Film's ids by place.
+    let captions = |all: &[Value]| -> Vec<Value> { all.iter().filter(|t| is_caption_track(t)).cloned().collect() };
+    if !same_value(&Value::Array(captions(ot_all)), &Value::Array(captions(et_all))) {
+        let raw = tl.pointer("/tracks/children").and_then(Value::as_array).unwrap_or(&empty);
+        let mut tracks = Vec::new();
+        for (i, t) in raw.iter().filter(|t| is_caption_track(t)).enumerate() {
+            let mut ct = read_caption_track(t, || p.alloc_id())
+                .map_err(|why| format!("had its caption track \"{}\" changed so it {why}", t.get("name").and_then(Value::as_str).unwrap_or("")))?;
+            if let Some(old) = seq.caption_tracks.get(i) {
+                ct.id = old.id;
+                for (c, o) in ct.captions.iter_mut().zip(&old.captions) {
+                    c.id = o.id;
+                }
+            }
+            tracks.push(ct);
+        }
+        seq.caption_tracks = tracks;
+    }
+    for (k, ((ko, ok), (_, ek))) in ot.iter().zip(&et).enumerate() {
         if same_value(ok, ek) {
             continue;
         }
@@ -388,7 +410,7 @@ fn reconcile(p: &mut Project, seq_id: ItemId, tl: &Value) -> Result<(), String> 
             return Err(format!("had the track \"{}\", which holds transitions, changed outside Film", track.name));
         }
         // The file's own clips (with every key: Film reads its mirrors from them), against Film's.
-        let raw_children = tl.pointer(&format!("/tracks/children/{k}/children")).and_then(Value::as_array).unwrap_or(&empty);
+        let raw_children = tl.pointer(&format!("/tracks/children/{ko}/children")).and_then(Value::as_array).unwrap_or(&empty);
         let now = lane(raw_children).map_err(|w| format!("had its track \"{}\" changed so it {w}", track.name))?;
         let was = lane(ec).map_err(|w| format!("had its track \"{}\" written so it {w}", track.name))?;
         if was.len() != track.items.len() {
