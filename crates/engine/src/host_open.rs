@@ -484,6 +484,56 @@ mod tests {
         assert_eq!((&got[7]["type"], &got[9]["type"], &got[9]["name"]), (&serde_json::json!("text"), &serde_json::json!("custom"), &serde_json::json!("Hole")));
     }
 
+    /// files/989 (Mona 2026-11-10: "Carry it untouched"): a Cut mask whose kind, units, mode, tracking or text weight is not one of Cut's
+    /// own values (damaged data) is carried byte for byte by Film and written back unchanged, and the track stays editable around it. On
+    /// Cut's editor-built project with one of Beach's masks damaged each way: nothing of Beach's track is locked, Beach opens with none of
+    /// its masks in Film (the list is carried whole), an unedited save is the file, Film's rotation of Beach is written and Beach's masks are
+    /// the file's very text, and a mask Film adds beside them is refused at save by name (`masks-carried`), nothing written.
+    #[test]
+    fn a_damaged_cut_mask_is_carried_untouched_and_its_track_stays_editable() {
+        use filmcraft_project::{Mask, MaskPath};
+        let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-project.otio");
+        let damages: [(&str, fn(&mut Value)); 5] = [
+            ("kind", |m| m["type"] = serde_json::json!("blob")),
+            ("units", |m| m["params"]["units"] = serde_json::json!("inches")),
+            ("mode", |m| m["params"]["mode"] = serde_json::json!("screen")),
+            ("tracking", |m| m["track"] = serde_json::json!("perspective")),
+            ("text weight", |m| m["params"]["fontWeight"] = serde_json::json!("600")),
+        ];
+        for (what, damage) in damages {
+            let mut cut: Value = serde_json::from_slice(bytes).unwrap();
+            let el = format!("{}/metadata/opencut/element", clip_ptr(&cut, "Beach", "").unwrap());
+            let masks = cut.pointer_mut(&format!("{el}/masks")).unwrap().as_array_mut().unwrap();
+            let at = if what == "text weight" { masks.iter().position(|m| m["type"] == "text").unwrap() } else { 2 };
+            damage(&mut masks[at]);
+            let file = serde_json::to_vec(&cut).unwrap();
+            let mut s = session();
+            open_host_file(&mut s, "trip.otio", &file).unwrap_or_else(|e| panic!("{what}: {e}"));
+            let locked = s.host_shared.locked();
+            assert!(locked.iter().all(|l| l.contains("sticker")), "{what}: the track stays editable: {locked:?}");
+            let (seq, kind, ti, ci) = find(&s, "Main", "Beach");
+            let beach = &s.project.sequence(seq).unwrap().tracks(kind)[ti].items[ci];
+            assert!(beach.effects.iter().all(|e| e.masks.is_empty()), "{what}: Beach's masks are carried, none of them Film's");
+            let unedited: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap_or_else(|e| panic!("{what}: {e}"))).unwrap();
+            assert_eq!(first_difference(&cut, &unedited, ""), None, "{what}: an unedited save is the file");
+            edit_clip(&mut s, "Main", "Beach", |c| {
+                c.effects.iter_mut().find(|e| e.effect == "motion").unwrap().params.get_mut("rotation").unwrap().value = ParamValue::Float(30.0);
+            });
+            let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap_or_else(|e| panic!("{what}: {e}"))).unwrap();
+            let mut want = cut.clone();
+            want.pointer_mut(&el).unwrap()["transform"]["rotate"] = serde_json::json!(30);
+            assert_eq!(first_difference(&want, &saved, ""), None, "{what}: only Film's rotation is written");
+            let text = |v: &Value| serde_json::to_string(v.pointer(&format!("{el}/masks")).unwrap()).unwrap();
+            assert_eq!(text(&saved), text(&cut), "{what}: Beach's masks are written back byte for byte");
+            edit_clip(&mut s, "Main", "Beach", |c| {
+                let o = c.effects.iter_mut().find(|e| e.effect == "opacity").unwrap();
+                o.masks.push(Mask::new("Hole", MaskPath::ellipse(filmcraft_geom::Vec2::new(960.0, 540.0), filmcraft_geom::Vec2::new(40.0, 30.0))));
+            });
+            let e = save_host_file(&mut s).unwrap_err();
+            assert!(e.contains("masks-carried:") && e.contains("Beach"), "{what}: {e}");
+        }
+    }
+
     /// files/989 (Mona 2026-11-09: "Build canvas feather in Film"): on Cut's editor-built project with Beach scaled unevenly (160 % wide,
     /// 80 % tall) and its rectangle feathered and its ellipse grown in the canvas's pixels, Beach's masks open in Film as its own (not
     /// carried), measured in the canvas's pixels with Cut's numbers; an unedited save is the file, and Film's change of the feather is

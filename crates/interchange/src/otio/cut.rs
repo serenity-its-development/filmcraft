@@ -640,8 +640,10 @@ fn effects_field() -> Field {
     )
 }
 
-/// The element's masks as Film's masks on the clip (its Opacity's masks), written back in Cut's shape (`cut_masks`). Cut's masks Film
-/// cannot read (a mask of a kind, units, mode or tracking Film does not know) are carried as the file holds them, and Film adds none beside them.
+/// The element's masks as Film's masks on the clip (its Opacity's masks), written back in Cut's shape (`cut_masks`). A list holding a mask
+/// whose kind, units, mode, tracking or text weight is not one of Cut's own values (damaged data) is carried untouched (files/989, Mona
+/// 2026-11-10: "Carry it untouched"): none of it is Film's, it is written back byte for byte, the clip and its track stay editable around
+/// it, and a mask Film adds beside it is refused at save by name (`masks-carried`).
 fn masks_field() -> Field {
     field(
         "/masks",
@@ -677,7 +679,7 @@ fn masks_field() -> Field {
         },
         move |f, ti, v| {
             let (Some(b), Some(list)) = (f.el, v.as_array()) else { return Ok(()) };
-            // Cut's masks Film cannot show yet stay carried as the file holds them (the field reads them back as they are).
+            // A damaged list stays carried as the file holds it (the field reads it back as it is), none of it Film's.
             if let Ok(masks) = cut_masks::film_masks(list, &b) {
                 fx_mut(ti, "opacity")?.masks = masks;
             }
