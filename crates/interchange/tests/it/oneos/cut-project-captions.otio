@@ -1,0 +1,3277 @@
+{
+    "OTIO_SCHEMA": "SerializableCollection.1",
+    "name": "Trip",
+    "metadata": {
+        "opencut": {
+            "project": {
+                "metadata": {
+                    "id": "p1",
+                    "name": "Trip",
+                    "thumbnail": "data:image/png;base64,AAAA",
+                    "duration": 1200000,
+                    "createdAt": "2026-11-08T00:00:00.000Z",
+                    "updatedAt": "2026-11-08T02:00:00.000Z"
+                },
+                "currentSceneId": "s2",
+                "settings": {
+                    "fps": {
+                        "numerator": 30000,
+                        "denominator": 1001
+                    },
+                    "canvasSize": {
+                        "width": 1080,
+                        "height": 1920
+                    },
+                    "canvasSizeMode": "custom",
+                    "lastCustomCanvasSize": {
+                        "width": 1080,
+                        "height": 1920
+                    },
+                    "originalCanvasSize": null,
+                    "background": {
+                        "type": "blur",
+                        "blurIntensity": 12
+                    }
+                },
+                "version": 23,
+                "timelineViewState": {
+                    "zoomLevel": 2.5,
+                    "scrollLeft": 340,
+                    "playheadTime": 360000
+                }
+            },
+            "media": [
+                {
+                    "id": "m-video",
+                    "name": "beach.mp4",
+                    "type": "video",
+                    "file": {
+                        "id": "01jabcdefghjkmnpqrstvwxyz0",
+                        "version": "v3"
+                    },
+                    "width": 1920,
+                    "height": 1080,
+                    "duration": 8,
+                    "fps": 30,
+                    "hasAudio": true
+                },
+                {
+                    "id": "m-image",
+                    "name": "logo.png",
+                    "type": "image",
+                    "file": {
+                        "id": "01jabcdefghjkmnpqrstvwxyz1",
+                        "version": "v1"
+                    },
+                    "width": 512,
+                    "height": 512
+                },
+                {
+                    "id": "m-audio",
+                    "name": "song.wav",
+                    "type": "audio",
+                    "file": {
+                        "id": "01jabcdefghjkmnpqrstvwxyz2",
+                        "version": "v9"
+                    },
+                    "duration": 180
+                }
+            ]
+        }
+    },
+    "children": [
+        {
+            "OTIO_SCHEMA": "Timeline.1",
+            "name": "Main",
+            "global_start_time": null,
+            "metadata": {
+                "opencut": {
+                    "scene": {
+                        "id": "s1",
+                        "isMain": true,
+                        "createdAt": "2026-11-08T00:00:00.000Z",
+                        "updatedAt": "2026-11-08T01:00:00.000Z"
+                    }
+                }
+            },
+            "tracks": {
+                "OTIO_SCHEMA": "Stack.1",
+                "name": "tracks",
+                "source_range": null,
+                "effects": [],
+                "enabled": true,
+                "metadata": {},
+                "markers": [
+                    {
+                        "OTIO_SCHEMA": "Marker.2",
+                        "name": "Cut here",
+                        "marked_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 120000,
+                                "value": 240000
+                            },
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 120000,
+                                "value": 120000
+                            }
+                        },
+                        "color": "RED",
+                        "comment": "",
+                        "metadata": {
+                            "opencut": {
+                                "bookmark": {
+                                    "note": "Cut here",
+                                    "color": "#ff0000",
+                                    "duration": 120000
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "OTIO_SCHEMA": "Marker.2",
+                        "name": "",
+                        "marked_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 120000,
+                                "value": 1080000
+                            },
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 120000,
+                                "value": 0
+                            }
+                        },
+                        "color": "RED",
+                        "comment": "",
+                        "metadata": {
+                            "opencut": {
+                                "bookmark": {}
+                            }
+                        }
+                    }
+                ],
+                "children": [
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "name": "Main",
+                        "kind": "Video",
+                        "source_range": null,
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "metadata": {
+                            "opencut": {
+                                "track": {
+                                    "id": "s1-main",
+                                    "type": "video",
+                                    "muted": false,
+                                    "hidden": false
+                                },
+                                "slot": "main",
+                                "order": [
+                                    "v1",
+                                    "i1"
+                                ]
+                            }
+                        },
+                        "children": [
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Beach",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 120000
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 600000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "ExternalReference.1",
+                                        "name": "beach.mp4",
+                                        "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz0?version=v3",
+                                        "available_range": null,
+                                        "available_image_bounds": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "video",
+                                            "mediaId": "m-video",
+                                            "trimEnd": 240000,
+                                            "sourceDuration": 960000,
+                                            "muted": false,
+                                            "isSourceAudioEnabled": true,
+                                            "hidden": false,
+                                            "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "rotate": 7.5
+                                            },
+                                            "opacity": 0.9,
+                                            "blendMode": "screen",
+                                            "volume": 0.7,
+                                            "id": "v1",
+                                            "retime": {
+                                                "rate": 1.5,
+                                                "maintainPitch": true
+                                            },
+                                            "effects": [
+                                                {
+                                                    "id": "id-001",
+                                                    "type": "blur",
+                                                    "params": {
+                                                        "intensity": 15
+                                                    },
+                                                    "enabled": true
+                                                }
+                                            ],
+                                            "masks": [
+                                                {
+                                                    "type": "split",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "rotation": 0
+                                                    },
+                                                    "id": "id-002"
+                                                },
+                                                {
+                                                    "type": "cinematic-bars",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 1.1473474844178637,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-003"
+                                                },
+                                                {
+                                                    "type": "rectangle",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 0.3375,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-004"
+                                                },
+                                                {
+                                                    "type": "ellipse",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 0.3375,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-005"
+                                                },
+                                                {
+                                                    "type": "heart",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 0.3375,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-006"
+                                                },
+                                                {
+                                                    "type": "diamond",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 0.3375,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-007"
+                                                },
+                                                {
+                                                    "type": "star",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 0.3375,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-008"
+                                                },
+                                                {
+                                                    "type": "text",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "content": "Mask",
+                                                        "fontSize": 15,
+                                                        "fontFamily": "Arial",
+                                                        "fontWeight": "normal",
+                                                        "fontStyle": "normal",
+                                                        "textDecoration": "none",
+                                                        "letterSpacing": 0,
+                                                        "lineHeight": 1.2,
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-009"
+                                                },
+                                                {
+                                                    "type": "custom",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "path": [],
+                                                        "closed": false,
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-010"
+                                                }
+                                            ],
+                                            "animations": {
+                                                "bindings": {
+                                                    "opacity": {
+                                                        "path": "opacity",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "opacity:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "transform.positionX": {
+                                                        "path": "transform.positionX",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "transform.positionX:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "volume": {
+                                                        "path": "volume",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "volume:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "effects.id-001.params.intensity": {
+                                                        "path": "effects.id-001.params.intensity",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "effects.id-001.params.intensity:value"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "channels": {
+                                                    "opacity:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-011",
+                                                                "time": 0,
+                                                                "value": 0,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            },
+                                                            {
+                                                                "id": "id-012",
+                                                                "time": 120000,
+                                                                "value": 1,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "transform.positionX:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-013",
+                                                                "time": 240000,
+                                                                "value": 40,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "volume:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-014",
+                                                                "time": 360000,
+                                                                "value": 0.2,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "effects.id-001.params.intensity:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-015",
+                                                                "time": 120000,
+                                                                "value": 40,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "OTIO_SCHEMA": "Gap.1",
+                                "name": "",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 240000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "metadata": {}
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Logo",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 360000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "ExternalReference.1",
+                                        "name": "logo.png",
+                                        "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz1?version=v1",
+                                        "available_range": null,
+                                        "available_image_bounds": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "image",
+                                            "mediaId": "m-image",
+                                            "trimEnd": 0,
+                                            "hidden": false,
+                                            "transform": {
+                                                "scaleX": 1,
+                                                "scaleY": 1,
+                                                "position": {
+                                                    "x": 0,
+                                                    "y": 0
+                                                },
+                                                "rotate": 0
+                                            },
+                                            "opacity": 1,
+                                            "blendMode": "normal",
+                                            "id": "i1"
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "name": "Titles",
+                        "kind": "Video",
+                        "source_range": null,
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "metadata": {
+                            "opencut": {
+                                "track": {
+                                    "id": "s1-text",
+                                    "type": "text",
+                                    "hidden": false
+                                },
+                                "slot": "overlay",
+                                "order": [
+                                    "t1"
+                                ]
+                            }
+                        },
+                        "children": [
+                            {
+                                "OTIO_SCHEMA": "Gap.1",
+                                "name": "",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 120000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "metadata": {}
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Title",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 240000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Title",
+                                        "generator_kind": "OpenCut.text",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "text",
+                                            "content": "Hello 日本語",
+                                            "trimEnd": 0,
+                                            "fontSize": 64,
+                                            "fontFamily": "Inter",
+                                            "color": "#ffffff",
+                                            "background": {
+                                                "enabled": true,
+                                                "color": "#00000080",
+                                                "cornerRadius": 8,
+                                                "paddingX": 4,
+                                                "paddingY": 2,
+                                                "offsetX": 0,
+                                                "offsetY": 0
+                                            },
+                                            "textAlign": "center",
+                                            "fontWeight": "bold",
+                                            "fontStyle": "italic",
+                                            "textDecoration": "underline",
+                                            "letterSpacing": 1,
+                                            "lineHeight": 1.2,
+                                            "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "rotate": 7.5
+                                            },
+                                            "opacity": 1,
+                                            "blendMode": "normal",
+                                            "id": "t1",
+                                            "effects": [
+                                                {
+                                                    "id": "id-016",
+                                                    "type": "blur",
+                                                    "params": {
+                                                        "intensity": 15
+                                                    },
+                                                    "enabled": true
+                                                }
+                                            ],
+                                            "animations": {
+                                                "bindings": {
+                                                    "opacity": {
+                                                        "path": "opacity",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "opacity:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "color": {
+                                                        "path": "color",
+                                                        "kind": "color",
+                                                        "colorSpace": "srgb-linear",
+                                                        "components": [
+                                                            {
+                                                                "key": "r",
+                                                                "channelId": "color:r"
+                                                            },
+                                                            {
+                                                                "key": "g",
+                                                                "channelId": "color:g"
+                                                            },
+                                                            {
+                                                                "key": "b",
+                                                                "channelId": "color:b"
+                                                            },
+                                                            {
+                                                                "key": "a",
+                                                                "channelId": "color:a"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "fontSize": {
+                                                        "path": "fontSize",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "fontSize:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "letterSpacing": {
+                                                        "path": "letterSpacing",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "letterSpacing:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "content": {
+                                                        "path": "content",
+                                                        "kind": "discrete",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "content:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "fontFamily": {
+                                                        "path": "fontFamily",
+                                                        "kind": "discrete",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "fontFamily:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "textAlign": {
+                                                        "path": "textAlign",
+                                                        "kind": "discrete",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "textAlign:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "fontWeight": {
+                                                        "path": "fontWeight",
+                                                        "kind": "discrete",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "fontWeight:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "fontStyle": {
+                                                        "path": "fontStyle",
+                                                        "kind": "discrete",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "fontStyle:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "textDecoration": {
+                                                        "path": "textDecoration",
+                                                        "kind": "discrete",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "textDecoration:value"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "channels": {
+                                                    "opacity:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-017",
+                                                                "time": 0,
+                                                                "value": 0,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "color:r": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-018",
+                                                                "time": 120000,
+                                                                "value": 1,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "color:g": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-018",
+                                                                "time": 120000,
+                                                                "value": 0,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "color:b": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-018",
+                                                                "time": 120000,
+                                                                "value": 0,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "color:a": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-018",
+                                                                "time": 120000,
+                                                                "value": 1,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "fontSize:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-019",
+                                                                "time": 0,
+                                                                "value": 64,
+                                                                "rightHandle": {
+                                                                    "dt": 30000,
+                                                                    "dv": 12
+                                                                },
+                                                                "segmentToNext": "bezier",
+                                                                "tangentMode": "broken"
+                                                            },
+                                                            {
+                                                                "id": "id-020",
+                                                                "time": 120000,
+                                                                "value": 96,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "letterSpacing:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-021",
+                                                                "time": 60000,
+                                                                "value": 4,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "content:value": {
+                                                        "kind": "discrete",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-022",
+                                                                "time": 0,
+                                                                "value": "Hello 日本語"
+                                                            },
+                                                            {
+                                                                "id": "id-023",
+                                                                "time": 120000,
+                                                                "value": "Goodbye"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "fontFamily:value": {
+                                                        "kind": "discrete",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-024",
+                                                                "time": 120000,
+                                                                "value": "Roboto"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "textAlign:value": {
+                                                        "kind": "discrete",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-025",
+                                                                "time": 120000,
+                                                                "value": "left"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "fontWeight:value": {
+                                                        "kind": "discrete",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-026",
+                                                                "time": 120000,
+                                                                "value": "normal"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "fontStyle:value": {
+                                                        "kind": "discrete",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-027",
+                                                                "time": 120000,
+                                                                "value": "normal"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "textDecoration:value": {
+                                                        "kind": "discrete",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-028",
+                                                                "time": 0,
+                                                                "value": "underline"
+                                                            },
+                                                            {
+                                                                "id": "id-029",
+                                                                "time": 120000,
+                                                                "value": "line-through"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "name": "Sous-titres",
+                        "kind": "Video",
+                        "children": [
+                            {
+                                "OTIO_SCHEMA": "Gap.1",
+                                "name": "",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 60000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "metadata": {}
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Bonjour.",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 180000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "",
+                                        "generator_kind": "FilmCraft.caption",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "filmcraft": {
+                                        "caption": {
+                                            "text": "Bonjour.",
+                                            "speaker": null,
+                                            "cue_id": null,
+                                            "settings": ""
+                                        }
+                                    },
+                                    "opencut": {
+                                        "element": {
+                                            "id": "cap-1",
+                                            "name": "Greeting"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "OTIO_SCHEMA": "Gap.1",
+                                "name": "",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 60000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "metadata": {}
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Deux lignes,\nla seconde.",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 240000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "",
+                                        "generator_kind": "FilmCraft.caption",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "filmcraft": {
+                                        "caption": {
+                                            "text": "Deux lignes,\nla seconde.",
+                                            "speaker": "Ana",
+                                            "cue_id": "two",
+                                            "settings": "line:90%"
+                                        }
+                                    },
+                                    "opencut": {
+                                        "element": {
+                                            "id": "cap-2"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "OTIO_SCHEMA": "Gap.1",
+                                "name": "",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 180000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "metadata": {}
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Fin.",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 120000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "",
+                                        "generator_kind": "FilmCraft.caption",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "filmcraft": {
+                                        "caption": {
+                                            "text": "Fin.",
+                                            "speaker": null,
+                                            "cue_id": null,
+                                            "settings": ""
+                                        }
+                                    },
+                                    "opencut": {
+                                        "element": {
+                                            "id": "cap-3"
+                                        }
+                                    }
+                                }
+                            }
+                        ],
+                        "source_range": null,
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "metadata": {
+                            "filmcraft": {
+                                "caption_track": {
+                                    "format": "Subtitle",
+                                    "language": "fr",
+                                    "style": {
+                                        "font": "Inter",
+                                        "size": 54,
+                                        "color": [
+                                            255,
+                                            255,
+                                            255,
+                                            255
+                                        ],
+                                        "background": true,
+                                        "background_color": [
+                                            0,
+                                            0,
+                                            0,
+                                            191
+                                        ],
+                                        "align": "Center",
+                                        "anchor": "Bottom",
+                                        "margin": 0.08,
+                                        "line_spacing": 1.25,
+                                        "outline": 0,
+                                        "outline_color": [
+                                            0,
+                                            0,
+                                            0,
+                                            255
+                                        ],
+                                        "font_style": "SemiBold"
+                                    },
+                                    "locked": false,
+                                    "sync_lock": true,
+                                    "vtt_blocks": []
+                                }
+                            },
+                            "opencut": {
+                                "track": {
+                                    "id": "cut-subs",
+                                    "type": "caption"
+                                },
+                                "slot": "overlay",
+                                "order": [
+                                    "cap-1",
+                                    "cap-2",
+                                    "cap-3"
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "name": "Graphics",
+                        "kind": "Video",
+                        "source_range": null,
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "metadata": {
+                            "opencut": {
+                                "track": {
+                                    "id": "s1-gfx",
+                                    "type": "graphic",
+                                    "hidden": true
+                                },
+                                "slot": "overlay",
+                                "order": [
+                                    "g1",
+                                    "g2",
+                                    "g3",
+                                    "g4",
+                                    "g5"
+                                ]
+                            }
+                        },
+                        "children": [
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Star",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 120000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Star",
+                                        "generator_kind": "OpenCut.sticker",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "sticker",
+                                            "stickerId": "shapes:star",
+                                            "trimEnd": 0,
+                                            "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "rotate": 7.5
+                                            },
+                                            "opacity": 0.5,
+                                            "blendMode": "normal",
+                                            "id": "g1"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "OTIO_SCHEMA": "Gap.1",
+                                "name": "",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 120000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "metadata": {}
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Rectangle",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 240000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Rectangle",
+                                        "generator_kind": "OpenCut.graphic",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "graphic",
+                                            "definitionId": "rectangle",
+                                            "params": {
+                                                "fill": "#ffffff",
+                                                "stroke": "#000000",
+                                                "strokeWidth": 0,
+                                                "strokeAlign": "center",
+                                                "cornerRadius": 0
+                                            },
+                                            "trimEnd": 0,
+                                            "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "rotate": 7.5
+                                            },
+                                            "opacity": 1,
+                                            "blendMode": "normal",
+                                            "id": "g2",
+                                            "animations": {
+                                                "bindings": {
+                                                    "params.strokeWidth": {
+                                                        "path": "params.strokeWidth",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "params.strokeWidth:value"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "channels": {
+                                                    "params.strokeWidth:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-030",
+                                                                "time": 120000,
+                                                                "value": 1,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "masks": [
+                                                {
+                                                    "type": "ellipse",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 0.6,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-031"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Ellipse",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 240000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Ellipse",
+                                        "generator_kind": "OpenCut.graphic",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "graphic",
+                                            "definitionId": "ellipse",
+                                            "params": {
+                                                "fill": "#ffffff",
+                                                "stroke": "#000000",
+                                                "strokeWidth": 0,
+                                                "strokeAlign": "center"
+                                            },
+                                            "trimEnd": 0,
+                                            "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "rotate": 7.5
+                                            },
+                                            "opacity": 1,
+                                            "blendMode": "normal",
+                                            "id": "g3"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Polygon",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 240000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Polygon",
+                                        "generator_kind": "OpenCut.graphic",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "graphic",
+                                            "definitionId": "polygon",
+                                            "params": {
+                                                "fill": "#ffffff",
+                                                "stroke": "#000000",
+                                                "strokeWidth": 0,
+                                                "strokeAlign": "center",
+                                                "sides": 5,
+                                                "cornerRadius": 0
+                                            },
+                                            "trimEnd": 0,
+                                            "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "rotate": 7.5
+                                            },
+                                            "opacity": 1,
+                                            "blendMode": "normal",
+                                            "id": "g4"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Star",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 240000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Star",
+                                        "generator_kind": "OpenCut.graphic",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "graphic",
+                                            "definitionId": "star",
+                                            "params": {
+                                                "fill": "#ffffff",
+                                                "stroke": "#000000",
+                                                "strokeWidth": 0,
+                                                "strokeAlign": "center",
+                                                "points": 5,
+                                                "depth": 45
+                                            },
+                                            "trimEnd": 0,
+                                            "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "rotate": 7.5
+                                            },
+                                            "opacity": 1,
+                                            "blendMode": "normal",
+                                            "id": "g5"
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "name": "Adjust",
+                        "kind": "Video",
+                        "source_range": null,
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "metadata": {
+                            "opencut": {
+                                "track": {
+                                    "id": "s1-fx",
+                                    "type": "effect",
+                                    "hidden": false
+                                },
+                                "slot": "overlay",
+                                "order": [
+                                    "e1"
+                                ]
+                            }
+                        },
+                        "children": [
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Grade",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 1200000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Grade",
+                                        "generator_kind": "OpenCut.effect",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "effect",
+                                            "effectType": "blur",
+                                            "params": {
+                                                "intensity": 15
+                                            },
+                                            "trimEnd": 0,
+                                            "id": "e1"
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "name": "Music",
+                        "kind": "Audio",
+                        "source_range": null,
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "metadata": {
+                            "opencut": {
+                                "track": {
+                                    "id": "s1-a1",
+                                    "type": "audio",
+                                    "muted": true
+                                },
+                                "slot": "audio",
+                                "order": [
+                                    "a1"
+                                ]
+                            }
+                        },
+                        "children": [
+                            {
+                                "OTIO_SCHEMA": "Gap.1",
+                                "name": "",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 60000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "metadata": {}
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Song",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 360000
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 1080000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "ExternalReference.1",
+                                        "name": "song.wav",
+                                        "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz2?version=v9",
+                                        "available_range": null,
+                                        "available_image_bounds": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "audio",
+                                            "sourceType": "upload",
+                                            "mediaId": "m-audio",
+                                            "trimEnd": 0,
+                                            "sourceDuration": 21600000,
+                                            "volume": 0.4,
+                                            "muted": false,
+                                            "id": "a1",
+                                            "retime": {
+                                                "rate": 0.9
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "OTIO_SCHEMA": "Timeline.1",
+            "name": "B-roll",
+            "global_start_time": null,
+            "metadata": {
+                "opencut": {
+                    "scene": {
+                        "id": "s2",
+                        "isMain": false,
+                        "createdAt": "2026-11-08T00:00:00.000Z",
+                        "updatedAt": "2026-11-08T01:00:00.000Z"
+                    }
+                }
+            },
+            "tracks": {
+                "OTIO_SCHEMA": "Stack.1",
+                "name": "tracks",
+                "source_range": null,
+                "effects": [],
+                "enabled": true,
+                "metadata": {},
+                "markers": [
+                    {
+                        "OTIO_SCHEMA": "Marker.2",
+                        "name": "Cut here",
+                        "marked_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 120000,
+                                "value": 240000
+                            },
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 120000,
+                                "value": 120000
+                            }
+                        },
+                        "color": "RED",
+                        "comment": "",
+                        "metadata": {
+                            "opencut": {
+                                "bookmark": {
+                                    "note": "Cut here",
+                                    "color": "#ff0000",
+                                    "duration": 120000
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "OTIO_SCHEMA": "Marker.2",
+                        "name": "",
+                        "marked_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 120000,
+                                "value": 1080000
+                            },
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 120000,
+                                "value": 0
+                            }
+                        },
+                        "color": "RED",
+                        "comment": "",
+                        "metadata": {
+                            "opencut": {
+                                "bookmark": {}
+                            }
+                        }
+                    }
+                ],
+                "children": [
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "name": "Main",
+                        "kind": "Video",
+                        "source_range": null,
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "metadata": {
+                            "opencut": {
+                                "track": {
+                                    "id": "s2-main",
+                                    "type": "video",
+                                    "muted": false,
+                                    "hidden": false
+                                },
+                                "slot": "main",
+                                "order": [
+                                    "v1",
+                                    "i1"
+                                ]
+                            }
+                        },
+                        "children": [
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Beach",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 120000
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 600000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "ExternalReference.1",
+                                        "name": "beach.mp4",
+                                        "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz0?version=v3",
+                                        "available_range": null,
+                                        "available_image_bounds": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "video",
+                                            "mediaId": "m-video",
+                                            "trimEnd": 240000,
+                                            "sourceDuration": 960000,
+                                            "muted": false,
+                                            "isSourceAudioEnabled": true,
+                                            "hidden": false,
+                                            "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "rotate": 7.5
+                                            },
+                                            "opacity": 0.9,
+                                            "blendMode": "screen",
+                                            "volume": 0.7,
+                                            "id": "v1",
+                                            "retime": {
+                                                "rate": 1.5,
+                                                "maintainPitch": true
+                                            },
+                                            "effects": [
+                                                {
+                                                    "id": "id-032",
+                                                    "type": "blur",
+                                                    "params": {
+                                                        "intensity": 15
+                                                    },
+                                                    "enabled": true
+                                                }
+                                            ],
+                                            "masks": [
+                                                {
+                                                    "type": "split",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "rotation": 0
+                                                    },
+                                                    "id": "id-033"
+                                                },
+                                                {
+                                                    "type": "cinematic-bars",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 1.1473474844178637,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-034"
+                                                },
+                                                {
+                                                    "type": "rectangle",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 0.3375,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-035"
+                                                },
+                                                {
+                                                    "type": "ellipse",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 0.3375,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-036"
+                                                },
+                                                {
+                                                    "type": "heart",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 0.3375,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-037"
+                                                },
+                                                {
+                                                    "type": "diamond",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 0.3375,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-038"
+                                                },
+                                                {
+                                                    "type": "star",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 0.3375,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-039"
+                                                },
+                                                {
+                                                    "type": "text",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "content": "Mask",
+                                                        "fontSize": 15,
+                                                        "fontFamily": "Arial",
+                                                        "fontWeight": "normal",
+                                                        "fontStyle": "normal",
+                                                        "textDecoration": "none",
+                                                        "letterSpacing": 0,
+                                                        "lineHeight": 1.2,
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-040"
+                                                },
+                                                {
+                                                    "type": "custom",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "path": [],
+                                                        "closed": false,
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-041"
+                                                }
+                                            ],
+                                            "animations": {
+                                                "bindings": {
+                                                    "opacity": {
+                                                        "path": "opacity",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "opacity:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "transform.positionX": {
+                                                        "path": "transform.positionX",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "transform.positionX:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "volume": {
+                                                        "path": "volume",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "volume:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "effects.id-032.params.intensity": {
+                                                        "path": "effects.id-032.params.intensity",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "effects.id-032.params.intensity:value"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "channels": {
+                                                    "opacity:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-042",
+                                                                "time": 0,
+                                                                "value": 0,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            },
+                                                            {
+                                                                "id": "id-043",
+                                                                "time": 120000,
+                                                                "value": 1,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "transform.positionX:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-044",
+                                                                "time": 240000,
+                                                                "value": 40,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "volume:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-045",
+                                                                "time": 360000,
+                                                                "value": 0.2,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "effects.id-032.params.intensity:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-046",
+                                                                "time": 120000,
+                                                                "value": 40,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "OTIO_SCHEMA": "Gap.1",
+                                "name": "",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 240000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "metadata": {}
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Logo",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 360000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "ExternalReference.1",
+                                        "name": "logo.png",
+                                        "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz1?version=v1",
+                                        "available_range": null,
+                                        "available_image_bounds": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "image",
+                                            "mediaId": "m-image",
+                                            "trimEnd": 0,
+                                            "hidden": false,
+                                            "transform": {
+                                                "scaleX": 1,
+                                                "scaleY": 1,
+                                                "position": {
+                                                    "x": 0,
+                                                    "y": 0
+                                                },
+                                                "rotate": 0
+                                            },
+                                            "opacity": 1,
+                                            "blendMode": "normal",
+                                            "id": "i1"
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "name": "Titles",
+                        "kind": "Video",
+                        "source_range": null,
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "metadata": {
+                            "opencut": {
+                                "track": {
+                                    "id": "s2-text",
+                                    "type": "text",
+                                    "hidden": false
+                                },
+                                "slot": "overlay",
+                                "order": [
+                                    "t1"
+                                ]
+                            }
+                        },
+                        "children": [
+                            {
+                                "OTIO_SCHEMA": "Gap.1",
+                                "name": "",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 120000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "metadata": {}
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Title",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 240000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Title",
+                                        "generator_kind": "OpenCut.text",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "text",
+                                            "content": "Hello 日本語",
+                                            "trimEnd": 0,
+                                            "fontSize": 64,
+                                            "fontFamily": "Inter",
+                                            "color": "#ffffff",
+                                            "background": {
+                                                "enabled": true,
+                                                "color": "#00000080",
+                                                "cornerRadius": 8,
+                                                "paddingX": 4,
+                                                "paddingY": 2,
+                                                "offsetX": 0,
+                                                "offsetY": 0
+                                            },
+                                            "textAlign": "center",
+                                            "fontWeight": "bold",
+                                            "fontStyle": "italic",
+                                            "textDecoration": "underline",
+                                            "letterSpacing": 1,
+                                            "lineHeight": 1.2,
+                                            "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "rotate": 7.5
+                                            },
+                                            "opacity": 1,
+                                            "blendMode": "normal",
+                                            "id": "t1",
+                                            "effects": [
+                                                {
+                                                    "id": "id-047",
+                                                    "type": "blur",
+                                                    "params": {
+                                                        "intensity": 15
+                                                    },
+                                                    "enabled": true
+                                                }
+                                            ],
+                                            "animations": {
+                                                "bindings": {
+                                                    "opacity": {
+                                                        "path": "opacity",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "opacity:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "color": {
+                                                        "path": "color",
+                                                        "kind": "color",
+                                                        "colorSpace": "srgb-linear",
+                                                        "components": [
+                                                            {
+                                                                "key": "r",
+                                                                "channelId": "color:r"
+                                                            },
+                                                            {
+                                                                "key": "g",
+                                                                "channelId": "color:g"
+                                                            },
+                                                            {
+                                                                "key": "b",
+                                                                "channelId": "color:b"
+                                                            },
+                                                            {
+                                                                "key": "a",
+                                                                "channelId": "color:a"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "fontSize": {
+                                                        "path": "fontSize",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "fontSize:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "letterSpacing": {
+                                                        "path": "letterSpacing",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "letterSpacing:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "content": {
+                                                        "path": "content",
+                                                        "kind": "discrete",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "content:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "fontFamily": {
+                                                        "path": "fontFamily",
+                                                        "kind": "discrete",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "fontFamily:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "textAlign": {
+                                                        "path": "textAlign",
+                                                        "kind": "discrete",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "textAlign:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "fontWeight": {
+                                                        "path": "fontWeight",
+                                                        "kind": "discrete",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "fontWeight:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "fontStyle": {
+                                                        "path": "fontStyle",
+                                                        "kind": "discrete",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "fontStyle:value"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "textDecoration": {
+                                                        "path": "textDecoration",
+                                                        "kind": "discrete",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "textDecoration:value"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "channels": {
+                                                    "opacity:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-048",
+                                                                "time": 0,
+                                                                "value": 0,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "color:r": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-049",
+                                                                "time": 120000,
+                                                                "value": 1,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "color:g": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-049",
+                                                                "time": 120000,
+                                                                "value": 0,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "color:b": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-049",
+                                                                "time": 120000,
+                                                                "value": 0,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "color:a": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-049",
+                                                                "time": 120000,
+                                                                "value": 1,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "fontSize:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-050",
+                                                                "time": 0,
+                                                                "value": 64,
+                                                                "rightHandle": {
+                                                                    "dt": 30000,
+                                                                    "dv": 12
+                                                                },
+                                                                "segmentToNext": "bezier",
+                                                                "tangentMode": "broken"
+                                                            },
+                                                            {
+                                                                "id": "id-051",
+                                                                "time": 120000,
+                                                                "value": 96,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "letterSpacing:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-052",
+                                                                "time": 60000,
+                                                                "value": 4,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "content:value": {
+                                                        "kind": "discrete",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-053",
+                                                                "time": 0,
+                                                                "value": "Hello 日本語"
+                                                            },
+                                                            {
+                                                                "id": "id-054",
+                                                                "time": 120000,
+                                                                "value": "Goodbye"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "fontFamily:value": {
+                                                        "kind": "discrete",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-055",
+                                                                "time": 120000,
+                                                                "value": "Roboto"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "textAlign:value": {
+                                                        "kind": "discrete",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-056",
+                                                                "time": 120000,
+                                                                "value": "left"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "fontWeight:value": {
+                                                        "kind": "discrete",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-057",
+                                                                "time": 120000,
+                                                                "value": "normal"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "fontStyle:value": {
+                                                        "kind": "discrete",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-058",
+                                                                "time": 120000,
+                                                                "value": "normal"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "textDecoration:value": {
+                                                        "kind": "discrete",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-059",
+                                                                "time": 0,
+                                                                "value": "underline"
+                                                            },
+                                                            {
+                                                                "id": "id-060",
+                                                                "time": 120000,
+                                                                "value": "line-through"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "name": "Graphics",
+                        "kind": "Video",
+                        "source_range": null,
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "metadata": {
+                            "opencut": {
+                                "track": {
+                                    "id": "s2-gfx",
+                                    "type": "graphic",
+                                    "hidden": true
+                                },
+                                "slot": "overlay",
+                                "order": [
+                                    "g1",
+                                    "g2",
+                                    "g3",
+                                    "g4",
+                                    "g5"
+                                ]
+                            }
+                        },
+                        "children": [
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Star",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 120000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Star",
+                                        "generator_kind": "OpenCut.sticker",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "sticker",
+                                            "stickerId": "shapes:star",
+                                            "trimEnd": 0,
+                                            "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "rotate": 7.5
+                                            },
+                                            "opacity": 0.5,
+                                            "blendMode": "normal",
+                                            "id": "g1"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "OTIO_SCHEMA": "Gap.1",
+                                "name": "",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 120000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "metadata": {}
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Rectangle",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 240000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Rectangle",
+                                        "generator_kind": "OpenCut.graphic",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "graphic",
+                                            "definitionId": "rectangle",
+                                            "params": {
+                                                "fill": "#ffffff",
+                                                "stroke": "#000000",
+                                                "strokeWidth": 0,
+                                                "strokeAlign": "center",
+                                                "cornerRadius": 0
+                                            },
+                                            "trimEnd": 0,
+                                            "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "rotate": 7.5
+                                            },
+                                            "opacity": 1,
+                                            "blendMode": "normal",
+                                            "id": "g2",
+                                            "animations": {
+                                                "bindings": {
+                                                    "params.strokeWidth": {
+                                                        "path": "params.strokeWidth",
+                                                        "kind": "number",
+                                                        "components": [
+                                                            {
+                                                                "key": "value",
+                                                                "channelId": "params.strokeWidth:value"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "channels": {
+                                                    "params.strokeWidth:value": {
+                                                        "kind": "scalar",
+                                                        "keys": [
+                                                            {
+                                                                "id": "id-061",
+                                                                "time": 120000,
+                                                                "value": 1,
+                                                                "segmentToNext": "linear",
+                                                                "tangentMode": "flat"
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "masks": [
+                                                {
+                                                    "type": "ellipse",
+                                                    "params": {
+                                                        "feather": 0,
+                                                        "inverted": false,
+                                                        "strokeColor": "#ffffff",
+                                                        "strokeWidth": 0,
+                                                        "strokeAlign": "center",
+                                                        "centerX": 0,
+                                                        "centerY": 0,
+                                                        "width": 0.6,
+                                                        "height": 0.6,
+                                                        "rotation": 0,
+                                                        "scale": 1
+                                                    },
+                                                    "id": "id-062"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Ellipse",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 240000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Ellipse",
+                                        "generator_kind": "OpenCut.graphic",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "graphic",
+                                            "definitionId": "ellipse",
+                                            "params": {
+                                                "fill": "#ffffff",
+                                                "stroke": "#000000",
+                                                "strokeWidth": 0,
+                                                "strokeAlign": "center"
+                                            },
+                                            "trimEnd": 0,
+                                            "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "rotate": 7.5
+                                            },
+                                            "opacity": 1,
+                                            "blendMode": "normal",
+                                            "id": "g3"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Polygon",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 240000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Polygon",
+                                        "generator_kind": "OpenCut.graphic",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "graphic",
+                                            "definitionId": "polygon",
+                                            "params": {
+                                                "fill": "#ffffff",
+                                                "stroke": "#000000",
+                                                "strokeWidth": 0,
+                                                "strokeAlign": "center",
+                                                "sides": 5,
+                                                "cornerRadius": 0
+                                            },
+                                            "trimEnd": 0,
+                                            "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "rotate": 7.5
+                                            },
+                                            "opacity": 1,
+                                            "blendMode": "normal",
+                                            "id": "g4"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Star",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 240000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Star",
+                                        "generator_kind": "OpenCut.graphic",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "graphic",
+                                            "definitionId": "star",
+                                            "params": {
+                                                "fill": "#ffffff",
+                                                "stroke": "#000000",
+                                                "strokeWidth": 0,
+                                                "strokeAlign": "center",
+                                                "points": 5,
+                                                "depth": 45
+                                            },
+                                            "trimEnd": 0,
+                                            "transform": {
+                                                "scaleX": 1.25,
+                                                "scaleY": 1.25,
+                                                "position": {
+                                                    "x": 12,
+                                                    "y": -4
+                                                },
+                                                "rotate": 7.5
+                                            },
+                                            "opacity": 1,
+                                            "blendMode": "normal",
+                                            "id": "g5"
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "name": "Adjust",
+                        "kind": "Video",
+                        "source_range": null,
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "metadata": {
+                            "opencut": {
+                                "track": {
+                                    "id": "s2-fx",
+                                    "type": "effect",
+                                    "hidden": false
+                                },
+                                "slot": "overlay",
+                                "order": [
+                                    "e1"
+                                ]
+                            }
+                        },
+                        "children": [
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Grade",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 1200000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "GeneratorReference.1",
+                                        "name": "Grade",
+                                        "generator_kind": "OpenCut.effect",
+                                        "parameters": {},
+                                        "available_range": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "effect",
+                                            "effectType": "blur",
+                                            "params": {
+                                                "intensity": 15
+                                            },
+                                            "trimEnd": 0,
+                                            "id": "e1"
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "OTIO_SCHEMA": "Track.1",
+                        "name": "Music",
+                        "kind": "Audio",
+                        "source_range": null,
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "metadata": {
+                            "opencut": {
+                                "track": {
+                                    "id": "s2-a1",
+                                    "type": "audio",
+                                    "muted": true
+                                },
+                                "slot": "audio",
+                                "order": [
+                                    "a1"
+                                ]
+                            }
+                        },
+                        "children": [
+                            {
+                                "OTIO_SCHEMA": "Gap.1",
+                                "name": "",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 0
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 60000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "metadata": {}
+                            },
+                            {
+                                "OTIO_SCHEMA": "Clip.2",
+                                "name": "Song",
+                                "source_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 360000
+                                    },
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 120000,
+                                        "value": 1080000
+                                    }
+                                },
+                                "effects": [],
+                                "markers": [],
+                                "enabled": true,
+                                "media_references": {
+                                    "DEFAULT_MEDIA": {
+                                        "OTIO_SCHEMA": "ExternalReference.1",
+                                        "name": "song.wav",
+                                        "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz2?version=v9",
+                                        "available_range": null,
+                                        "available_image_bounds": null,
+                                        "metadata": {}
+                                    }
+                                },
+                                "active_media_reference_key": "DEFAULT_MEDIA",
+                                "metadata": {
+                                    "opencut": {
+                                        "element": {
+                                            "type": "audio",
+                                            "sourceType": "upload",
+                                            "mediaId": "m-audio",
+                                            "trimEnd": 0,
+                                            "sourceDuration": 21600000,
+                                            "volume": 0.4,
+                                            "muted": false,
+                                            "id": "a1",
+                                            "retime": {
+                                                "rate": 0.9
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

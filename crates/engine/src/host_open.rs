@@ -1122,4 +1122,86 @@ mod tests {
         let mut s2 = session();
         open_host_file(&mut s2, "Captions.otio", &serde_json::to_vec(&again).unwrap()).expect("Film reopens its own save");
     }
+
+    /// files/989 (owed under "Caption track in the .otio"): a caption track inside a PURE Cut project (the OpenCut fork's
+    /// `oneos-tests/fixtures/cut-project-captions.otio`, Cut's writer's maximal project with a caption track among its overlays) opens in
+    /// Film as Film's own captions, nothing locked; an unedited save is the file value for value. Film's edit (a caption's text, one
+    /// removed, one added, the style's colour) is written in the caption track's shape with Cut's ids beside it (the caption Film made named
+    /// `film-<id>`), every other part of the file as it was, pinned as `film-saved-cut-captions.otio` (`FILMCRAFT_BLESS=1` writes it), the
+    /// file the OpenCut fork's `oneos-tests/captions.test.ts` opens in Cut's project mode.
+    #[test]
+    fn a_caption_track_in_a_pure_cut_project_opens_in_film_as_its_captions() {
+        let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-project-captions.otio");
+        let cut: Value = serde_json::from_slice(bytes).unwrap();
+        let mut s = session();
+        open_host_file(&mut s, "subs.otio", bytes).unwrap();
+        let locked = s.host_shared.locked();
+        assert!(!locked.iter().any(|l| l.contains("Sous-titres")), "the caption track is not locked: {locked:?}");
+        let at = |sec: f64| filmcraft_time::Tick((sec * filmcraft_time::TICKS_PER_SECOND as f64) as i64);
+        let main = s.project.items.values().find(|i| i.name == "Main" && i.as_sequence().is_some()).unwrap().id;
+        let q = s.project.sequence(main).unwrap();
+        assert_eq!(q.caption_tracks.len(), 1);
+        let t = &q.caption_tracks[0];
+        assert_eq!((t.name.as_str(), t.language.as_str()), ("Sous-titres", "fr"));
+        assert_eq!(
+            t.captions.iter().map(|c| (c.text.as_str(), c.start, c.duration)).collect::<Vec<_>>(),
+            vec![("Bonjour.", at(0.5), at(1.5)), ("Deux lignes,\nla seconde.", at(2.5), at(2.0)), ("Fin.", at(6.0), at(1.0))]
+        );
+        assert_eq!(
+            (t.captions[1].speaker.as_deref(), t.captions[1].cue_id.as_deref(), t.captions[1].settings.as_str()),
+            (Some("Ana"), Some("two"), "line:90%")
+        );
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
+        assert_eq!(first_difference(&cut, &saved, ""), None, "unedited: Cut's project comes back value for value");
+        {
+            let p = std::sync::Arc::make_mut(&mut s.project);
+            let id = filmcraft_project::ClipId(p.alloc_id());
+            let t = &mut p.sequence_mut(main).unwrap().caption_tracks[0];
+            t.captions[1].text = "Deux, par Film.".into();
+            t.captions.remove(2);
+            t.captions.push(filmcraft_project::Caption {
+                id,
+                start: at(7.0),
+                duration: at(1.0),
+                text: "Ajouté par Film.".into(),
+                speaker: None,
+                cue_id: None,
+                settings: String::new(),
+            });
+            t.style.color = [0, 255, 0, 255];
+        }
+        let out = save_host_file(&mut s).unwrap_or_else(|e| panic!("Film refused the save: {e}"));
+        let edited: Value = serde_json::from_slice(&out).unwrap();
+        let golden = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../interchange/tests/it/oneos/film-saved-cut-captions.otio");
+        if std::env::var_os("FILMCRAFT_BLESS").is_some() {
+            std::fs::write(&golden, &out).unwrap();
+        }
+        let pinned: Value = serde_json::from_slice(&std::fs::read(&golden).expect("film-saved-cut-captions.otio (FILMCRAFT_BLESS=1 writes it)")).unwrap();
+        assert_eq!(first_difference(&pinned, &edited, ""), None, "Film saves Cut's project as it is pinned");
+        let ptr = "/children/0/tracks/children/2";
+        let (was, now) = (cut.pointer(ptr).unwrap(), edited.pointer(ptr).unwrap());
+        let clips = |t: &Value| t["children"].as_array().unwrap().iter().filter(|c| c["OTIO_SCHEMA"] == "Clip.2").cloned().collect::<Vec<_>>();
+        let texts: Vec<String> = clips(now).iter().map(|c| c["metadata"]["filmcraft"]["caption"]["text"].as_str().unwrap().to_string()).collect();
+        assert_eq!(texts, ["Bonjour.", "Deux, par Film.", "Ajouté par Film."]);
+        let ids: Vec<Value> = clips(now).iter().map(|c| c["metadata"]["opencut"]["element"]["id"].clone()).collect();
+        assert_eq!(ids[..2], [serde_json::json!("cap-1"), serde_json::json!("cap-2")], "Cut's ids kept");
+        assert!(ids[2].as_str().is_some_and(|i| i.starts_with("film-")), "the caption Film made is named for Cut: {}", ids[2]);
+        assert_eq!(now["metadata"]["opencut"]["order"], Value::Array(ids.clone()), "Cut's order of its captions");
+        assert_eq!(clips(now)[0], clips(was)[0], "an unchanged caption is its own clip");
+        assert_eq!(clips(now)[1]["metadata"]["opencut"], clips(was)[1]["metadata"]["opencut"], "an edited caption keeps Cut's element");
+        assert_eq!(now["metadata"]["filmcraft"]["caption_track"]["style"]["color"], serde_json::json!([0, 255, 0, 255]));
+        let mut want = cut.clone();
+        *want.pointer_mut(ptr).unwrap() = now.clone();
+        // Measured: a Film edit that makes a part (here a caption's id) moves Film's id counter, so Film's own (empty) project snapshot is
+        // written beside Cut's, as for any part Film makes in a pure Cut project; it holds nothing of Film's own.
+        assert_eq!(edited.pointer("/metadata/filmcraft/project/items"), Some(&serde_json::json!({})), "Film's own part is empty");
+        want["metadata"]["filmcraft"] = edited["metadata"]["filmcraft"].clone();
+        assert_eq!(first_difference(&want, &edited, ""), None, "only the caption track differs (and Film's empty snapshot)");
+        let mut s2 = session();
+        open_host_file(&mut s2, "subs.otio", &out).expect("Film reopens its own save");
+        let q2 = s2.project.items.values().find(|i| i.name == "Main" && i.as_sequence().is_some()).and_then(|i| i.as_sequence()).unwrap();
+        assert_eq!(q2.caption_tracks[0].captions.len(), 3);
+        let again: Value = serde_json::from_slice(&save_host_file(&mut s2).unwrap()).unwrap();
+        assert_eq!(first_difference(&edited, &again, ""), None, "Film's own save comes back value for value");
+    }
 }

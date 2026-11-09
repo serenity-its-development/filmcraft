@@ -23,6 +23,7 @@
 //! | transform, opacity, hidden | the clip's Motion, Opacity and output |
 //! | an element's blur effects | Gaussian Blur on the clip |
 //! | bookmark | a sequence marker (time, duration, note, colour) |
+//! | caption track (Film's shape, `metadata.filmcraft.caption_track`) | the sequence's caption track: Film's own captions (Cut's ids beside) |
 //!
 //! A save writes each part back in Cut's shape: the part as the file held it, with only the fields Film changed rewritten (a field-level
 //! three-way: Film's value now against Film's value when it was opened), so every field Film does not edit comes back exactly and Cut
@@ -35,8 +36,8 @@ use std::sync::Arc;
 
 use filmcraft_geom::Vec2;
 use filmcraft_project::{
-    ClipId, EffectInstance, HexColor, ItemId, ItemKind, Keyframe, Label, Marker, MarkerId, MarkerKind, MediaRef, Param, ParamValue, Project, Track, TrackId,
-    TrackItem, TrackKind, find_effect, graphic,
+    Caption, CaptionTrack, ClipId, EffectInstance, HexColor, ItemId, ItemKind, Keyframe, Label, Marker, MarkerId, MarkerKind, MediaRef, Param, ParamValue,
+    Project, Track, TrackId, TrackItem, TrackKind, find_effect, graphic,
 };
 use filmcraft_time::{FrameRate, TICKS_PER_SECOND, Tick, TimeRange};
 use serde_json::{Map, Value, json};
@@ -44,7 +45,7 @@ use serde_json::{Map, Value, json};
 use super::cut_keys::{CutKey, cut_to_film, film_to_cut, same_curve};
 use super::cut_masks::{self, ElementBox};
 use super::oneos::{Split, oneos_media};
-use super::{read_tr, schema_name};
+use super::{caption_track_json, is_caption_track, read_caption_track, read_tr, schema_name};
 use crate::common::{MediaSpec, empty_sequence, media_info, rate_from_f64, settings_for};
 use crate::is_oneos_media;
 
@@ -151,6 +152,22 @@ struct Sound {
     a0: Anims,
 }
 
+/// A caption track in one of Cut's scenes (files/989, "Caption track in the .otio"; owed by "Captions both ways"): Film's own caption track
+/// in the scene's sequence, written back in the same shape with Cut's ids beside it.
+#[derive(Debug, Clone)]
+struct CutCaptions {
+    seq: ItemId,
+    track: TrackId,
+    /// Its place among the scene's tracks.
+    order: usize,
+    /// The track as the file holds it.
+    origin: Value,
+    /// Each caption's clip as the file holds it.
+    clips: BTreeMap<ClipId, Value>,
+    /// The track as Film read it.
+    t0: CaptionTrack,
+}
+
 #[derive(Debug, Clone)]
 struct Mark {
     origin: Value,
@@ -171,6 +188,7 @@ pub struct CutParts {
     tracks: Vec<CutTrack>,
     clips: BTreeMap<ClipId, CutClip>,
     marks: BTreeMap<MarkerId, Mark>,
+    captions: Vec<CutCaptions>,
     pub locked: Vec<Locked>,
     /// Each of Cut's link labels (`element.link`, files/989 "Build linked audio") as the link number Film reads it as, and the numbers
     /// Film gave a sounding picture and its sound only (written as Cut's one element, never as a label).
@@ -185,6 +203,7 @@ pub(super) struct Rendered {
     tracks: Vec<CutTrack>,
     clips: BTreeMap<ClipId, CutClip>,
     marks: BTreeMap<MarkerId, Mark>,
+    captions: Vec<CutCaptions>,
     media: Vec<Value>,
 }
 
@@ -1842,7 +1861,11 @@ impl CutParts {
         let seq = p.add_item(&name, Label::Forest, ItemKind::Sequence(Arc::new(empty_sequence(settings))), None);
         let stack = tl.get("tracks").cloned().unwrap_or(json!({}));
         for (k, t) in stack.get("children").and_then(Value::as_array).into_iter().flatten().enumerate() {
-            self.read_track(p, seq, (None, k), t, f, rate);
+            if is_caption_track(t) {
+                self.read_captions(p, seq, k, t);
+            } else {
+                self.read_track(p, seq, (None, k), t, f, rate);
+            }
         }
         for m in stack.get("markers").and_then(Value::as_array).into_iter().flatten() {
             if self.read_mark(p, seq, m).is_err() {
@@ -1853,6 +1876,24 @@ impl CutParts {
             }
         }
         self.scenes.push(Scene { seq, after, order, origin: tl.clone(), name0: name });
+    }
+
+    /// A caption track of a Cut scene into the sequence `seq` as Film's own caption track, at `order` among the scene's tracks; locked,
+    /// named, when Film cannot read it as one.
+    fn read_captions(&mut self, p: &mut Project, seq: ItemId, order: usize, t: &Value) {
+        let read = read_caption_track(t, || p.alloc_id());
+        let track = match read {
+            Ok(track) => track,
+            Err(why) => {
+                self.locked.push(Locked::Track { seq, after: None, order, value: t.clone(), reason: format!("it {why}") });
+                return;
+            }
+        };
+        let clips: Vec<&Value> = t.get("children").and_then(Value::as_array).into_iter().flatten().filter(|c| schema_name(c) == "Clip").collect();
+        let clips = track.captions.iter().zip(clips).map(|(c, v)| (c.id, v.clone())).collect();
+        let Some(q) = p.sequence_mut(seq) else { return };
+        q.caption_tracks.push(track.clone());
+        self.captions.push(CutCaptions { seq, track: track.id, order, origin: t.clone(), clips, t0: track });
     }
 
     fn unread_scene(&mut self, p: &mut Project, seq: ItemId) -> Option<()> {
@@ -1866,6 +1907,7 @@ impl CutParts {
             self.marks.remove(&m.id);
         }
         self.tracks.retain(|t| t.seq != seq);
+        self.captions.retain(|t| t.seq != seq);
         self.locked.retain(|l| !matches!(l, Locked::Track { seq: s, .. } if *s == seq));
         p.items.remove(&seq);
         remove_from_bins(&mut p.root, seq);
@@ -1910,6 +1952,11 @@ impl CutParts {
         }
         q
     }
+}
+
+/// A caption as it was, save for its place (a move is the gaps').
+fn same_caption(a: &Caption, b: &Caption) -> bool {
+    a.duration == b.duration && a.text == b.text && a.speaker == b.speaker && a.cue_id == b.cue_id && a.settings == b.settings
 }
 
 fn remove_from_bins(b: &mut filmcraft_project::Bin, id: ItemId) {
@@ -2381,6 +2428,110 @@ impl Out<'_> {
         Ok(out)
     }
 
+    /// A caption track of a Cut scene in Film's shape (`caption_track_json`), as the file held it where Film changed nothing: an unchanged
+    /// track is its own bytes, an unchanged caption its own clip and an unchanged gap its own gap; Cut's ids ride beside it (a Cut project's
+    /// `metadata.opencut`: the track's id and type, its slot and its order, each caption's element id), a caption Film made named
+    /// `film-<id>`.
+    fn captions(&self, t: &CaptionTrack, prior: Option<&CutCaptions>) -> Result<Value, String> {
+        if let Some(cc) = prior
+            && *t == cc.t0
+        {
+            return Ok(cc.origin.clone());
+        }
+        let rate = prior
+            .and_then(|cc| cc.origin.get("children").and_then(Value::as_array).and_then(|a| a.first()))
+            .and_then(|c| c.pointer("/source_range/duration/rate"))
+            .and_then(Value::as_f64)
+            .unwrap_or(CUT_TICKS as f64);
+        let film = caption_track_json(t, FrameRate::FPS_30);
+        let mut out = prior.map(|cc| cc.origin.clone()).unwrap_or_else(|| film.clone());
+        out["name"] = json!(t.name);
+        out["enabled"] = json!(t.enabled);
+        let before = prior.map(|cc| caption_track_json(&cc.t0, FrameRate::FPS_30));
+        let data = "/metadata/filmcraft/caption_track";
+        if before.as_ref().and_then(|b| b.pointer(data)) != film.pointer(data) {
+            put(&mut out, data, film.pointer(data).cloned().unwrap_or(Value::Null));
+        }
+        // Gaps the file held at the same place and length are their own bytes.
+        let mut gaps = Vec::new();
+        let mut at = Tick::ZERO;
+        for c in prior.and_then(|cc| cc.origin.get("children").and_then(Value::as_array)).into_iter().flatten() {
+            let d = c.get("source_range").and_then(read_time).map(|r| r.1).unwrap_or(Tick::ZERO);
+            if schema_name(c) == "Gap" {
+                gaps.push((at, d, c.clone()));
+            }
+            at += d;
+        }
+        let was = |id: ClipId| prior.and_then(|cc| Some((cc.t0.captions.iter().find(|c| c.id == id)?, cc.clips.get(&id)?)));
+        let mut children = Vec::new();
+        let mut ids = Vec::new();
+        let mut at = Tick::ZERO;
+        for c in &t.captions {
+            if c.start > at {
+                let g = c.start - at;
+                match gaps.iter().find(|(a, d, _)| *a == at && *d == g) {
+                    Some((_, _, raw)) => children.push(raw.clone()),
+                    None => children.push(json!({"OTIO_SCHEMA": "Gap.1", "name": "", "source_range": time_range(Tick::ZERO, g, rate)?, "effects": [], "markers": [], "enabled": true, "metadata": {}})),
+                }
+            }
+            let cue = json!({"text": c.text, "speaker": c.speaker, "cue_id": c.cue_id, "settings": c.settings});
+            let clip = match was(c.id) {
+                Some((c0, raw)) if same_caption(c0, c) => raw.clone(),
+                Some((c0, raw)) => {
+                    let mut v = raw.clone();
+                    if c0.text != c.text {
+                        v["name"] = json!(c.text);
+                    }
+                    if c0.duration != c.duration {
+                        let r = raw.pointer("/source_range/duration/rate").and_then(Value::as_f64).unwrap_or(rate);
+                        v["source_range"] = time_range(Tick::ZERO, c.duration, r)?;
+                    }
+                    put(&mut v, "/metadata/filmcraft/caption", cue);
+                    v
+                }
+                None => {
+                    let mut v = json!({
+                        "OTIO_SCHEMA": "Clip.2", "name": c.text, "source_range": time_range(Tick::ZERO, c.duration, rate)?, "effects": [], "markers": [], "enabled": true,
+                        "media_references": {"DEFAULT_MEDIA": {
+                            "OTIO_SCHEMA": "GeneratorReference.1", "name": "", "generator_kind": super::CAPTION_KIND, "parameters": {}, "available_range": null, "metadata": {},
+                        }},
+                        "active_media_reference_key": "DEFAULT_MEDIA",
+                        "metadata": {"filmcraft": {"caption": cue}},
+                    });
+                    if self.parts.project_mode {
+                        put(&mut v, &format!("{ELEMENT}/id"), json!(format!("film-{}", c.id.0)));
+                    }
+                    v
+                }
+            };
+            if let Some(id) = clip.pointer(&format!("{ELEMENT}/id")) {
+                ids.push(id.clone());
+            }
+            children.push(clip);
+            at = c.end();
+        }
+        out["children"] = Value::Array(children);
+        if self.parts.project_mode {
+            // Cut's order of its captions: the file's, less the ones gone, then the ones Film made.
+            let prior_order: Vec<Value> = out.pointer("/metadata/opencut/order").and_then(Value::as_array).cloned().unwrap_or_default();
+            let mut order: Vec<Value> = prior_order.into_iter().filter(|id| ids.contains(id)).collect();
+            order.extend(ids.iter().filter(|id| !order.contains(id)).cloned().collect::<Vec<_>>());
+            if prior.is_none() {
+                put(&mut out, "/metadata/opencut/track", json!({"id": format!("film-{}", t.id.0), "type": "caption"}));
+                put(&mut out, "/metadata/opencut/slot", json!("overlay"));
+            }
+            put(&mut out, "/metadata/opencut/order", Value::Array(order));
+        }
+        Ok(out)
+    }
+
+    /// What the file holds of a caption track once saved: the next save is measured against it.
+    fn rendered_captions(&self, seq: ItemId, order: usize, t: &CaptionTrack, body: &Value) -> CutCaptions {
+        let clips: Vec<&Value> = body.get("children").and_then(Value::as_array).into_iter().flatten().filter(|c| schema_name(c) == "Clip").collect();
+        let clips = t.captions.iter().zip(clips).map(|(c, v)| (c.id, v.clone())).collect();
+        CutCaptions { seq, track: t.id, order, origin: body.clone(), clips, t0: t.clone() }
+    }
+
     fn scene(&mut self, s: &Scene) -> Result<Value, String> {
         let seq = self.p.sequence(s.seq).ok_or("a scene of Cut's is gone")?;
         let mut tl = s.origin.clone();
@@ -2407,8 +2558,24 @@ impl Out<'_> {
                 placed.push((*order, value.clone()));
             }
         }
+        for cc in self.parts.captions.iter().filter(|c| c.seq == s.seq) {
+            let Some(t) = seq.caption_track(cc.track) else { continue };
+            let body = self.captions(t, Some(cc))?;
+            self.r.captions.push(self.rendered_captions(s.seq, cc.order, t, &body));
+            placed.push((cc.order, body));
+        }
         placed.sort_by_key(|(o, _)| *o);
         let mut next = placed.last().map(|(o, _)| o + 1).unwrap_or(0);
+        // Caption tracks Film made in the scene, after Cut's tracks.
+        for t in &seq.caption_tracks {
+            if self.parts.captions.iter().any(|c| c.seq == s.seq && c.track == t.id) {
+                continue;
+            }
+            let body = self.captions(t, None)?;
+            self.r.captions.push(self.rendered_captions(s.seq, next, t, &body));
+            placed.push((next, body));
+            next += 1;
+        }
         for kind in [TrackKind::Video, TrackKind::Audio] {
             for t in seq.tracks(kind) {
                 if held.contains(&t.id) || t.items.is_empty() {
@@ -2559,5 +2726,6 @@ impl CutParts {
         self.tracks = r.tracks;
         self.clips = r.clips;
         self.marks = r.marks;
+        self.captions = r.captions;
     }
 }
