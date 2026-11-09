@@ -516,6 +516,66 @@
                             "kind": "color",
                             "path": "color"
                           },
+                          "content": {
+                            "components": [
+                              {
+                                "channelId": "content:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "discrete",
+                            "path": "content"
+                          },
+                          "fontFamily": {
+                            "components": [
+                              {
+                                "channelId": "fontFamily:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "discrete",
+                            "path": "fontFamily"
+                          },
+                          "fontSize": {
+                            "components": [
+                              {
+                                "channelId": "fontSize:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "fontSize"
+                          },
+                          "fontStyle": {
+                            "components": [
+                              {
+                                "channelId": "fontStyle:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "discrete",
+                            "path": "fontStyle"
+                          },
+                          "fontWeight": {
+                            "components": [
+                              {
+                                "channelId": "fontWeight:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "discrete",
+                            "path": "fontWeight"
+                          },
+                          "letterSpacing": {
+                            "components": [
+                              {
+                                "channelId": "letterSpacing:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "letterSpacing"
+                          },
                           "opacity": {
                             "components": [
                               {
@@ -525,6 +585,26 @@
                             ],
                             "kind": "number",
                             "path": "opacity"
+                          },
+                          "textAlign": {
+                            "components": [
+                              {
+                                "channelId": "textAlign:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "discrete",
+                            "path": "textAlign"
+                          },
+                          "textDecoration": {
+                            "components": [
+                              {
+                                "channelId": "textDecoration:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "discrete",
+                            "path": "textDecoration"
                           }
                         },
                         "channels": {
@@ -576,6 +656,86 @@
                             ],
                             "kind": "scalar"
                           },
+                          "content:value": {
+                            "keys": [
+                              {
+                                "id": "id-022",
+                                "time": 0,
+                                "value": "Hello 日本語"
+                              },
+                              {
+                                "id": "id-023",
+                                "time": 120000,
+                                "value": "Goodbye"
+                              }
+                            ],
+                            "kind": "discrete"
+                          },
+                          "fontFamily:value": {
+                            "keys": [
+                              {
+                                "id": "id-024",
+                                "time": 120000,
+                                "value": "Roboto"
+                              }
+                            ],
+                            "kind": "discrete"
+                          },
+                          "fontSize:value": {
+                            "keys": [
+                              {
+                                "id": "id-019",
+                                "rightHandle": {
+                                  "dt": 30000,
+                                  "dv": 12
+                                },
+                                "segmentToNext": "bezier",
+                                "tangentMode": "broken",
+                                "time": 0,
+                                "value": 64
+                              },
+                              {
+                                "id": "id-020",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 96
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "fontStyle:value": {
+                            "keys": [
+                              {
+                                "id": "id-027",
+                                "time": 120000,
+                                "value": "normal"
+                              }
+                            ],
+                            "kind": "discrete"
+                          },
+                          "fontWeight:value": {
+                            "keys": [
+                              {
+                                "id": "id-026",
+                                "time": 120000,
+                                "value": "normal"
+                              }
+                            ],
+                            "kind": "discrete"
+                          },
+                          "letterSpacing:value": {
+                            "keys": [
+                              {
+                                "id": "id-021",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 60000,
+                                "value": 4
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
                           "opacity:value": {
                             "keys": [
                               {
@@ -587,6 +747,31 @@
                               }
                             ],
                             "kind": "scalar"
+                          },
+                          "textAlign:value": {
+                            "keys": [
+                              {
+                                "id": "id-025",
+                                "time": 120000,
+                                "value": "left"
+                              }
+                            ],
+                            "kind": "discrete"
+                          },
+                          "textDecoration:value": {
+                            "keys": [
+                              {
+                                "id": "id-028",
+                                "time": 0,
+                                "value": "underline"
+                              },
+                              {
+                                "id": "id-029",
+                                "time": 120000,
+                                "value": "line-through"
+                              }
+                            ],
+                            "kind": "discrete"
                           }
                         }
                       },
@@ -784,7 +969,7 @@
                           "params.strokeWidth:value": {
                             "keys": [
                               {
-                                "id": "id-019",
+                                "id": "id-030",
                                 "segmentToNext": "linear",
                                 "tangentMode": "flat",
                                 "time": 120000,
@@ -800,7 +985,7 @@
                       "id": "g2",
                       "masks": [
                         {
-                          "id": "id-020",
+                          "id": "id-031",
                           "params": {
                             "centerX": 0,
                             "centerY": 0,
@@ -1321,15 +1506,15 @@
                     "element": {
                       "animations": {
                         "bindings": {
-                          "effects.id-021.params.intensity": {
+                          "effects.id-032.params.intensity": {
                             "components": [
                               {
-                                "channelId": "effects.id-021.params.intensity:value",
+                                "channelId": "effects.id-032.params.intensity:value",
                                 "key": "value"
                               }
                             ],
                             "kind": "number",
-                            "path": "effects.id-021.params.intensity"
+                            "path": "effects.id-032.params.intensity"
                           },
                           "opacity": {
                             "components": [
@@ -1363,10 +1548,10 @@
                           }
                         },
                         "channels": {
-                          "effects.id-021.params.intensity:value": {
+                          "effects.id-032.params.intensity:value": {
                             "keys": [
                               {
-                                "id": "id-035",
+                                "id": "id-046",
                                 "segmentToNext": "linear",
                                 "tangentMode": "flat",
                                 "time": 120000,
@@ -1378,14 +1563,14 @@
                           "opacity:value": {
                             "keys": [
                               {
-                                "id": "id-031",
+                                "id": "id-042",
                                 "segmentToNext": "linear",
                                 "tangentMode": "flat",
                                 "time": 0,
                                 "value": 0
                               },
                               {
-                                "id": "id-032",
+                                "id": "id-043",
                                 "segmentToNext": "linear",
                                 "tangentMode": "flat",
                                 "time": 120000,
@@ -1397,7 +1582,7 @@
                           "transform.positionX:value": {
                             "keys": [
                               {
-                                "id": "id-033",
+                                "id": "id-044",
                                 "segmentToNext": "linear",
                                 "tangentMode": "flat",
                                 "time": 240000,
@@ -1409,7 +1594,7 @@
                           "volume:value": {
                             "keys": [
                               {
-                                "id": "id-034",
+                                "id": "id-045",
                                 "segmentToNext": "linear",
                                 "tangentMode": "flat",
                                 "time": 360000,
@@ -1424,7 +1609,7 @@
                       "effects": [
                         {
                           "enabled": true,
-                          "id": "id-021",
+                          "id": "id-032",
                           "params": {
                             "intensity": 15
                           },
@@ -1436,7 +1621,7 @@
                       "isSourceAudioEnabled": true,
                       "masks": [
                         {
-                          "id": "id-022",
+                          "id": "id-033",
                           "params": {
                             "centerX": 0,
                             "centerY": 0,
@@ -1450,7 +1635,7 @@
                           "type": "split"
                         },
                         {
-                          "id": "id-023",
+                          "id": "id-034",
                           "params": {
                             "centerX": 0,
                             "centerY": 0,
@@ -1467,7 +1652,7 @@
                           "type": "cinematic-bars"
                         },
                         {
-                          "id": "id-024",
+                          "id": "id-035",
                           "params": {
                             "centerX": 0,
                             "centerY": 0,
@@ -1484,7 +1669,7 @@
                           "type": "rectangle"
                         },
                         {
-                          "id": "id-025",
+                          "id": "id-036",
                           "params": {
                             "centerX": 0,
                             "centerY": 0,
@@ -1501,7 +1686,7 @@
                           "type": "ellipse"
                         },
                         {
-                          "id": "id-026",
+                          "id": "id-037",
                           "params": {
                             "centerX": 0,
                             "centerY": 0,
@@ -1518,7 +1703,7 @@
                           "type": "heart"
                         },
                         {
-                          "id": "id-027",
+                          "id": "id-038",
                           "params": {
                             "centerX": 0,
                             "centerY": 0,
@@ -1535,7 +1720,7 @@
                           "type": "diamond"
                         },
                         {
-                          "id": "id-028",
+                          "id": "id-039",
                           "params": {
                             "centerX": 0,
                             "centerY": 0,
@@ -1552,7 +1737,7 @@
                           "type": "star"
                         },
                         {
-                          "id": "id-029",
+                          "id": "id-040",
                           "params": {
                             "centerX": 0,
                             "centerY": 0,
@@ -1575,7 +1760,7 @@
                           "type": "text"
                         },
                         {
-                          "id": "id-030",
+                          "id": "id-041",
                           "params": {
                             "centerX": 0,
                             "centerY": 0,
@@ -1795,6 +1980,66 @@
                             "kind": "color",
                             "path": "color"
                           },
+                          "content": {
+                            "components": [
+                              {
+                                "channelId": "content:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "discrete",
+                            "path": "content"
+                          },
+                          "fontFamily": {
+                            "components": [
+                              {
+                                "channelId": "fontFamily:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "discrete",
+                            "path": "fontFamily"
+                          },
+                          "fontSize": {
+                            "components": [
+                              {
+                                "channelId": "fontSize:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "fontSize"
+                          },
+                          "fontStyle": {
+                            "components": [
+                              {
+                                "channelId": "fontStyle:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "discrete",
+                            "path": "fontStyle"
+                          },
+                          "fontWeight": {
+                            "components": [
+                              {
+                                "channelId": "fontWeight:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "discrete",
+                            "path": "fontWeight"
+                          },
+                          "letterSpacing": {
+                            "components": [
+                              {
+                                "channelId": "letterSpacing:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "letterSpacing"
+                          },
                           "opacity": {
                             "components": [
                               {
@@ -1804,13 +2049,33 @@
                             ],
                             "kind": "number",
                             "path": "opacity"
+                          },
+                          "textAlign": {
+                            "components": [
+                              {
+                                "channelId": "textAlign:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "discrete",
+                            "path": "textAlign"
+                          },
+                          "textDecoration": {
+                            "components": [
+                              {
+                                "channelId": "textDecoration:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "discrete",
+                            "path": "textDecoration"
                           }
                         },
                         "channels": {
                           "color:a": {
                             "keys": [
                               {
-                                "id": "id-038",
+                                "id": "id-049",
                                 "segmentToNext": "linear",
                                 "tangentMode": "flat",
                                 "time": 120000,
@@ -1822,7 +2087,7 @@
                           "color:b": {
                             "keys": [
                               {
-                                "id": "id-038",
+                                "id": "id-049",
                                 "segmentToNext": "linear",
                                 "tangentMode": "flat",
                                 "time": 120000,
@@ -1834,7 +2099,7 @@
                           "color:g": {
                             "keys": [
                               {
-                                "id": "id-038",
+                                "id": "id-049",
                                 "segmentToNext": "linear",
                                 "tangentMode": "flat",
                                 "time": 120000,
@@ -1846,7 +2111,7 @@
                           "color:r": {
                             "keys": [
                               {
-                                "id": "id-038",
+                                "id": "id-049",
                                 "segmentToNext": "linear",
                                 "tangentMode": "flat",
                                 "time": 120000,
@@ -1855,10 +2120,90 @@
                             ],
                             "kind": "scalar"
                           },
+                          "content:value": {
+                            "keys": [
+                              {
+                                "id": "id-053",
+                                "time": 0,
+                                "value": "Hello 日本語"
+                              },
+                              {
+                                "id": "id-054",
+                                "time": 120000,
+                                "value": "Goodbye"
+                              }
+                            ],
+                            "kind": "discrete"
+                          },
+                          "fontFamily:value": {
+                            "keys": [
+                              {
+                                "id": "id-055",
+                                "time": 120000,
+                                "value": "Roboto"
+                              }
+                            ],
+                            "kind": "discrete"
+                          },
+                          "fontSize:value": {
+                            "keys": [
+                              {
+                                "id": "id-050",
+                                "rightHandle": {
+                                  "dt": 30000,
+                                  "dv": 12
+                                },
+                                "segmentToNext": "bezier",
+                                "tangentMode": "broken",
+                                "time": 0,
+                                "value": 64
+                              },
+                              {
+                                "id": "id-051",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 96
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "fontStyle:value": {
+                            "keys": [
+                              {
+                                "id": "id-058",
+                                "time": 120000,
+                                "value": "normal"
+                              }
+                            ],
+                            "kind": "discrete"
+                          },
+                          "fontWeight:value": {
+                            "keys": [
+                              {
+                                "id": "id-057",
+                                "time": 120000,
+                                "value": "normal"
+                              }
+                            ],
+                            "kind": "discrete"
+                          },
+                          "letterSpacing:value": {
+                            "keys": [
+                              {
+                                "id": "id-052",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 60000,
+                                "value": 4
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
                           "opacity:value": {
                             "keys": [
                               {
-                                "id": "id-037",
+                                "id": "id-048",
                                 "segmentToNext": "linear",
                                 "tangentMode": "flat",
                                 "time": 0,
@@ -1866,6 +2211,31 @@
                               }
                             ],
                             "kind": "scalar"
+                          },
+                          "textAlign:value": {
+                            "keys": [
+                              {
+                                "id": "id-056",
+                                "time": 120000,
+                                "value": "left"
+                              }
+                            ],
+                            "kind": "discrete"
+                          },
+                          "textDecoration:value": {
+                            "keys": [
+                              {
+                                "id": "id-059",
+                                "time": 0,
+                                "value": "underline"
+                              },
+                              {
+                                "id": "id-060",
+                                "time": 120000,
+                                "value": "line-through"
+                              }
+                            ],
+                            "kind": "discrete"
                           }
                         }
                       },
@@ -1884,7 +2254,7 @@
                       "effects": [
                         {
                           "enabled": true,
-                          "id": "id-036",
+                          "id": "id-047",
                           "params": {
                             "intensity": 15
                           },
@@ -2063,7 +2433,7 @@
                           "params.strokeWidth:value": {
                             "keys": [
                               {
-                                "id": "id-039",
+                                "id": "id-061",
                                 "segmentToNext": "linear",
                                 "tangentMode": "flat",
                                 "time": 120000,
@@ -2079,7 +2449,7 @@
                       "id": "g2",
                       "masks": [
                         {
-                          "id": "id-040",
+                          "id": "id-062",
                           "params": {
                             "centerX": 0,
                             "centerY": 0,

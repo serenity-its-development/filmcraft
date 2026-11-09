@@ -795,7 +795,7 @@ fn oneos_film_writes_its_keyframes_for_cut() {
     let v = clip(&mut p, s, TrackKind::Video, 0, a, 0..48, 24);
     let au = clip(&mut p, s, TrackKind::Audio, 0, a, 0..48, 24);
     let (w, h) = { let q = p.sequence(s).unwrap(); (q.settings.width as f64, q.settings.height as f64) };
-    let key = |f: i64, value: ParamValue, interp: Interpolation, out_influence: f64, in_influence: f64| Keyframe { time: r.tick_of(f), value, interp, out_influence, in_influence };
+    let key = |f: i64, value: ParamValue, interp: Interpolation, out_influence: f64, in_influence: f64| Keyframe { time: r.tick_of(f), value, interp, out_influence, in_influence, out_rise: None, in_rise: None };
     let third = 1.0 / 3.0;
     {
         let q = p.sequence_mut(s).unwrap();

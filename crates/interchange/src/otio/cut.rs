@@ -33,7 +33,7 @@ use std::sync::Arc;
 
 use filmcraft_geom::Vec2;
 use filmcraft_project::{
-    ClipId, EffectInstance, HexColor, ItemId, ItemKind, Label, Marker, MarkerId, MarkerKind, MediaRef, Param, ParamValue, Project, Track, TrackId, TrackItem,
+    ClipId, EffectInstance, HexColor, ItemId, ItemKind, Keyframe, Label, Marker, MarkerId, MarkerKind, MediaRef, Param, ParamValue, Project, Track, TrackId, TrackItem,
     TrackKind, find_effect, graphic,
 };
 use filmcraft_time::{FrameRate, TICKS_PER_SECOND, Tick, TimeRange};
@@ -126,6 +126,8 @@ struct CutClip {
     f0: Fields,
     /// Each of Cut's channels Film shows, as Film's keyframes read back into Cut's shape when the file was opened (or last saved).
     a0: Anims,
+    /// Each of Cut's held channels (a text's font, content, alignment, weight, style, decoration) Film shows, as read back when opened.
+    h0: Held,
     kind: Kind,
     time0: (Tick, Tick, Tick),
 }
@@ -692,8 +694,8 @@ enum At {
     Layer,
 }
 
-/// One of Cut's animated paths and the parameter of Film's that holds it: Film's component `i` is `cut * k + off` (a colour's are sRGB,
-/// Cut's linear light).
+/// One of Cut's animated paths and the parameter of Film's that holds it: Film's component `i` is `cut * k + off`; a colour's are sRGB,
+/// and Cut's are sRGB too in an `srgb` channel (Mona 2026-11-09: "Add sRGB channel to Cut"), linear light in Cut's own.
 #[derive(Debug, Clone)]
 struct Anim {
     path: String,
@@ -702,17 +704,42 @@ struct Anim {
     keys: &'static [&'static str],
     k: f64,
     off: f64,
-    colour: bool,
+    colour: Option<Space>,
+}
+
+/// Where a colour channel of Cut's keeps and eases its components.
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum Space {
+    /// Cut's own channels: linear light.
+    Linear,
+    /// The space Film keys colours in, which Cut now holds as a channel of its own (`colorSpace: "srgb"`).
+    Srgb,
+}
+
+impl Anim {
+    /// Film's units in one of Cut's for each component (a sloped handle's rise is converted by it). A linear-light colour's rise is
+    /// carried as it is: Film eases colours in sRGB, so between its keys such a channel is not drawn alike anyway (its keys are).
+    fn per_cut(&self) -> Vec<f64> {
+        match self.colour {
+            Some(_) => vec![1.0; 4],
+            None => vec![self.k],
+        }
+    }
 }
 
 const VALUE: &[&str] = &["value"];
 const RGBA: &[&str] = &["r", "g", "b", "a"];
 
 fn anim(path: &str, at: At, param: &'static str, k: f64, off: f64) -> Anim {
-    Anim { path: path.into(), at, param, keys: VALUE, k, off, colour: false }
+    Anim { path: path.into(), at, param, keys: VALUE, k, off, colour: None }
 }
-fn colour(path: &str, param: &'static str) -> Anim {
-    Anim { path: path.into(), at: At::Layer, param, keys: RGBA, k: 1.0, off: 0.0, colour: true }
+/// A colour of Cut's in the space its channel in the file keeps (`origin`); a channel the file does not have is Film's to write, in sRGB.
+fn colour(path: &str, param: &'static str, origin: &Value) -> Anim {
+    let space = match origin.pointer(&format!("{ELEMENT}/animations/bindings")).and_then(|b| b.get(path)).map(|b| b.get("colorSpace").and_then(Value::as_str)) {
+        Some(Some("srgb")) | None => Space::Srgb,
+        Some(_) => Space::Linear,
+    };
+    Anim { path: path.into(), at: At::Layer, param, keys: RGBA, k: 1.0, off: 0.0, colour: Some(space) }
 }
 
 /// Cut's animated paths of an element of `kind` and where Film holds each (`origin`: the clip as the file holds it, for its effects' ids).
@@ -738,12 +765,16 @@ fn anim_maps(kind: Kind, f: Frame, origin: &Value, gain: f64) -> Vec<Anim> {
     }
     match kind {
         Kind::Text => {
-            v.push(colour("color", "fill_color"));
-            v.push(colour("background.color", "background_color"));
+            v.push(colour("color", "fill_color", origin));
+            v.push(colour("background.color", "background_color", origin));
+            // Mona 2026-11-09: "Build text animation in Cut": a text's size and tracking are channels of Cut's (its font, content, alignment,
+            // weight, style and decoration are held channels, `held_maps`).
+            v.push(anim("fontSize", At::Layer, "size", f.h / 90.0, 0.0));
+            v.push(anim("letterSpacing", At::Layer, "tracking", 1.0, 0.0));
         }
         Kind::Shape => {
-            v.push(colour("params.fill", "fill_color"));
-            v.push(colour("params.stroke", "stroke_color"));
+            v.push(colour("params.fill", "fill_color", origin));
+            v.push(colour("params.stroke", "stroke_color", origin));
             v.push(anim("params.strokeWidth", At::Layer, "stroke_width", 1.0, 0.0));
             v.push(anim("params.cornerRadius", At::Layer, "corner_radius", 1.0, 0.0));
             v.push(anim("params.sides", At::Layer, "sides", 1.0, 0.0));
@@ -782,15 +813,17 @@ fn film_parts(v: &ParamValue, comps: &[&Anim]) -> Vec<f64> {
         ParamValue::Color(c) => c.iter().map(|x| *x as f64).collect(),
         other => vec![other.as_f64().unwrap_or(0.0)],
     };
-    if comps.first().is_some_and(|a| a.colour) {
-        return raw.iter().enumerate().map(|(i, x)| if i < 3 { srgb_to_linear(*x) } else { *x }).collect();
+    match comps.first().and_then(|a| a.colour) {
+        Some(Space::Linear) => return raw.iter().enumerate().map(|(i, x)| if i < 3 { srgb_to_linear(*x) } else { *x }).collect(),
+        Some(Space::Srgb) => return raw,
+        None => {}
     }
     comps.iter().enumerate().map(|(i, a)| (raw.get(i).copied().unwrap_or(0.0) - a.off) / a.k).collect()
 }
 
 fn film_value(like: &ParamValue, c: &[f64], comps: &[&Anim]) -> ParamValue {
-    if comps.first().is_some_and(|a| a.colour) {
-        let s = |i: usize| (if i < 3 { linear_to_srgb(c[i]) } else { c[i] }) as f32;
+    if let Some(space) = comps.first().and_then(|a| a.colour) {
+        let s = |i: usize| (if i < 3 && space == Space::Linear { linear_to_srgb(c[i]) } else { c[i] }) as f32;
         return ParamValue::Color([s(0), s(1), s(2), s(3)]);
     }
     let x: Vec<f64> = comps.iter().enumerate().map(|(i, a)| c[i] * a.k + a.off).collect();
@@ -831,12 +864,17 @@ fn put_channel(c: &mut Value, path: &str, a: &Anim, comps: Option<&[Vec<CutKey>]
         }
         Some(comps) => {
             let ids: Vec<String> = a.keys.iter().enumerate().map(|(i, k)| was.get(i).cloned().unwrap_or_else(|| format!("{path}:{k}"))).collect();
-            let mut b = json!({"path": path, "kind": if a.colour { "color" } else { "number" }, "components": a.keys.iter().zip(&ids).map(|(k, id)| json!({"key": k, "channelId": id})).collect::<Vec<_>>()});
-            if a.colour {
-                b["colorSpace"] = json!("srgb-linear");
+            let mut b = json!({"path": path, "kind": if a.colour.is_some() { "color" } else { "number" }, "components": a.keys.iter().zip(&ids).map(|(k, id)| json!({"key": k, "channelId": id})).collect::<Vec<_>>()});
+            let at = format!("{bindings}/{}", path.replace('~', "~0").replace('/', "~1"));
+            if let Some(space) = a.colour {
+                b["colorSpace"] = json!(if space == Space::Srgb { "srgb" } else { "srgb-linear" });
+                // A colour channel is written in the space it is given in (Film's edit of one: sRGB), the binding saying which.
+                if let Some(was) = c.pointer_mut(&format!("{at}/colorSpace")) {
+                    *was = b["colorSpace"].clone();
+                }
             }
             if c.pointer(&bindings).and_then(|x| x.get(path)).is_none() {
-                put(c, &format!("{bindings}/{}", path.replace('~', "~0").replace('/', "~1")), b);
+                put(c, &at, b);
             }
             for (i, id) in ids.iter().enumerate() {
                 let keys: Vec<Value> = comps[i].iter().map(CutKey::write).collect();
@@ -856,11 +894,6 @@ fn groups(maps: &[Anim]) -> Vec<Vec<&Anim>> {
         }
     }
     out
-}
-
-/// A colour Cut eases between two different colours: Cut eases in linear light, Film in sRGB, so the two would not draw the same.
-fn colour_eased(comps: &[Vec<CutKey>]) -> bool {
-    comps.iter().any(|ch| ch.windows(2).any(|w| w[0].segment != "step" && (w[0].value - w[1].value).abs() > 1e-12))
 }
 
 /// Cut's channels of the element (`origin`) as Film's keyframes on `ti`, and what they read back as (the file's `a0`); a reason when Film
@@ -887,32 +920,30 @@ fn read_anims(kind: Kind, f: Frame, ti: &mut TrackItem, origin: &Value) -> Resul
             a0.insert(g[0].path.clone(), chans[0].clone().unwrap_or_default());
             continue;
         }
-        if g[0].colour && chans.iter().flatten().any(|c| colour_eased(c)) {
-            return Err(format!("eases its {} between colours, which Cut does in linear light and Film in sRGB", g[0].path));
-        }
         let e = effect_at(ti, g[0].at).ok_or_else(|| format!("animates {}, which has no {} in Film", g[0].path, g[0].param))?;
         let like = e.params.get(g[0].param).map(|p| p.value.clone()).ok_or_else(|| format!("animates {}, which has no {} in Film", g[0].path, g[0].param))?;
         let statics = film_parts(&like, &g);
         // Each component as Cut's channel; one Cut does not animate is held at its value through the others' keys.
-        let flat: Vec<Vec<CutKey>> = if g[0].colour { chans[0].clone().unwrap_or_default() } else { chans.iter().map(|c| c.as_ref().map(|x| x[0].clone()).unwrap_or_default()).collect() };
+        let flat: Vec<Vec<CutKey>> = if g[0].colour.is_some() { chans[0].clone().unwrap_or_default() } else { chans.iter().map(|c| c.as_ref().map(|x| x[0].clone()).unwrap_or_default()).collect() };
         let lead = flat.iter().find(|c| !c.is_empty()).cloned().unwrap_or_default();
         let comps: Vec<Vec<CutKey>> = flat
             .iter()
             .enumerate()
             .map(|(i, c)| if c.is_empty() { lead.iter().map(|k| CutKey { value: statics[i], right: k.right.map(|h| (h.0, 0.0)), left: k.left.map(|h| (h.0, 0.0)), ..k.clone() }).collect() } else { c.clone() })
             .collect();
-        let keys = cut_to_film(&comps, &|c| film_value(&like, c, &g), &[]).map_err(|why| format!("animates {}: {why}", g[0].path))?;
-        let back = film_to_cut(&keys, &|v| film_parts(v, &g), &comps, &g[0].path)?;
+        let per_cut: Vec<f64> = if g[0].colour.is_some() { g[0].per_cut() } else { g.iter().map(|a| a.k).collect() };
+        let keys = cut_to_film(&comps, &|c| film_value(&like, c, &g), &[], &per_cut).map_err(|why| format!("animates {}: {why}", g[0].path))?;
+        let back = film_to_cut(&keys, &|v| film_parts(v, &g), &comps, &g[0].path, &per_cut)?;
         let tol = |a: &[CutKey], b: &[CutKey]| a.len() == b.len() && a.iter().zip(b).all(|(x, y)| x.time == y.time && (x.value - y.value).abs() <= 1e-6 * x.value.abs().max(1.0)) && same_curve(&round6(a), &round6(b));
         for (i, c) in flat.iter().enumerate() {
-            if !c.is_empty() && !(if g[0].colour { tol(c, &back[i]) } else { same_curve(c, &back[i]) }) {
+            if !c.is_empty() && !(if g[0].colour.is_some() { tol(c, &back[i]) } else { same_curve(c, &back[i]) }) {
                 return Err(format!("animates {} in a way that does not read back from Film exactly", g[0].path));
             }
         }
         if let Some(p) = effect_at_mut(ti, g[0].at).and_then(|e| e.params.get_mut(g[0].param)) {
             p.keyframes = keys;
         }
-        if g[0].colour {
+        if g[0].colour.is_some() {
             a0.insert(g[0].path.clone(), back);
         } else {
             for (i, a) in g.iter().enumerate() {
@@ -936,7 +967,15 @@ fn write_anims(kind: Kind, f: Frame, ti: &TrackItem, c: &mut Value, a0: &Anims, 
     let maps = anim_maps(kind, f, c, ti.gain_db);
     let uniform = fx(ti, "motion").and_then(|m| m.params.get("uniform_scale")).is_some_and(|p| matches!(p.value, ParamValue::Bool(true)));
     let mut held: BTreeSet<(String, &'static str)> = BTreeSet::new();
+    for h in held_maps(kind) {
+        if let Some(e) = layer(ti) {
+            for p in h.params {
+                held.insert((e.effect.clone(), p));
+            }
+        }
+    }
     let mut now = Anims::new();
+    let mut as_srgb = Anims::new();
     for g in groups(&maps) {
         let Some(e) = effect_at(ti, g[0].at) else { continue };
         held.insert((e.effect.clone(), g[0].param));
@@ -944,11 +983,16 @@ fn write_anims(kind: Kind, f: Frame, ti: &TrackItem, c: &mut Value, a0: &Anims, 
         if g[0].param == "scale_width" && uniform {
             continue;
         }
-        let prior: Vec<Vec<CutKey>> = if g[0].colour { a0.get(&g[0].path).cloned().unwrap_or_default() } else { g.iter().map(|a| a0.get(&a.path).and_then(|x| x.first().cloned()).unwrap_or_default()).collect() };
-        let chans = film_to_cut(&p.keyframes, &|v| film_parts(v, &g), &prior, &format!("film-{}-{}", ti.id.0, g[0].path)).map_err(|why| format!("keyframes-not-in-cut: Film's {} {} on \"{name}\": {why}", e.effect, g[0].param))?;
-        if g[0].colour {
-            if colour_eased(&chans) {
-                return Err(format!("keyframes-not-in-cut: Film eases \"{name}\"'s {} between colours in sRGB, where Cut eases colours in linear light", g[0].path));
+        let prior: Vec<Vec<CutKey>> = if g[0].colour.is_some() { a0.get(&g[0].path).cloned().unwrap_or_default() } else { g.iter().map(|a| a0.get(&a.path).and_then(|x| x.first().cloned()).unwrap_or_default()).collect() };
+        let per_cut: Vec<f64> = if g[0].colour.is_some() { g[0].per_cut() } else { g.iter().map(|a| a.k).collect() };
+        let chans = film_to_cut(&p.keyframes, &|v| film_parts(v, &g), &prior, &format!("film-{}-{}", ti.id.0, g[0].path), &per_cut).map_err(|why| format!("keyframes-not-in-cut: Film's {} {} on \"{name}\": {why}", e.effect, g[0].param))?;
+        if let Some(space) = g[0].colour {
+            // Film's edit of a colour is written as Cut's sRGB channel (Film's own shape), so both draw it alike.
+            if space == Space::Linear {
+                let srgb: Vec<Anim> = g.iter().map(|a| Anim { colour: Some(Space::Srgb), ..(*a).clone() }).collect();
+                let refs: Vec<&Anim> = srgb.iter().collect();
+                let fresh = film_to_cut(&p.keyframes, &|v| film_parts(v, &refs), &prior, &format!("film-{}-{}", ti.id.0, g[0].path), &per_cut).map_err(|why| format!("keyframes-not-in-cut: Film's {} {} on \"{name}\": {why}", e.effect, g[0].param))?;
+                as_srgb.insert(g[0].path.clone(), fresh);
             }
             now.insert(g[0].path.clone(), chans);
         } else {
@@ -969,6 +1013,7 @@ fn write_anims(kind: Kind, f: Frame, ti: &TrackItem, c: &mut Value, a0: &Anims, 
             }
         }
     }
+    let mut rewritten: Vec<String> = Vec::new();
     for a in &maps {
         let (Some(was), Some(is)) = (a0.get(&a.path).map(Vec::as_slice), now.get(&a.path).map(Vec::as_slice)) else {
             if let Some(is) = now.get(&a.path).filter(|x| x.iter().any(|k| !k.is_empty())) {
@@ -980,10 +1025,186 @@ fn write_anims(kind: Kind, f: Frame, ti: &TrackItem, c: &mut Value, a0: &Anims, 
         };
         let changed = was.len() != is.len() || was.iter().zip(is).any(|(x, y)| !same_curve(x, y));
         if changed {
-            put_channel(c, &a.path, a, Some(is));
+            match as_srgb.get(&a.path) {
+                Some(srgb) => {
+                    put_channel(c, &a.path, &Anim { colour: Some(Space::Srgb), ..a.clone() }, Some(srgb));
+                    rewritten.push(a.path.clone());
+                }
+                None => put_channel(c, &a.path, a, Some(is)),
+            }
+        }
+    }
+    // What a rewritten channel now reads as is its sRGB form, the space the file holds it in from here on.
+    for path in rewritten {
+        if let Some(x) = as_srgb.remove(&path) {
+            now.insert(path, x);
         }
     }
     Ok(now.into_iter().filter(|(_, v)| v.iter().any(|k| !k.is_empty())).collect())
+}
+
+/// Cut's held channels by path: each key's time (Cut's ticks) and value.
+type Held = BTreeMap<String, Vec<(i64, String)>>;
+
+/// One of a text's held values (Mona 2026-11-09: "Build text animation in Cut"): Cut's discrete channel at `path` and the parameters of
+/// Film's text layer that hold it (both hold a value from key to key).
+struct HeldMap {
+    path: &'static str,
+    params: &'static [&'static str],
+    to_film: fn(&str) -> Result<Vec<ParamValue>, String>,
+    from_film: fn(&[ParamValue]) -> Result<String, String>,
+}
+
+fn text_of_value(v: &[ParamValue]) -> Result<String, String> {
+    match v.first() {
+        Some(ParamValue::Text(t)) => Ok(t.clone()),
+        other => Err(format!("{other:?} is not text")),
+    }
+}
+fn switch_of(v: &[ParamValue], off: &str, on: &str) -> Result<String, String> {
+    match v.first() {
+        Some(ParamValue::Bool(b)) => Ok(if *b { on } else { off }.to_string()),
+        other => Err(format!("{other:?} is not a switch")),
+    }
+}
+
+fn held_maps(kind: Kind) -> Vec<HeldMap> {
+    if kind != Kind::Text {
+        return Vec::new();
+    }
+    vec![
+        HeldMap { path: "content", params: &["text"], to_film: |s| Ok(vec![ParamValue::Text(s.into())]), from_film: text_of_value },
+        HeldMap { path: "fontFamily", params: &["font"], to_film: |s| Ok(vec![ParamValue::Text(s.into())]), from_film: text_of_value },
+        HeldMap {
+            path: "textAlign",
+            params: &["align"],
+            to_film: |s| match s {
+                "left" => Ok(vec![ParamValue::Choice(0)]),
+                "center" => Ok(vec![ParamValue::Choice(1)]),
+                "right" => Ok(vec![ParamValue::Choice(2)]),
+                o => Err(format!("the alignment {o}")),
+            },
+            from_film: |v| match v.first() {
+                Some(ParamValue::Choice(0)) => Ok("left".into()),
+                Some(ParamValue::Choice(1)) => Ok("center".into()),
+                Some(ParamValue::Choice(2)) => Ok("right".into()),
+                _ => Err("align-not-in-cut: Film's justified text has no place in Cut's alignment".into()),
+            },
+        },
+        HeldMap { path: "fontWeight", params: &["faux_bold"], to_film: |s| Ok(vec![ParamValue::Bool(s == "bold")]), from_film: |v| switch_of(v, "normal", "bold") },
+        HeldMap { path: "fontStyle", params: &["faux_italic"], to_film: |s| Ok(vec![ParamValue::Bool(s == "italic")]), from_film: |v| switch_of(v, "normal", "italic") },
+        HeldMap {
+            path: "textDecoration",
+            params: &["underline", "strikethrough"],
+            to_film: |s| Ok(vec![ParamValue::Bool(s == "underline"), ParamValue::Bool(s == "line-through")]),
+            from_film: |v| match (v.first(), v.get(1)) {
+                (Some(ParamValue::Bool(false)), Some(ParamValue::Bool(false))) => Ok("none".into()),
+                (Some(ParamValue::Bool(true)), Some(ParamValue::Bool(false))) => Ok("underline".into()),
+                (Some(ParamValue::Bool(false)), Some(ParamValue::Bool(true))) => Ok("line-through".into()),
+                _ => Err("decoration-not-in-cut: underlined AND struck through, where Cut holds one".into()),
+            },
+        },
+    ]
+}
+
+/// Cut's held channel at `path`, when the element keys it.
+fn held_channel(origin: &Value, path: &str) -> Option<Vec<(i64, String, Value)>> {
+    let b = origin.pointer(&format!("{ELEMENT}/animations/bindings"))?.get(path)?;
+    let id = b.get("components")?.as_array()?.first()?.get("channelId")?.as_str()?;
+    let ch = origin.pointer(&format!("{ELEMENT}/animations/channels"))?.get(id)?;
+    let keys: Vec<(i64, String, Value)> = ch.get("keys")?.as_array()?.iter().map(|k| Some((k.get("time")?.as_i64()?, k.get("value")?.as_str()?.to_string(), k.get("id").cloned().unwrap_or(Value::Null)))).collect::<Option<_>>()?;
+    (!keys.is_empty()).then_some(keys)
+}
+
+/// Cut's held channels of a text as Film's keyframes on its text layer, and what they read back as. Before its first key a held channel of
+/// Cut's shows the element's own value, where Film shows its first key's: so a channel whose first key is after the start is keyed at the
+/// clip's start with the element's own value, which Film writes back only where Cut keyed it.
+fn read_held(kind: Kind, ti: &mut TrackItem, origin: &Value) -> Result<Held, String> {
+    let mut h0 = Held::new();
+    for h in held_maps(kind) {
+        let Some(keys) = held_channel(origin, h.path) else { continue };
+        let own = origin.pointer(&format!("{ELEMENT}/{}", h.path)).and_then(Value::as_str).ok_or_else(|| format!("animates {} with no value of its own", h.path))?.to_string();
+        let mut film: Vec<(i64, String)> = keys.iter().map(|(t, v, _)| (*t, v.clone())).collect();
+        if film.first().is_some_and(|(t, _)| *t > 0) {
+            film.insert(0, (0, own));
+        }
+        let e = layer_mut(ti).map_err(|e| format!("animates {}: {e}", h.path))?;
+        for (i, p) in h.params.iter().enumerate() {
+            let param = e.params.get_mut(*p).ok_or_else(|| format!("animates {}, which has no {p} in Film", h.path))?;
+            param.keyframes = film
+                .iter()
+                .map(|(t, v)| {
+                    let mut k = Keyframe::new(Tick(t * PER_CUT_TICK), (h.to_film)(v)?[i].clone());
+                    k.interp = filmcraft_project::Interpolation::Hold;
+                    Ok(k)
+                })
+                .collect::<Result<_, String>>()
+                .map_err(|e: String| format!("animates {}: {e}", h.path))?;
+        }
+        h0.insert(h.path.to_string(), keys.into_iter().map(|(t, v, _)| (t, v)).collect());
+    }
+    Ok(h0)
+}
+
+/// Film's keyframes on a text's layer as Cut's held channels, written into `c` where they changed since `h0`; the channels now.
+fn write_held(kind: Kind, ti: &TrackItem, c: &mut Value, h0: &Held, name: &str) -> Result<Held, String> {
+    let mut now = Held::new();
+    let Some(e) = layer(ti) else { return Ok(now) };
+    for h in held_maps(kind) {
+        let params: Vec<&Param> = h.params.iter().map(|p| e.params.get(*p).ok_or_else(|| format!("\"{name}\" has no {p} on its text layer"))).collect::<Result<_, _>>()?;
+        let mut times: Vec<Tick> = params.iter().flat_map(|p| p.keyframes.iter().map(|k| k.time)).collect();
+        times.sort();
+        times.dedup();
+        let mut keys: Vec<(i64, String)> = Vec::new();
+        for t in &times {
+            let at = cut_ticks(*t).ok_or_else(|| format!("keyframes-not-in-cut: Film keys \"{name}\"'s {} at Film tick {}, not a whole tick of Cut's clock", h.path, t.0))?;
+            let v: Vec<ParamValue> = params.iter().map(|p| p.value_at(*t)).collect();
+            keys.push((at, (h.from_film)(&v).map_err(|why| format!("keyframes-not-in-cut: \"{name}\"'s {}: {why}", h.path))?));
+        }
+        // The key at the start Film was given for Cut's own value is not Cut's key (unless Cut had one there).
+        let own = (h.from_film)(&params.iter().map(|p| p.value.clone()).collect::<Vec<_>>()).map_err(|why| format!("\"{name}\"'s {}: {why}", h.path))?;
+        let was = h0.get(h.path);
+        if keys.len() > 1 && keys[0].0 == 0 && keys[0].1 == own && !was.is_some_and(|w| w.first().is_some_and(|k| k.0 == 0)) {
+            keys.remove(0);
+        }
+        if was.map(Vec::as_slice).unwrap_or(&[]) != keys.as_slice() {
+            put_held(c, h.path, &keys);
+        }
+        if !keys.is_empty() {
+            now.insert(h.path.to_string(), keys);
+        }
+    }
+    Ok(now)
+}
+
+/// Write Cut's held channel at `path` into the clip `c` (Cut's shape: a `discrete` binding and channel), or remove it when it holds no keys.
+/// A key at a time Cut had keeps its id.
+fn put_held(c: &mut Value, path: &str, keys: &[(i64, String)]) {
+    let bindings = format!("{ELEMENT}/animations/bindings");
+    let channels = format!("{ELEMENT}/animations/channels");
+    let was = held_channel(c, path).unwrap_or_default();
+    let id = c.pointer(&bindings).and_then(|b| b.get(path)).and_then(|b| b.pointer("/components/0/channelId")).and_then(Value::as_str).map(str::to_string);
+    let esc = |s: &str| s.replace('~', "~0").replace('/', "~1");
+    if keys.is_empty() {
+        if let Some(Value::Object(m)) = c.pointer_mut(&bindings) {
+            m.remove(path);
+        }
+        if let (Some(id), Some(Value::Object(m))) = (id, c.pointer_mut(&channels)) {
+            m.remove(&id);
+        }
+        return;
+    }
+    let id = id.unwrap_or_else(|| format!("{path}:value"));
+    put(c, &format!("{bindings}/{}", esc(path)), json!({"path": path, "kind": "discrete", "components": [{"key": "value", "channelId": id}]}));
+    let out: Vec<Value> = keys
+        .iter()
+        .enumerate()
+        .map(|(i, (t, v))| {
+            let kid = was.iter().find(|w| w.0 == *t).map(|w| w.2.clone()).filter(|x| !x.is_null()).unwrap_or_else(|| json!(format!("film-{path}-{i}")));
+            json!({"id": kid, "time": t, "value": v})
+        })
+        .collect();
+    put(c, &format!("{channels}/{}", esc(&id)), json!({"kind": "discrete", "keys": out}));
 }
 
 fn read_fields(kind: Kind, f: Frame, ti: &TrackItem, origin: &Value) -> Result<Fields, String> {
@@ -1105,7 +1326,8 @@ fn read_clip(p: &mut Project, c: &Value, track_kind: TrackKind, f: Frame, rate: 
         }
     }
     let a0 = read_anims(kind, f, &mut ti, c).map_err(|e| format!("holds \"{}\" which {e}", ti.name))?;
-    Ok((ti, CutClip { origin: c.clone(), f0, a0, kind, time0: (start, src, dur) }))
+    let h0 = read_held(kind, &mut ti, c).map_err(|e| format!("holds \"{}\" which {e}", ti.name))?;
+    Ok((ti, CutClip { origin: c.clone(), f0, a0, h0, kind, time0: (start, src, dur) }))
 }
 
 fn track_type(t: &Value) -> String {
@@ -1477,7 +1699,8 @@ impl Out<'_> {
                     put(&mut c, k, now[k].clone());
                 }
                 let a = write_anims(kind, f, ti, &mut c, &pr.a0, &ti.name)?;
-                self.r.clips.insert(ti.id, CutClip { origin: Value::Null, f0: Fields::new(), a0: a, kind, time0: time });
+                let h = write_held(kind, ti, &mut c, &pr.h0, &ti.name)?;
+                self.r.clips.insert(ti.id, CutClip { origin: Value::Null, f0: Fields::new(), a0: a, h0: h, kind, time0: time });
                 if (pr.time0.1, pr.time0.2) != (time.1, time.2) {
                     let rate = c.pointer("/source_range/duration/rate").and_then(Value::as_f64).unwrap_or(lane_rate);
                     c["source_range"] = time_range(ti.source_in, ti.duration, rate)?;
@@ -1493,15 +1716,16 @@ impl Out<'_> {
             None => {
                 let mut c = self.fresh(ti, kind, &now, lane_rate)?;
                 let a = write_anims(kind, f, ti, &mut c, &Anims::new(), &ti.name)?;
-                self.r.clips.insert(ti.id, CutClip { origin: Value::Null, f0: Fields::new(), a0: a, kind, time0: time });
+                let h = write_held(kind, ti, &mut c, &Held::new(), &ti.name)?;
+                self.r.clips.insert(ti.id, CutClip { origin: Value::Null, f0: Fields::new(), a0: a, h0: h, kind, time0: time });
                 c
             }
         };
         if !c.is_object() {
             c = json!({});
         }
-        let a0 = self.r.clips.remove(&ti.id).map(|x| x.a0).unwrap_or_default();
-        self.r.clips.insert(ti.id, CutClip { origin: c.clone(), f0: now, a0, kind, time0: time });
+        let (a0, h0) = self.r.clips.remove(&ti.id).map(|x| (x.a0, x.h0)).unwrap_or_default();
+        self.r.clips.insert(ti.id, CutClip { origin: c.clone(), f0: now, a0, h0, kind, time0: time });
         Ok(c)
     }
 

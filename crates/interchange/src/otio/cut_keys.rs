@@ -6,9 +6,11 @@
 //! a parameter as keyframes ([`filmcraft_project::Keyframe`]: Film's ticks from the clip's start; the segment from key a to key b is held
 //! when a is `Hold`, else its out side is eased with a flat handle reaching `a.out_influence` when a is Bezier, Auto Bezier, Continuous
 //! Bezier or Ease Out, and its in side, reaching `b.in_influence`, when b is Bezier, Auto Bezier, Continuous Bezier or Ease In or a is
-//! Bezier or Continuous Bezier; a side not eased is a straight third). So every Film segment IS a Cut segment, and a Cut segment is a Film
-//! one when each side is a straight third or a flat handle reaching 1% to 100% of it and the keys' sides pair up ([`cut_to_film`] finds
-//! each key's interp, keeping the one it had where it fits).
+//! Bezier or Continuous Bezier; a side not eased is a straight third). An eased side may be SLOPED (Mona 2026-11-09: "Add slopes to
+//! Film"): the key then holds its handle's rise per component (`out_rise`, `in_rise`, in Film's units) and its reach is 0% to 100% of the
+//! segment. So every Film segment IS a Cut segment and every Cut segment is a Film one (a side is a straight third, a flat handle or a
+//! sloped one); what Film still cannot hold is a value's components keyed at different times or curving differently ([`cut_to_film`]
+//! finds each key's interp, keeping the one it had where it fits).
 
 use filmcraft_project::{Interpolation, Keyframe, ParamValue};
 use filmcraft_time::{TICKS_PER_SECOND, Tick};
@@ -42,6 +44,10 @@ fn near(a: f64, b: f64) -> bool {
 }
 fn clamp_influence(x: f64) -> f64 {
     x.clamp(0.01, 1.0)
+}
+/// A sloped handle's reach: 0% to 100% of the segment (Cut clamps a handle's dt to the segment).
+fn reach(x: f64) -> f64 {
+    x.clamp(0.0, 1.0)
 }
 fn number(x: f64) -> Value {
     let r = (x * 1e9).round() / 1e9;
@@ -101,11 +107,15 @@ pub fn cut_time(t: Tick) -> Option<i64> {
     (t.0 % PER_CUT_TICK == 0).then_some(t.0 / PER_CUT_TICK)
 }
 
-/// Film's keyframes of one parameter as one channel of Cut's per component (`parts` gives a value's components in Cut's units). `prior` are
-/// the channels the file held: a key keeps its id and tangent mode where it stays at its time.
-pub fn film_to_cut(keys: &[Keyframe], parts: &dyn Fn(&ParamValue) -> Vec<f64>, prior: &[Vec<CutKey>], id_base: &str) -> Result<Vec<Vec<CutKey>>, String> {
+/// Film's keyframes of one parameter as one channel of Cut's per component (`parts` gives a value's components in Cut's units; `per_cut[c]`
+/// is Film's units in one of Cut's for component c, so a sloped handle's rise is read in Cut's units). `prior` are the channels the file
+/// held: a key keeps its id and tangent mode where it stays at its time.
+pub fn film_to_cut(keys: &[Keyframe], parts: &dyn Fn(&ParamValue) -> Vec<f64>, prior: &[Vec<CutKey>], id_base: &str, per_cut: &[f64]) -> Result<Vec<Vec<CutKey>>, String> {
     let values: Vec<Vec<f64>> = keys.iter().map(|k| parts(&k.value)).collect();
     let n = values.first().map(Vec::len).unwrap_or(0);
+    if !keys.is_empty() && per_cut.len() != n {
+        return Err(format!("its {n} components have {} unit factors", per_cut.len()));
+    }
     let mut times = Vec::new();
     for k in keys {
         times.push(cut_time(k.time).ok_or_else(|| format!("a keyframe at Film tick {} is not a whole tick of Cut's clock ({CUT_TICKS}/s)", k.time.0))?);
@@ -138,11 +148,18 @@ pub fn film_to_cut(keys: &[Keyframe], parts: &dyn Fn(&ParamValue) -> Vec<f64>, p
             let span = (ch[i + 1].time - ch[i].time) as f64;
             ch[i].segment = "bezier".into();
             // A side Film does not ease is Cut's default handle, left unset so it follows the keys as they move, as Film's does.
+            let k = per_cut[c];
             if o {
-                ch[i].right = Some((clamp_influence(a.out_influence) * span, 0.0));
+                ch[i].right = Some(match &a.out_rise {
+                    Some(r) => (reach(a.out_influence) * span, r.get(c).copied().unwrap_or(0.0) / k),
+                    None => (clamp_influence(a.out_influence) * span, 0.0),
+                });
             }
             if m {
-                ch[i + 1].left = Some((-clamp_influence(b.in_influence) * span, 0.0));
+                ch[i + 1].left = Some(match &b.in_rise {
+                    Some(r) => (-reach(b.in_influence) * span, r.get(c).copied().unwrap_or(0.0) / k),
+                    None => (-clamp_influence(b.in_influence) * span, 0.0),
+                });
             }
         }
         if let Some(last) = ch.last_mut()
@@ -155,58 +172,67 @@ pub fn film_to_cut(keys: &[Keyframe], parts: &dyn Fn(&ParamValue) -> Vec<f64>, p
     Ok(out)
 }
 
-#[derive(Debug, Clone, Copy)]
+/// One side of a Cut segment as Film can hold it: a straight third (`lin`), a flat handle reaching `flat` of the segment, and always a
+/// sloped handle reaching `r` of it with a rise of `dv` per component (in Cut's units).
+#[derive(Debug, Clone)]
 struct Side {
     lin: bool,
     flat: Option<f64>,
+    r: f64,
+    dv: Vec<f64>,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 enum Seg {
     Step,
     Move { out: Side, inn: Side },
 }
 
-fn side((dt, dv): (f64, f64), span: f64, delta: f64, sign: f64) -> Option<Side> {
-    let r = sign * dt / span;
+fn side((dt, dv): (f64, f64), span: f64, delta: f64, sign: f64) -> Side {
+    let r = reach(sign * dt / span);
     let lin = near(dt, sign * span * THIRD) && near(dv, sign * delta * THIRD);
-    let flat = (dv.abs() <= 1e-12 && (0.01 - 1e-12..=1.0 + 1e-12).contains(&r)).then(|| r.clamp(0.01, 1.0));
-    (lin || flat.is_some()).then_some(Side { lin, flat })
+    let flat = (dv.abs() <= 1e-12 && r >= 0.01 - 1e-12).then(|| r.clamp(0.01, 1.0));
+    Side { lin, flat, r, dv: vec![dv] }
 }
 
-fn segment(a: &CutKey, b: &CutKey) -> Result<Seg, String> {
+fn segment(a: &CutKey, b: &CutKey) -> Seg {
     if a.segment == "step" {
-        return Ok(Seg::Step);
+        return Seg::Step;
     }
     let (span, delta) = ((b.time - a.time) as f64, b.value - a.value);
     if a.segment == "linear" || span == 0.0 {
-        let s = Side { lin: true, flat: (delta == 0.0).then_some(THIRD) };
-        return Ok(Seg::Move { out: s, inn: s });
+        let flat = (delta == 0.0).then_some(THIRD);
+        return Seg::Move { out: Side { lin: true, flat, r: THIRD, dv: vec![delta * THIRD] }, inn: Side { lin: true, flat, r: THIRD, dv: vec![-delta * THIRD] } };
     }
     let out = side(a.right.unwrap_or((span * THIRD, delta * THIRD)), span, delta, 1.0);
     let inn = side(b.left.unwrap_or((-span * THIRD, -delta * THIRD)), span, delta, -1.0);
-    match (out, inn) {
-        (Some(out), Some(inn)) => Ok(Seg::Move { out, inn }),
-        _ => Err(format!(
-            "the curve from {} to {} has a handle Film's keyframes cannot hold (Film eases with flat handles reaching 1% to 100% of a segment, or goes straight)",
-            a.time, b.time
-        )),
-    }
+    Seg::Move { out, inn }
 }
 
-fn both(x: Side, y: Side) -> Option<Side> {
-    let lin = x.lin && y.lin;
+/// Two components' sides as one side of Film's (Film eases a value's components together), or None when they reach differently.
+fn both(x: &Side, y: &Side) -> Option<Side> {
+    if !near(x.r, y.r) {
+        return None;
+    }
     let flat = match (x.flat, y.flat) {
         (Some(a), Some(b)) if near(a, b) => Some(a),
         _ => None,
     };
-    (lin || flat.is_some()).then_some(Side { lin, flat })
+    Some(Side { lin: x.lin && y.lin, flat, r: x.r, dv: x.dv.iter().chain(&y.dv).copied().collect() })
+}
+
+fn side_same(x: &Side, y: &Side) -> bool {
+    (x.lin && y.lin) || matches!((x.flat, y.flat), (Some(u), Some(v)) if near(u, v)) || (near(x.r, y.r) && x.dv.len() == y.dv.len() && x.dv.iter().zip(&y.dv).all(|(a, b)| near(*a, *b)))
 }
 
 /// Cut's channels for one of Film's parameters (one per component) as Film's keyframes: `value` makes Film's value from the components,
-/// `prior` are the keyframes Film held (a key keeps its interp where it still fits). A reason when Film cannot hold the curve.
-pub fn cut_to_film(channels: &[Vec<CutKey>], value: &dyn Fn(&[f64]) -> ParamValue, prior: &[Keyframe]) -> Result<Vec<Keyframe>, String> {
+/// `prior` are the keyframes Film held (a key keeps its interp where it still fits), `per_cut[c]` Film's units in one of Cut's for
+/// component c (a sloped handle's rise is written in Film's units). A reason when Film cannot hold the curve.
+pub fn cut_to_film(channels: &[Vec<CutKey>], value: &dyn Fn(&[f64]) -> ParamValue, prior: &[Keyframe], per_cut: &[f64]) -> Result<Vec<Keyframe>, String> {
     let Some(first) = channels.first() else { return Ok(Vec::new()) };
+    if per_cut.len() != channels.len() {
+        return Err(format!("its {} components have {} unit factors", channels.len(), per_cut.len()));
+    }
     if channels.iter().any(|c| c.len() != first.len() || c.iter().zip(first).any(|(k, f)| k.time != f.time)) {
         return Err("its components are keyed at different times, where Film keys them together".into());
     }
@@ -215,11 +241,11 @@ pub fn cut_to_film(channels: &[Vec<CutKey>], value: &dyn Fn(&[f64]) -> ParamValu
     for i in 0..n.saturating_sub(1) {
         let mut s: Option<Seg> = None;
         for ch in channels {
-            let x = segment(&ch[i], &ch[i + 1])?;
+            let x = segment(&ch[i], &ch[i + 1]);
             s = Some(match (s, x) {
                 (None, x) => x,
                 (Some(Seg::Step), Seg::Step) => Seg::Step,
-                (Some(Seg::Move { out: a, inn: b }), Seg::Move { out: c, inn: d }) => match (both(a, c), both(b, d)) {
+                (Some(Seg::Move { out: a, inn: b }), Seg::Move { out: c, inn: d }) => match (both(&a, &c), both(&b, &d)) {
                     (Some(out), Some(inn)) => Seg::Move { out, inn },
                     _ => return Err(format!("its components curve differently from {}, where Film eases them together", ch[i].time)),
                 },
@@ -230,11 +256,12 @@ pub fn cut_to_film(channels: &[Vec<CutKey>], value: &dyn Fn(&[f64]) -> ParamValu
     }
     let fits = |prev: Option<Interpolation>, cur: Interpolation, i: usize| -> bool {
         if i + 1 < n {
-            match segs[i] {
+            match &segs[i] {
                 Seg::Step if cur != Interpolation::Hold => return false,
                 Seg::Move { .. } if cur == Interpolation::Hold => return false,
+                // An eased side is flat or sloped, so it always fits; a side not eased must be a straight third.
                 Seg::Move { out, .. } => {
-                    if if out_eased(cur) { out.flat.is_none() } else { !out.lin } {
+                    if !out_eased(cur) && !out.lin {
                         return false;
                     }
                 }
@@ -242,10 +269,10 @@ pub fn cut_to_film(channels: &[Vec<CutKey>], value: &dyn Fn(&[f64]) -> ParamValu
             }
         }
         if i > 0
-            && let (Some(prev), Seg::Move { inn, .. }) = (prev, segs[i - 1])
+            && let (Some(prev), Seg::Move { inn, .. }) = (prev, &segs[i - 1])
         {
             let eased = in_eased_by_next(cur) || in_eased_by_self(prev);
-            if if eased { inn.flat.is_none() } else { !inn.lin } {
+            if !eased && !inn.lin {
                 return false;
             }
         }
@@ -279,21 +306,25 @@ pub fn cut_to_film(channels: &[Vec<CutKey>], value: &dyn Fn(&[f64]) -> ParamValu
         .enumerate()
         .map(|(i, k)| {
             let was = prior_at(k.time);
-            let out_flat = match segs.get(i) {
-                Some(Seg::Move { out, .. }) if i + 1 < n && out_eased(interps[i]) => out.flat,
+            let out_side = match segs.get(i) {
+                Some(Seg::Move { out, .. }) if i + 1 < n && out_eased(interps[i]) => Some(out),
                 _ => None,
             };
-            let in_flat = match i.checked_sub(1).map(|j| segs[j]) {
-                Some(Seg::Move { inn, .. }) if in_eased_by_next(interps[i]) || in_eased_by_self(interps[i - 1]) => inn.flat,
+            let in_side = match i.checked_sub(1).map(|j| &segs[j]) {
+                Some(Seg::Move { inn, .. }) if in_eased_by_next(interps[i]) || in_eased_by_self(interps[i - 1]) => Some(inn),
                 _ => None,
             };
+            // A side Film eases flat holds no rise; a sloped one holds its rise per component, in Film's units.
+            let rise = |x: &Side| x.dv.iter().zip(per_cut).map(|(d, k)| (d * k * 1e9).round() / 1e9).collect::<Vec<f64>>();
             let comps: Vec<f64> = channels.iter().map(|c| c[i].value).collect();
             Keyframe {
                 time: Tick(k.time * PER_CUT_TICK),
                 value: value(&comps),
                 interp: interps[i],
-                out_influence: out_flat.or(was.map(|w| w.out_influence)).unwrap_or(THIRD),
-                in_influence: in_flat.or(was.map(|w| w.in_influence)).unwrap_or(THIRD),
+                out_influence: out_side.map(|x| x.flat.unwrap_or(x.r)).or(was.map(|w| w.out_influence)).unwrap_or(THIRD),
+                in_influence: in_side.map(|x| x.flat.unwrap_or(x.r)).or(was.map(|w| w.in_influence)).unwrap_or(THIRD),
+                out_rise: out_side.filter(|x| x.flat.is_none()).map(rise),
+                in_rise: in_side.filter(|x| x.flat.is_none()).map(rise),
             }
         })
         .collect())
@@ -312,15 +343,9 @@ pub fn same_curve(a: &[CutKey], b: &[CutKey]) -> bool {
             break;
         }
         match (segment(&a[i], &a[i + 1]), segment(&b[i], &b[i + 1])) {
-            (Ok(Seg::Step), Ok(Seg::Step)) => {}
-            (Ok(Seg::Move { out: p, inn: q }), Ok(Seg::Move { out: r, inn: s })) => {
-                let same = |x: Side, y: Side| (x.lin && y.lin) || matches!((x.flat, y.flat), (Some(u), Some(v)) if near(u, v));
-                if !(same(p, r) && same(q, s)) {
-                    return false;
-                }
-            }
-            (Err(_), Err(_)) => {
-                if (a[i].segment.as_str(), a[i].right, a[i + 1].left) != (b[i].segment.as_str(), b[i].right, b[i + 1].left) {
+            (Seg::Step, Seg::Step) => {}
+            (Seg::Move { out: p, inn: q }, Seg::Move { out: r, inn: s }) => {
+                if !(side_same(&p, &r) && side_same(&q, &s)) {
                     return false;
                 }
             }
@@ -335,7 +360,7 @@ mod tests {
     use super::*;
 
     fn key(t: i64, v: f64, interp: Interpolation, o: f64, i: f64) -> Keyframe {
-        Keyframe { time: Tick(t * PER_CUT_TICK), value: ParamValue::Float(v), interp, out_influence: o, in_influence: i }
+        Keyframe { time: Tick(t * PER_CUT_TICK), value: ParamValue::Float(v), interp, out_influence: o, in_influence: i, out_rise: None, in_rise: None }
     }
     fn parts(v: &ParamValue) -> Vec<f64> {
         vec![v.as_f64().unwrap_or(0.0)]
@@ -351,9 +376,9 @@ mod tests {
             for b in ORDER {
                 for c in ORDER {
                     let film = vec![key(0, 0.0, a, 0.25, 0.5), key(1200, 10.0, b, 0.75, 0.2), key(3000, -5.0, c, THIRD, 0.6)];
-                    let cut = film_to_cut(&film, &parts, &[], "k").unwrap();
-                    let back = cut_to_film(&cut, &value, &film).unwrap_or_else(|e| panic!("{a:?} {b:?} {c:?}: {e}"));
-                    let again = film_to_cut(&back, &parts, &cut, "k").unwrap();
+                    let cut = film_to_cut(&film, &parts, &[], "k", &[1.0]).unwrap();
+                    let back = cut_to_film(&cut, &value, &film, &[1.0]).unwrap_or_else(|e| panic!("{a:?} {b:?} {c:?}: {e}"));
+                    let again = film_to_cut(&back, &parts, &cut, "k", &[1.0]).unwrap();
                     assert!(same_curve(&cut[0], &again[0]), "{a:?} {b:?} {c:?}");
                     for t in (0..3000).step_by(37) {
                         let p = filmcraft_project::Param { value: ParamValue::Float(0.0), keyframes: film.clone() };
@@ -365,14 +390,42 @@ mod tests {
         }
     }
 
+    /// Mona 2026-11-09 (files/989): "Add slopes to Film". Cut's sloped handles (any reach 0% to 100%, any rise) are Film's sloped keys,
+    /// drawn as Cut draws them, and read back as the very handles; a flat handle stays a flat ease with no rise.
     #[test]
-    fn a_handle_with_a_slope_is_refused_by_name() {
-        let mut k0 = CutKey::read(&json!({"id": "a", "time": 0, "value": 0, "segmentToNext": "bezier", "tangentMode": "broken", "rightHandle": {"dt": 100, "dv": 4}})).unwrap();
-        let k1 = CutKey::read(&json!({"id": "b", "time": 600, "value": 10, "segmentToNext": "linear", "tangentMode": "flat"})).unwrap();
-        assert!(cut_to_film(&[vec![k0.clone(), k1.clone()]], &value, &[]).unwrap_err().contains("cannot hold"));
-        k0.right = Some((100.0, 0.0));
-        let f = cut_to_film(&[vec![k0, k1]], &value, &[]).unwrap();
-        assert_eq!(f[0].interp, Interpolation::EaseOut);
+    fn a_handle_with_a_slope_is_held_by_film_and_draws_as_cut_draws_it() {
+        let k0 = CutKey::read(&json!({"id": "a", "time": 0, "value": 0, "segmentToNext": "bezier", "tangentMode": "broken", "rightHandle": {"dt": 100, "dv": 4}})).unwrap();
+        let k1 = CutKey::read(&json!({"id": "b", "time": 600, "value": 10, "segmentToNext": "bezier", "tangentMode": "broken", "leftHandle": {"dt": 0, "dv": 3}})).unwrap();
+        let k2 = CutKey::read(&json!({"id": "c", "time": 900, "value": 10, "segmentToNext": "linear", "tangentMode": "flat"})).unwrap();
+        let cut = vec![k0.clone(), k1.clone(), k2];
+        // Film's units are twice Cut's here: the rise is written in Film's units.
+        let f = cut_to_film(std::slice::from_ref(&cut), &|c| ParamValue::Float(c[0] * 2.0), &[], &[2.0]).unwrap();
+        assert_eq!((f[0].out_rise.clone(), f[0].out_influence), (Some(vec![8.0]), 100.0 / 600.0));
+        assert_eq!((f[1].in_rise.clone(), f[1].in_influence), (Some(vec![6.0]), 0.0), "a zero-reach handle is held, not clamped to 1%");
+        let back = film_to_cut(&f, &|v| vec![v.as_f64().unwrap() / 2.0], std::slice::from_ref(&cut), "k", &[2.0]).unwrap();
+        assert_eq!((back[0][0].right, back[0][1].left), (Some((100.0, 4.0)), Some((-0.0, 3.0))), "Cut reads the very handles back");
+        assert!(same_curve(&cut, &back[0]));
+        // Film draws it as Cut does: Cut's bezier solved for time (OpenCut `animation/bezier.ts`), against Film's evaluation.
+        let p = filmcraft_project::Param { value: ParamValue::Float(0.0), keyframes: f };
+        let cut_at = |t: f64| {
+            let (p0, p1, p2, p3) = ((0.0, 0.0), (100.0, 4.0), (600.0, 13.0), (600.0, 10.0));
+            let (mut lo, mut hi) = (0.0f64, 1.0f64);
+            let bz = |s: f64, a: f64, b: f64, c: f64, d: f64| (1.0 - s).powi(3) * a + 3.0 * (1.0 - s).powi(2) * s * b + 3.0 * (1.0 - s) * s * s * c + s.powi(3) * d;
+            for _ in 0..80 {
+                let m = (lo + hi) / 2.0;
+                if bz(m, p0.0, p1.0, p2.0, p3.0) < t { lo = m } else { hi = m }
+            }
+            bz((lo + hi) / 2.0, p0.1, p1.1, p2.1, p3.1)
+        };
+        for t in (10..600).step_by(10) {
+            let film = p.f64_at(Tick(t * PER_CUT_TICK)) / 2.0;
+            assert!((film - cut_at(t as f64)).abs() < 1e-6, "at {t}: Film {film}, Cut {}", cut_at(t as f64));
+        }
+        // A flat handle is Film's flat ease, no rise.
+        let mut flat = k0;
+        flat.right = Some((100.0, 0.0));
+        let f = cut_to_film(&[vec![flat, CutKey { segment: "linear".into(), left: None, ..k1 }]], &value, &[], &[1.0]).unwrap();
+        assert_eq!((f[0].interp, f[0].out_rise.clone()), (Interpolation::EaseOut, None));
         assert!(near(f[0].out_influence, 100.0 / 600.0));
     }
 }

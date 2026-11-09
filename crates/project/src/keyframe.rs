@@ -152,6 +152,15 @@ pub struct Keyframe {
     pub out_influence: f64,
     #[serde(default = "default_influence")]
     pub in_influence: f64,
+    /// A SLOPED out handle (OneOS files/989, Mona 2026-11-09: "Add slopes to Film"): when the segment's out side is eased, its handle rises
+    /// by this much per component of the value (in the value's units) instead of lying flat, and reaches `out_influence` of the segment,
+    /// 0% to 100%. Absent = flat (reaching 1% to 100%).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub out_rise: Option<Vec<f64>>,
+    /// A sloped in handle: when the segment's in side is eased, its handle sits this much (per component) from this key's value, reaching
+    /// `in_influence` of the segment back from it. Absent = flat.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub in_rise: Option<Vec<f64>>,
 }
 
 fn default_influence() -> f64 {
@@ -160,7 +169,7 @@ fn default_influence() -> f64 {
 
 impl Keyframe {
     pub fn new(time: Tick, value: ParamValue) -> Self {
-        Self { time, value, interp: Interpolation::Linear, out_influence: default_influence(), in_influence: default_influence() }
+        Self { time, value, interp: Interpolation::Linear, out_influence: default_influence(), in_influence: default_influence(), out_rise: None, in_rise: None }
     }
 }
 
@@ -270,14 +279,19 @@ impl Param {
         }
         let span = (b.time - a.time).0 as f64;
         let u = (t - a.time).0 as f64 / span;
-        let e = ease(a, b, u);
         let ca = a.value.components();
         let cb = b.value.components();
         if ca.len() != cb.len() {
             // e.g. mask paths with different vertex counts: hold
             return a.value.clone();
         }
-        let c: Vec<f64> = ca.iter().zip(&cb).map(|(x, y)| x + (y - x) * e).collect();
+        let c: Vec<f64> = match sloped(a, b, u) {
+            Some(s) => ca.iter().zip(&cb).enumerate().map(|(i, (x, y))| s.at(i, *x, *y)).collect(),
+            None => {
+                let e = ease(a, b, u);
+                ca.iter().zip(&cb).map(|(x, y)| x + (y - x) * e).collect()
+            }
+        };
         ParamValue::from_components(&a.value, &c)
     }
 
@@ -342,7 +356,10 @@ impl Param {
             return va;
         }
         let u = (t - a.time).0 as f64 / (b.time - a.time).0 as f64;
-        va + (vb - va) * ease(a, b, u)
+        match sloped(a, b, u) {
+            Some(s) => s.at(0, va, vb),
+            None => va + (vb - va) * ease(a, b, u),
+        }
     }
 
     pub fn vec2_at(&self, t: Tick) -> Vec2 {
@@ -356,6 +373,65 @@ impl Param {
     pub fn next_keyframe(&self, t: Tick) -> Option<Tick> {
         self.keyframes.iter().map(|k| k.time).find(|&k| k > t)
     }
+}
+
+fn out_eases(a: &Keyframe) -> bool {
+    matches!(a.interp, Interpolation::Bezier | Interpolation::AutoBezier | Interpolation::ContinuousBezier | Interpolation::EaseOut)
+}
+fn in_eases(a: &Keyframe, b: &Keyframe) -> bool {
+    matches!(b.interp, Interpolation::Bezier | Interpolation::AutoBezier | Interpolation::ContinuousBezier | Interpolation::EaseIn)
+        || matches!(a.interp, Interpolation::Bezier | Interpolation::ContinuousBezier)
+}
+
+/// A segment with a sloped side, solved at one time: the curve's parameter there and each eased side's rise.
+struct Sloped<'k> {
+    s: f64,
+    out: Option<&'k [f64]>,
+    inn: Option<&'k [f64]>,
+}
+
+impl Sloped<'_> {
+    /// Component `i` from `x` (key a's) to `y` (key b's): a cubic Bezier in value whose handles are each side's rise (an eased side with
+    /// no rise is flat; a side not eased is a straight third).
+    fn at(&self, i: usize, x: f64, y: f64) -> f64 {
+        let p1 = match self.out {
+            Some(r) => x + r.get(i).copied().unwrap_or(0.0),
+            None => x + (y - x) / 3.0,
+        };
+        let p2 = match self.inn {
+            Some(r) => y + r.get(i).copied().unwrap_or(0.0),
+            None => y - (y - x) / 3.0,
+        };
+        let (s, m) = (self.s, 1.0 - self.s);
+        m * m * m * x + 3.0 * m * m * s * p1 + 3.0 * m * s * s * p2 + s * s * s * y
+    }
+}
+
+/// The segment from `a` to `b` at u∈[0,1] when one of its eased sides is sloped; None when neither is (then [`ease`] draws it).
+fn sloped<'k>(a: &'k Keyframe, b: &'k Keyframe, u: f64) -> Option<Sloped<'k>> {
+    let (oe, ie) = (out_eases(a), in_eases(a, b));
+    let out_rise = a.out_rise.as_deref().filter(|_| oe);
+    let in_rise = b.in_rise.as_deref().filter(|_| ie);
+    if out_rise.is_none() && in_rise.is_none() {
+        return None;
+    }
+    // A sloped side reaches 0% to 100% of the segment; a flat one 1% to 100%; a side not eased a third.
+    let x1 = match (oe, out_rise) {
+        (true, Some(_)) => a.out_influence.clamp(0.0, 1.0),
+        (true, None) => a.out_influence.clamp(0.01, 1.0),
+        (false, _) => 1.0 / 3.0,
+    };
+    let x2 = match (ie, in_rise) {
+        (true, Some(_)) => 1.0 - b.in_influence.clamp(0.0, 1.0),
+        (true, None) => 1.0 - b.in_influence.clamp(0.01, 1.0),
+        (false, _) => 2.0 / 3.0,
+    };
+    let flat: &[f64] = &[];
+    Some(Sloped {
+        s: bezier_s_for_x(x1, x2, u),
+        out: if oe { Some(out_rise.unwrap_or(flat)) } else { None },
+        inn: if ie { Some(in_rise.unwrap_or(flat)) } else { None },
+    })
 }
 
 /// Temporal easing for u∈[0,1] between two keyframes (1D cubic Bezier in time/value space).
@@ -376,8 +452,13 @@ fn ease(a: &Keyframe, b: &Keyframe, u: f64) -> f64 {
 
 /// Solve a CSS-style cubic-bezier(x1,y1,x2,y2) for y at x (Newton + bisection).
 pub fn cubic_bezier_y_for_x(x1: f64, y1: f64, x2: f64, y2: f64, x: f64) -> f64 {
-    let bx = |s: f64| 3.0 * (1.0 - s) * (1.0 - s) * s * x1 + 3.0 * (1.0 - s) * s * s * x2 + s * s * s;
     let by = |s: f64| 3.0 * (1.0 - s) * (1.0 - s) * s * y1 + 3.0 * (1.0 - s) * s * s * y2 + s * s * s;
+    by(bezier_s_for_x(x1, x2, x))
+}
+
+/// The parameter s at which a cubic Bezier from 0 to 1 with time handles x1, x2 reaches time x (Newton + bisection).
+fn bezier_s_for_x(x1: f64, x2: f64, x: f64) -> f64 {
+    let bx = |s: f64| 3.0 * (1.0 - s) * (1.0 - s) * s * x1 + 3.0 * (1.0 - s) * s * s * x2 + s * s * s;
     let dbx = |s: f64| 3.0 * (1.0 - s) * (1.0 - s) * x1 + 6.0 * (1.0 - s) * s * (x2 - x1) + 3.0 * s * s * (1.0 - x2);
     let mut s = x;
     for _ in 0..8 {
@@ -398,7 +479,7 @@ pub fn cubic_bezier_y_for_x(x1: f64, y1: f64, x2: f64, y2: f64, x: f64) -> f64 {
             if bx(s) < x { lo = s } else { hi = s }
         }
     }
-    by(s)
+    s
 }
 
 #[cfg(test)]
@@ -460,6 +541,47 @@ mod tests {
         p.set_at(Tick(100), ParamValue::Text("b".into()));
         assert_eq!(p.text_ref_at(Tick(50)), Some("a"), "text does not interpolate");
         assert_eq!(p.text_ref_at(Tick(100)), Some("b"));
+    }
+
+    /// Mona 2026-11-09 (files/989): "Add slopes to Film". A sloped handle draws Cut's curve: a cubic Bezier through (0, a), (r_out, a +
+    /// rise_out), (1 - r_in, b + rise_in), (1, b) in (segment time, value), solved for time as Cut's editor solves it (OpenCut
+    /// `animation/bezier.ts`, here by bisection on the same polynomial); a flat handle draws as before.
+    #[test]
+    fn a_sloped_handle_draws_cut_s_bezier() {
+        let mut p = Param::new(ParamValue::Float(0.0));
+        p.toggle_animation(Tick(0));
+        p.set_at(Tick(1000), ParamValue::Float(10.0));
+        p.keyframes[0].interp = Interpolation::EaseOut;
+        p.keyframes[0].out_influence = 0.25;
+        p.keyframes[0].out_rise = Some(vec![6.0]);
+        let cut = |u: f64| {
+            // Cut's: bisection for the parameter whose time is u, then the value polynomial.
+            let (mut lo, mut hi) = (0.0f64, 1.0f64);
+            for _ in 0..60 {
+                let m = (lo + hi) / 2.0;
+                let t = 3.0 * (1.0 - m) * (1.0 - m) * m * 0.25 + 3.0 * (1.0 - m) * m * m * (2.0 / 3.0) + m * m * m;
+                if t < u { lo = m } else { hi = m }
+            }
+            let s = (lo + hi) / 2.0;
+            let (p0, p1, p2, p3) = (0.0, 6.0, 10.0 - 10.0 / 3.0, 10.0);
+            (1.0 - s).powi(3) * p0 + 3.0 * (1.0 - s).powi(2) * s * p1 + 3.0 * (1.0 - s) * s * s * p2 + s.powi(3) * p3
+        };
+        for i in 1..20 {
+            let u = i as f64 / 20.0;
+            let film = p.f64_at(Tick((u * 1000.0) as i64));
+            assert!((film - cut(u)).abs() < 1e-6, "at {u}: Film {film}, Cut {}", cut(u));
+            assert!((p.scalar_at(Tick((u * 1000.0) as i64)) - film).abs() < 1e-12, "the mixer's evaluation agrees");
+        }
+        // Sloped from a zero-reach handle (Cut allows 0..100%): still drawn, not clamped to 1%.
+        p.keyframes[0].out_influence = 0.0;
+        assert!(p.f64_at(Tick(500)).is_finite());
+        // Off: a flat handle, as before.
+        p.keyframes[0].out_rise = None;
+        p.keyframes[0].out_influence = 0.25;
+        assert!((p.f64_at(Tick(500)) - 10.0 * cubic_bezier_y_for_x(0.25, 0.0, 2.0 / 3.0, 2.0 / 3.0, 0.5)).abs() < 1e-9);
+        // It is serialised only when set.
+        let j = serde_json::to_value(&p.keyframes[1]).unwrap();
+        assert!(j.get("out_rise").is_none() && j.get("in_rise").is_none(), "{j}");
     }
 
     #[test]

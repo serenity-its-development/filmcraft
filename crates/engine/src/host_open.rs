@@ -432,7 +432,86 @@ mod tests {
         assert_eq!(first_difference(&cut, &saved, ""), None, "unedited, Cut's edit comes back value for value");
     }
 
-    /// files/989 step 2: what Cut does not animate (a text's size) is refused by name when Film keyframes it, never dropped.
+    /// Mona 2026-11-09 (files/989): "Build text animation in Cut" and "Add slopes to Film". On Cut's editor-built project, the title's
+    /// animated typography opens as Film's own keyframes on its text layer: size (Cut's pixels at Film's scale, its first segment leaving on
+    /// a sloped handle) and tracking eased; content, font, alignment, weight, style and decoration held. Cut shows a held channel's own value
+    /// before its first key, Film its first key's, so Film keys the clip's start with Cut's own value. Unedited, Cut's project comes back
+    /// value for value; Film's edits are written back as Cut's channels, and nothing else changes.
+    #[test]
+    fn film_edits_cut_s_text_animation_as_its_own_keyframes() {
+        use filmcraft_project::Interpolation;
+        let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-project.otio");
+        let cut: Value = serde_json::from_slice(bytes).unwrap();
+        let mut s = session();
+        open_host_file(&mut s, "trip.otio", bytes).unwrap();
+        let k = 1920.0 / 90.0;
+        let size = keys_of(&s, "Main", "Title", "graphic_text", "size");
+        assert_eq!(size.len(), 2);
+        assert!((size[0].value.as_f64().unwrap() - 64.0 * k).abs() < 1e-9 && (size[1].value.as_f64().unwrap() - 96.0 * k).abs() < 1e-9, "{size:?}");
+        assert_eq!((size[0].out_influence, size[0].out_rise.as_ref().map(|r| (r[0] - 12.0 * k).abs() < 1e-6)), (0.25, Some(true)), "Cut's sloped handle is Film's: a quarter of the segment, rising 12 of Cut's pixels");
+        let text = keys_of(&s, "Main", "Title", "graphic_text", "text");
+        assert_eq!(text.iter().map(|k| (k.time.0, k.value.clone())).collect::<Vec<_>>(), vec![(0, ParamValue::Text("Hello 日本語".into())), (filmcraft_time::TICKS_PER_SECOND, ParamValue::Text("Goodbye".into()))]);
+        let font = keys_of(&s, "Main", "Title", "graphic_text", "font");
+        assert_eq!(font.iter().map(|k| (k.time.0, k.value.clone(), k.interp)).collect::<Vec<_>>(), vec![
+            (0, ParamValue::Text("Inter".into()), Interpolation::Hold),
+            (filmcraft_time::TICKS_PER_SECOND, ParamValue::Text("Roboto".into()), Interpolation::Hold),
+        ], "keyed at the start with Cut's own font, which Cut shows before its first key");
+        let under = keys_of(&s, "Main", "Title", "graphic_text", "underline");
+        let struck = keys_of(&s, "Main", "Title", "graphic_text", "strikethrough");
+        assert_eq!((under.iter().map(|k| k.value.clone()).collect::<Vec<_>>(), struck.iter().map(|k| k.value.clone()).collect::<Vec<_>>()), (vec![ParamValue::Bool(true), ParamValue::Bool(false)], vec![ParamValue::Bool(false), ParamValue::Bool(true)]));
+        assert_eq!(keys_of(&s, "Main", "Title", "graphic_text", "align").last().map(|k| k.value.clone()), Some(ParamValue::Choice(0)));
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
+        assert_eq!(first_difference(&cut, &saved, ""), None, "unedited: Cut's project comes back value for value");
+        edit_clip(&mut s, "Main", "Title", |c| {
+            let l = c.effects.iter_mut().find(|e| e.effect == "graphic_text").unwrap();
+            l.params.get_mut("text").unwrap().keyframes[1].value = ParamValue::Text("Farewell".into());
+            l.params.get_mut("size").unwrap().keyframes[1].value = ParamValue::Float(80.0 * k);
+            l.params.get_mut("tracking").unwrap().put_keyframe(filmcraft_time::Tick(0), ParamValue::Float(2.0));
+            l.params.get_mut("faux_bold").unwrap().put_keyframe(filmcraft_time::Tick(filmcraft_time::TICKS_PER_SECOND / 2), ParamValue::Bool(true));
+        });
+        let edited: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap_or_else(|e| panic!("Film refused the save: {e}"))).unwrap();
+        let el = "/children/0/tracks/children/1/children/1/metadata/opencut/element";
+        let mut want = cut.clone();
+        let ch = |p: &str| format!("{el}/animations/channels/{p}");
+        *want.pointer_mut(&format!("{}/keys/1/value", ch("content:value"))).unwrap() = serde_json::json!("Farewell");
+        *want.pointer_mut(&format!("{}/keys/1/value", ch("fontSize:value"))).unwrap() = serde_json::json!(80);
+        // Film's new tracking key: an id of Film's (the clip and the path), at the start, Cut's linear segment.
+        let new_id = edited.pointer(&format!("{}/keys/0/id", ch("letterSpacing:value"))).and_then(Value::as_str).unwrap_or_default().to_string();
+        assert!(new_id.starts_with("film-") && new_id.ends_with("-letterSpacing-0-0"), "{new_id}");
+        want.pointer_mut(&ch("letterSpacing:value")).unwrap()["keys"].as_array_mut().unwrap().insert(0, serde_json::json!({"id": new_id, "time": 0, "value": 2, "segmentToNext": "linear", "tangentMode": "flat"}));
+        // Film's new weight key at half a second; the key Film set at the start for Cut's own weight (bold) is not written as Cut's.
+        let normal = want.pointer(&ch("fontWeight:value")).unwrap()["keys"][0].clone();
+        want.pointer_mut(&ch("fontWeight:value")).unwrap()["keys"] = serde_json::json!([{"id": "film-fontWeight-0", "time": 60000, "value": "bold"}, normal]);
+        assert_eq!(first_difference(&want, &edited, ""), None, "only Film's edits differ, as Cut's channels");
+    }
+
+    /// Mona 2026-11-09 (files/989): "Add sRGB channel to Cut". Film eases a colour between colours in sRGB; its edit of Cut's title colour
+    /// is written as Cut's sRGB channel (`colorSpace: "srgb"`, Film's sRGB components exactly), which Cut draws as Film does, and it reopens
+    /// in Film as the very keyframes. Nothing is refused or locked for it.
+    #[test]
+    fn film_eases_cut_s_colour_and_writes_it_as_cut_s_srgb_channel() {
+        let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-project.otio");
+        let mut s = session();
+        open_host_file(&mut s, "trip.otio", bytes).unwrap();
+        edit_clip(&mut s, "Main", "Title", |c| {
+            let l = c.effects.iter_mut().find(|e| e.effect == "graphic_text").unwrap();
+            l.params.get_mut("fill_color").unwrap().put_keyframe(filmcraft_time::Tick(0), ParamValue::Color([0.0, 0.5, 1.0, 1.0]));
+        });
+        let out = save_host_file(&mut s).unwrap_or_else(|e| panic!("Film refused the save: {e}"));
+        let edited: Value = serde_json::from_slice(&out).unwrap();
+        let el = "/children/0/tracks/children/1/children/1/metadata/opencut/element/animations";
+        assert_eq!(edited.pointer(&format!("{el}/bindings/color/colorSpace")), Some(&serde_json::json!("srgb")));
+        let g = edited.pointer(&format!("{el}/channels/color:g/keys")).unwrap().as_array().unwrap();
+        assert_eq!(g.iter().map(|k| k["value"].as_f64().unwrap()).collect::<Vec<_>>(), vec![0.5, 0.0], "sRGB components, as Film keys them");
+        let fill = keys_of(&s, "Main", "Title", "graphic_text", "fill_color");
+        let mut again = session();
+        open_host_file(&mut again, "trip.otio", &out).unwrap();
+        assert_eq!(keys_of(&again, "Main", "Title", "graphic_text", "fill_color"), fill, "reopened in Film as the very keyframes");
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut again).unwrap()).unwrap();
+        assert_eq!(first_difference(&edited, &saved, ""), None);
+    }
+
+    /// files/989 step 2: what Cut does not animate (a text background's opacity) is refused by name when Film keyframes it, never dropped.
     #[test]
     fn a_keyframe_cut_has_no_channel_for_is_refused_by_name() {
         let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-project.otio");
@@ -440,9 +519,9 @@ mod tests {
         open_host_file(&mut s, "trip.otio", bytes).unwrap();
         edit_clip(&mut s, "Main", "Title", |c| {
             let l = c.effects.iter_mut().find(|e| e.effect == "graphic_text").unwrap();
-            l.params.get_mut("size").unwrap().put_keyframe(filmcraft_time::Tick(0), ParamValue::Float(40.0));
+            l.params.get_mut("background_opacity").unwrap().put_keyframe(filmcraft_time::Tick(0), ParamValue::Float(40.0));
         });
         let e = save_host_file(&mut s).unwrap_err();
-        assert!(e.contains("keyframes-not-in-cut") && e.contains("size") && e.contains("Title"), "{e}");
+        assert!(e.contains("keyframes-not-in-cut") && e.contains("background_opacity") && e.contains("Title"), "{e}");
     }
 }

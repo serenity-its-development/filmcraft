@@ -1007,6 +1007,8 @@ fn parse_param(pdef: &ParamDef, effect_id: &str, premiere_id: i32, raw: &RawPara
                         interp: k.interp,
                         in_influence: k.in_influence,
                         out_influence: k.out_influence,
+                        out_rise: None,
+                        in_rise: None,
                     });
                 }
             }
@@ -1024,6 +1026,8 @@ fn parse_param(pdef: &ParamDef, effect_id: &str, premiere_id: i32, raw: &RawPara
                         interp: k.interp,
                         in_influence: k.in_influence,
                         out_influence: k.out_influence,
+                        out_rise: None,
+                        in_rise: None,
                     });
                 }
             }
@@ -1041,6 +1045,8 @@ fn parse_param(pdef: &ParamDef, effect_id: &str, premiere_id: i32, raw: &RawPara
                         interp: k.interp,
                         in_influence: k.in_influence,
                         out_influence: k.out_influence,
+                        out_rise: None,
+                        in_rise: None,
                     });
                 }
             }
@@ -1058,6 +1064,8 @@ fn parse_param(pdef: &ParamDef, effect_id: &str, premiere_id: i32, raw: &RawPara
                         interp: k.interp,
                         in_influence: k.in_influence,
                         out_influence: k.out_influence,
+                        out_rise: None,
+                        in_rise: None,
                     });
                 }
             }
