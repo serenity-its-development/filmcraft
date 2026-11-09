@@ -1665,6 +1665,7 @@
                                     "opencut": {
                                         "element": {
                                             "volume": 0,
+                                            "isSourceAudioEnabled": false,
                                             "transform": {
                                                 "scaleX": 1,
                                                 "scaleY": 1,
