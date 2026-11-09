@@ -160,68 +160,42 @@ mod tests {
         assert!(String::from_utf8_lossy(&saved).contains("oneos:file/01jabcdefghjkmnpqrstvwxyz0?version=v3"));
     }
 
-    /// Film's own form of a one-clip timeline whose medium is a OneOS file.
-    fn film_form() -> Value {
-        let plain = r#"{"OTIO_SCHEMA":"Timeline.1","name":"T","global_start_time":null,"metadata":{},"tracks":{"OTIO_SCHEMA":"Stack.1","name":"tracks","children":[{"OTIO_SCHEMA":"Track.1","name":"V1","kind":"Video","children":[{"OTIO_SCHEMA":"Clip.2","name":"beach","source_range":{"OTIO_SCHEMA":"TimeRange.1","start_time":{"OTIO_SCHEMA":"RationalTime.1","rate":24,"value":0},"duration":{"OTIO_SCHEMA":"RationalTime.1","rate":24,"value":48}},"media_references":{"DEFAULT_MEDIA":{"OTIO_SCHEMA":"ExternalReference.1","name":"beach","target_url":"oneos:file/01jabcdefghjkmnpqrstvwxyz0?version=v3","available_range":null,"metadata":{}}},"active_media_reference_key":"DEFAULT_MEDIA"}]}]}}"#;
-        let (imp, _) = filmcraft_interchange::import(plain.as_bytes(), Format::Otio, None).unwrap();
-        let (bytes, _) = filmcraft_interchange::export_project(&imp.project, &ExportOptions::default()).unwrap();
-        serde_json::from_slice(&bytes).unwrap()
+    /// files/989 step 2e: Cut's parts of a Film file as CUT writes them, of elements the EDITOR built (the OpenCut fork's
+    /// `oneos-tests/editor/film-cut-parts.test.ts` writes `cut-parts-film.otio` into Film's `film-written.otio`): a text track "Titles" (the
+    /// maximal project's editor-built title, its typography keyed, a gap, and a text "End"), a graphic track "Shapes" whose two shapes
+    /// overlap (Cut's stacked lanes), a bookmark "hook" on Film's "Edit" and a scene of Cut's, "Teaser". Replaces the hand-made
+    /// `with_cut_parts` (a text element of four fields, one of them not Cut's).
+    fn cut_parts() -> Value {
+        serde_json::from_slice(include_bytes!("../../interchange/tests/it/oneos/cut-parts-film.otio")).unwrap()
     }
-
-    /// What Cut writes into a Film file (OpenCut fork `apps/web/src/oneos/cut-session.ts`): a text track, its stacked lanes, a scene of its
-    /// own, a bookmark on Film's stack and its settings on the root.
-    fn with_cut_parts(mut v: Value) -> Value {
-        use serde_json::json;
-        let rt = |value: i64| json!({"OTIO_SCHEMA": "RationalTime.1", "rate": 120000, "value": value});
-        let range = |s: i64, d: i64| json!({"OTIO_SCHEMA": "TimeRange.1", "start_time": rt(s), "duration": rt(d)});
-        let text = |name: &str, s: i64| {
-            json!({"OTIO_SCHEMA": "Clip.2", "name": name, "source_range": range(0, 120000), "effects": [], "markers": [], "enabled": true,
-            "media_references": {"DEFAULT_MEDIA": {"OTIO_SCHEMA": "GeneratorReference.1", "name": name, "generator_kind": "OpenCut.text", "parameters": {}, "available_range": null, "metadata": {}}},
-            "active_media_reference_key": "DEFAULT_MEDIA", "metadata": {"opencut": {"element": {"content": "Hello", "fontSize": 64, "trimEnd": 0, "start": s}}}})
-        };
-        let gap =
-            |d: i64| json!({"OTIO_SCHEMA": "Gap.1", "name": "", "source_range": range(0, d), "effects": [], "markers": [], "enabled": true, "metadata": {}});
-        let track = |name: &str, meta: Value, children: Value| json!({"OTIO_SCHEMA": "Track.1", "name": name, "kind": "Video", "source_range": null, "effects": [], "markers": [], "enabled": true, "metadata": meta, "children": children});
-        let titles = track("Titles", json!({"opencut": {"track": {"type": "text", "hidden": false}}}), json!([text("Title", 0), gap(120000), text("End", 2)]));
-        let lanes = json!({"OTIO_SCHEMA": "Stack.1", "name": "Stickers", "source_range": null, "effects": [], "markers": [], "enabled": true, "metadata": {"opencut": {"track": {"type": "graphic", "hidden": false}}},
-            "children": [track("Stickers (lane 1)", json!({"opencut": {"lane": 0}}), json!([text("a", 0)])), track("Stickers (lane 2)", json!({"opencut": {"lane": 1}}), json!([text("b", 1)]))]});
-        let tracks = v.pointer_mut("/children/0/tracks/children").and_then(Value::as_array_mut).unwrap();
-        tracks.push(titles.clone());
-        tracks.push(lanes);
-        let markers = v.pointer_mut("/children/0/tracks").and_then(Value::as_object_mut).unwrap().entry("markers").or_insert_with(|| json!([]));
-        markers.as_array_mut().unwrap().push(json!({"OTIO_SCHEMA": "Marker.2", "name": "hook", "marked_range": range(120000, 0), "color": "RED", "comment": "", "metadata": {"opencut": {"bookmark": {"note": "hook"}}}}));
-        let teaser = json!({"OTIO_SCHEMA": "Timeline.1", "name": "Teaser", "global_start_time": null, "metadata": {"opencut": {"scene": {"isMain": false}}},
-            "tracks": {"OTIO_SCHEMA": "Stack.1", "name": "tracks", "source_range": null, "effects": [], "markers": [], "enabled": true, "metadata": {}, "children": [titles]}});
-        v["children"].as_array_mut().unwrap().push(teaser);
-        v["metadata"]["opencut"] = json!({"settings": {"fps": {"numerator": 30, "denominator": 1}, "canvasSize": {"width": 1080, "height": 1920}}});
-        v
-    }
+    const TITLES: &str = "/children/0/tracks/children/7";
 
     /// files/989 (Mona 2026-11-09: "film should be able to edit cut though"): Cut's parts of a Film file open in Film as Film's own types (a
     /// text track as a track of graphic clips with a text layer, Cut's stacked lanes as tracks, its scene as a sequence, its bookmark as a
     /// marker), nothing locked; an unedited save is the file value for value, and so is a save after Film edits only its own part.
     #[test]
     fn cut_parts_in_a_film_file_open_as_film_types_and_save_back_value_for_value() {
-        let cut = with_cut_parts(film_form());
+        let cut = cut_parts();
         let bytes = serde_json::to_vec(&cut).unwrap();
         let mut s = session();
         open_host_file(&mut s, "trip.otio", &bytes).unwrap();
         assert!(!s.is_dirty());
         assert_eq!(s.host_shared.locked(), Vec::<String>::new(), "nothing of Cut's is locked");
+        assert_eq!(cut.pointer(&format!("{TITLES}/name")), Some(&serde_json::json!("Titles")));
         let (_, _, _, _) = find(&s, "Teaser", "Title");
-        let (seq, kind, ti, ci) = find(&s, "T", "End");
+        let (seq, kind, ti, ci) = find(&s, "Edit", "End");
         let q = s.project.sequence(seq).unwrap();
         assert_eq!(kind, TrackKind::Video);
         assert_eq!(q.video_tracks[ti].name, "Titles");
-        assert_eq!(text_of(&q.video_tracks[ti].items[ci]), "Hello");
-        assert!(q.video_tracks.iter().any(|t| t.name == "Stickers (lane 2)"), "Cut's lanes are tracks");
+        assert_eq!(text_of(&q.video_tracks[ti].items[ci]), "The end");
+        assert!(q.video_tracks.iter().any(|t| t.name == "Shapes (lane 2)"), "Cut's lanes are tracks");
         assert!(q.markers.iter().any(|m| m.name == "hook"), "Cut's bookmark is a marker");
         let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
         assert_eq!(first_difference(&cut, &saved, ""), None, "unedited: the file comes back value for value");
         std::sync::Arc::make_mut(&mut s.project).notes = "Film was here".into();
         let edited: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
         assert_ne!(first_difference(&cut, &edited, ""), None, "Film's edit is saved");
-        for at in ["/children/0/tracks/children/1", "/children/0/tracks/children/2", "/children/0/tracks/markers", "/children/1", "/metadata/opencut"] {
+        for at in [TITLES, "/children/0/tracks/children/8", "/children/0/tracks/markers", "/children/2", "/metadata/opencut"] {
             assert_eq!(edited.pointer(at), cut.pointer(at), "{at} is Cut's, untouched by an edit of Film's own part");
         }
     }
@@ -230,38 +204,37 @@ mod tests {
     /// scene's track hidden. Only those fields change; every other field of Cut's comes back exactly.
     #[test]
     fn film_edits_cut_s_parts_and_saves_them_in_cut_s_shape() {
-        let cut = with_cut_parts(film_form());
+        let cut = cut_parts();
         let mut s = session();
         open_host_file(&mut s, "trip.otio", &serde_json::to_vec(&cut).unwrap()).unwrap();
-        edit_clip(&mut s, "T", "Title", |c| {
+        edit_clip(&mut s, "Edit", "End", |c| {
             let l = c.effects.iter_mut().find(|e| e.effect == "graphic_text").unwrap();
             l.params.insert("text".into(), filmcraft_project::Param::new(ParamValue::Text("Bye".into())));
         });
         // A frame at 30 fps is 4000 of Cut's ticks: shorten "End" by one.
-        edit_clip(&mut s, "T", "End", |c| c.duration -= filmcraft_time::FrameRate::FPS_30.frame_duration());
+        edit_clip(&mut s, "Edit", "End", |c| c.duration -= filmcraft_time::FrameRate::FPS_30.frame_duration());
         {
             let p = std::sync::Arc::make_mut(&mut s.project);
-            let id = p.items.values().find(|i| i.name == "T").unwrap().id;
+            let id = p.items.values().find(|i| i.name == "Edit").unwrap().id;
             let q = p.sequence_mut(id).unwrap();
             q.markers.iter_mut().find(|m| m.name == "hook").unwrap().name = "hook 2".into();
             let teaser = p.items.values().find(|i| i.name == "Teaser").unwrap().id;
             p.sequence_mut(teaser).unwrap().video_tracks.iter_mut().find(|t| t.name == "Titles").unwrap().enabled = false;
         }
         let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
-        // Film's own tracks (V1, A1), then Cut's Titles and its lanes.
-        let titles = "/children/0/tracks/children/2";
-        assert_eq!(saved.pointer(&format!("{titles}/children/0/metadata/opencut/element/content")), Some(&serde_json::json!("Bye")));
-        assert_eq!(saved.pointer(&format!("{titles}/children/2/source_range/duration/value")), Some(&serde_json::json!(116000)));
+        let end = format!("{TITLES}/children/2");
+        assert_eq!(saved.pointer(&format!("{end}/metadata/opencut/element/content")), Some(&serde_json::json!("Bye")));
+        assert_eq!(saved.pointer(&format!("{end}/source_range/duration/value")), Some(&serde_json::json!(116000)));
         assert_eq!(saved.pointer("/children/0/tracks/markers/0/name"), Some(&serde_json::json!("hook 2")));
         assert_eq!(saved.pointer("/children/0/tracks/markers/0/metadata/opencut/bookmark/note"), Some(&serde_json::json!("hook 2")));
-        assert_eq!(saved.pointer("/children/1/tracks/children/0/metadata/opencut/track/hidden"), Some(&serde_json::json!(true)));
+        assert_eq!(saved.pointer("/children/2/tracks/children/0/metadata/opencut/track/hidden"), Some(&serde_json::json!(true)));
         // Everything else is exactly the file's.
         let mut want = cut.clone();
-        *want.pointer_mut(&format!("{titles}/children/0/metadata/opencut/element/content")).unwrap() = serde_json::json!("Bye");
-        *want.pointer_mut(&format!("{titles}/children/2/source_range/duration/value")).unwrap() = serde_json::json!(116000);
+        *want.pointer_mut(&format!("{end}/metadata/opencut/element/content")).unwrap() = serde_json::json!("Bye");
+        *want.pointer_mut(&format!("{end}/source_range/duration/value")).unwrap() = serde_json::json!(116000);
         *want.pointer_mut("/children/0/tracks/markers/0/name").unwrap() = serde_json::json!("hook 2");
         *want.pointer_mut("/children/0/tracks/markers/0/metadata/opencut/bookmark/note").unwrap() = serde_json::json!("hook 2");
-        *want.pointer_mut("/children/1/tracks/children/0/metadata/opencut/track/hidden").unwrap() = serde_json::json!(true);
+        *want.pointer_mut("/children/2/tracks/children/0/metadata/opencut/track/hidden").unwrap() = serde_json::json!(true);
         assert_eq!(first_difference(&want, &saved, ""), None);
         // Saved again unedited: the same file.
         let again: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
