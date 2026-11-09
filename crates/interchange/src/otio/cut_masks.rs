@@ -19,7 +19,7 @@
 use std::f64::consts::PI;
 
 use filmcraft_geom::Vec2;
-use filmcraft_project::{Mask, MaskMode, MaskPath, MaskUnits, MaskVertex, Param, ParamValue, TrackMethod};
+use filmcraft_project::{Mask, MaskMode, MaskPath, MaskText, MaskUnits, MaskVertex, Param, ParamValue, TextDecoration, TrackMethod};
 use serde_json::{Map, Value, json};
 
 /// The element's own pixels in Film's clip pixels (where Cut's fractions of the element are).
@@ -58,7 +58,9 @@ fn box_like(p: &Value, w: f64, h: f64) -> (f64, f64, f64, f64, f64) {
 }
 
 fn rect(cx: f64, cy: f64, hw: f64, hh: f64, rot: f64) -> MaskPath {
-    polygon([(cx - hw, cy - hh), (cx + hw, cy - hh), (cx + hw, cy + hh), (cx - hw, cy + hh)].into_iter().map(|(x, y)| rotate_about(x, y, cx, cy, rot)).collect())
+    polygon(
+        [(cx - hw, cy - hh), (cx + hw, cy - hh), (cx + hw, cy + hh), (cx - hw, cy + hh)].into_iter().map(|(x, y)| rotate_about(x, y, cx, cy, rot)).collect(),
+    )
 }
 
 /// A split's half-plane (the side its normal points), cut to a box `w + h` beyond every edge of the element (OpenCut
@@ -158,7 +160,13 @@ pub(super) fn cut_mask_path(mask: &Value, w: f64, h: f64) -> Result<MaskPath, St
             let start = at(0.0, -hh * 0.475);
             let (rc1, rc2, bottom) = (at(hw, -hh * 1.225), at(hw, -hh * 0.125), at(0.0, hh * 0.725));
             let (lc1, lc2) = (at(-hw, -hh * 0.125), at(-hw, -hh * 1.225));
-            MaskPath { vertices: vec![MaskVertex { p: start, t_in: lc2 - start, t_out: rc1 - start }, MaskVertex { p: bottom, t_in: rc2 - bottom, t_out: lc1 - bottom }], closed: true }
+            MaskPath {
+                vertices: vec![
+                    MaskVertex { p: start, t_in: lc2 - start, t_out: rc1 - start },
+                    MaskVertex { p: bottom, t_in: rc2 - bottom, t_out: lc1 - bottom },
+                ],
+                closed: true,
+            }
         }
         "custom" => {
             // An open path is not drawn by Cut (its definition calls it inactive); Film keeps it as an open path whose mode is None.
@@ -174,12 +182,16 @@ pub(super) fn cut_mask_path(mask: &Value, w: f64, h: f64) -> Result<MaskPath, St
                 .map(|q| {
                     let (x, y) = (num(q, "x", 0.0), num(q, "y", 0.0));
                     let a = to(x, y);
-                    MaskVertex { p: a, t_in: to(x + num(q, "inX", 0.0), y + num(q, "inY", 0.0)) - a, t_out: to(x + num(q, "outX", 0.0), y + num(q, "outY", 0.0)) - a }
+                    MaskVertex {
+                        p: a,
+                        t_in: to(x + num(q, "inX", 0.0), y + num(q, "inY", 0.0)) - a,
+                        t_out: to(x + num(q, "outX", 0.0), y + num(q, "outY", 0.0)) - a,
+                    }
                 })
                 .collect();
             MaskPath { vertices, closed: p.get("closed").and_then(Value::as_bool).unwrap_or(false) }
         }
-        "text" => return Err("a text mask, which Film draws once its text mask is built".into()),
+        "text" => return Err("a text mask, whose shape is its text, not a path".into()),
         other => return Err(format!("the mask \"{other}\", which is not one of Cut's")),
     })
 }
@@ -239,7 +251,8 @@ fn track_name(t: TrackMethod) -> &'static str {
 pub(super) fn film_mask(mask: &Value, b: &ElementBox) -> Result<Mask, String> {
     let ty = mask.get("type").and_then(Value::as_str).unwrap_or("");
     let p = mask.get("params").ok_or("a mask without params")?;
-    let mut path = cut_mask_path(mask, b.w, b.h)?;
+    let text = if ty == "text" { Some(film_text(p, b)?) } else { None };
+    let mut path = if text.is_some() { MaskPath::default() } else { cut_mask_path(mask, b.w, b.h)? };
     for v in &mut path.vertices {
         v.p = Vec2::new(v.p.x + b.x, v.p.y + b.y);
     }
@@ -257,7 +270,74 @@ pub(super) fn film_mask(mask: &Value, b: &ElementBox) -> Result<Mask, String> {
     m.inverted = p.get("inverted").and_then(Value::as_bool).unwrap_or(false);
     m.mode = if open { MaskMode::None } else { mode_of(p.get("mode").and_then(Value::as_str))? };
     m.track_method = track_of(mask.get("track").and_then(Value::as_str))?;
+    m.text = text;
     Ok(m)
+}
+
+fn str_of<'a>(p: &'a Value, k: &str, d: &'a str) -> &'a str {
+    p.get(k).and_then(Value::as_str).unwrap_or(d)
+}
+
+/// Cut's text mask (OpenCut `masks/definitions/text.ts`, its defaults where a field is absent) as Film's text, laid in the element's
+/// box: Cut draws it on a canvas the element's size, which is [`MaskText`]'s own measure.
+fn film_text(p: &Value, b: &ElementBox) -> Result<MaskText, String> {
+    let bold = match str_of(p, "fontWeight", "normal") {
+        "normal" => false,
+        "bold" => true,
+        w => return Err(format!("a text mask's weight \"{w}\", which is not one of Cut's")),
+    };
+    let italic = match str_of(p, "fontStyle", "normal") {
+        "normal" => false,
+        "italic" => true,
+        s => return Err(format!("a text mask's style \"{s}\", which is not one of Cut's")),
+    };
+    let d = str_of(p, "textDecoration", "none");
+    let decoration = TextDecoration::from_name(d).ok_or_else(|| format!("a text mask's decoration \"{d}\", which is not one of Cut's"))?;
+    Ok(MaskText {
+        content: str_of(p, "content", "").to_string(),
+        family: str_of(p, "fontFamily", "Arial").to_string(),
+        bold,
+        italic,
+        decoration,
+        size: num(p, "fontSize", 15.0),
+        letter_spacing: num(p, "letterSpacing", 0.0),
+        line_height: num(p, "lineHeight", 1.2),
+        frame: [b.x, b.y, b.w, b.h],
+        center: Vec2::new(num(p, "centerX", 0.0), num(p, "centerY", 0.0)),
+        rotation: num(p, "rotation", 0.0),
+        scale: num(p, "scale", 1.0),
+    })
+}
+
+/// Film's text as Cut's text mask's own parameters on the element's box. Text Film laid in another box of the clip is moved onto the
+/// element's: its centre kept where it is in the clip and its size kept in clip pixels (Cut's font is in 90ths of the box's height).
+fn cut_text(t: &MaskText, b: &ElementBox) -> Map<String, Value> {
+    let [fx, fy, fw, fh] = t.frame;
+    let same = t.frame == [b.x, b.y, b.w, b.h];
+    let (cx, cy, size) = if same {
+        (t.center.x, t.center.y, t.size)
+    } else {
+        let (ax, ay) = (fx + fw / 2.0 + t.center.x * fw, fy + fh / 2.0 + t.center.y * fh);
+        ((ax - b.x - b.w / 2.0) / b.w, (ay - b.y - b.h / 2.0) / b.h, t.size * fh / b.h)
+    };
+    let mut m = Map::new();
+    for (k, v) in [
+        ("content", json!(t.content)),
+        ("fontSize", r9(size)),
+        ("fontFamily", json!(t.family)),
+        ("fontWeight", json!(if t.bold { "bold" } else { "normal" })),
+        ("fontStyle", json!(if t.italic { "italic" } else { "normal" })),
+        ("textDecoration", json!(t.decoration.label())),
+        ("letterSpacing", r9(t.letter_spacing)),
+        ("lineHeight", r9(t.line_height)),
+        ("centerX", r9(cx)),
+        ("centerY", r9(cy)),
+        ("rotation", r9(t.rotation)),
+        ("scale", r9(t.scale)),
+    ] {
+        m.insert(k.into(), v);
+    }
+    m
 }
 
 /// Cut's masks as Film's.
@@ -309,6 +389,9 @@ pub(super) fn cut_masks(film: &[Mask], origin: &[Value], b: &ElementBox) -> Resu
             return Err(format!("mask-keyframes-not-in-cut: Film animates the path of the mask \"{}\", and Cut's masks hold no keyframes", m.name));
         }
         let ParamValue::Path(path) = &m.path.value else { return Err(format!("the mask \"{}\" has no path", m.name)) };
+        if m.text.is_some() && !path.is_empty() {
+            return Err(format!("text-mask-path-not-in-cut: the text mask \"{}\" holds a path beside its text, and Cut's text mask is its text alone", m.name));
+        }
         let feather = static_f64(&m.feather, "feather", &m.name)?;
         let expansion = static_f64(&m.expansion, "expansion", &m.name)?;
         let opacity = static_f64(&m.opacity, "opacity", &m.name)?;
@@ -319,13 +402,36 @@ pub(super) fn cut_masks(film: &[Mask], origin: &[Value], b: &ElementBox) -> Resu
         };
         let mut params = o["params"].as_object().cloned().ok_or("a mask of Cut's without params")?;
         let params = &mut params;
-        let reshaped = e.as_ref().is_none_or(|e| e.path.value != m.path.value);
+        let reshaped = m.text.is_none() && e.as_ref().is_none_or(|e| e.path.value != m.path.value || e.text.is_some());
+        if let Some(t) = &m.text {
+            // Film's text as Cut's text mask: only the parameters Film changed are rewritten; a mask that was not Cut's text mask
+            // becomes one, its look (feather, stroke, inversion...) kept.
+            let want = cut_text(t, b);
+            let had = e.as_ref().and_then(|e| e.text.as_ref()).map(|t| cut_text(t, b));
+            if had.is_none() {
+                let keep = ["feather", "inverted", "strokeColor", "strokeWidth", "strokeAlign", "mode", "opacity", "expansion", "units"];
+                params.retain(|k, _| keep.contains(&k.as_str()));
+                o["type"] = json!("text");
+            }
+            for (k, v) in want {
+                if had.as_ref().is_none_or(|h| h.get(&k) != Some(&v)) {
+                    params.insert(k, v);
+                }
+            }
+        }
         if reshaped {
             // Film's curve as Cut's custom path: the shape's own parameters go, its look (feather, stroke, inversion...) stays.
             let keep = ["feather", "inverted", "strokeColor", "strokeWidth", "strokeAlign", "mode", "opacity", "expansion", "units"];
             params.retain(|k, _| keep.contains(&k.as_str()));
             let closed = path.closed || m.mode != MaskMode::None;
-            for (k, v) in [("path", custom_points(path, b)), ("closed", json!(closed)), ("centerX", json!(0)), ("centerY", json!(0)), ("rotation", json!(0)), ("scale", json!(1))] {
+            for (k, v) in [
+                ("path", custom_points(path, b)),
+                ("closed", json!(closed)),
+                ("centerX", json!(0)),
+                ("centerY", json!(0)),
+                ("rotation", json!(0)),
+                ("scale", json!(1)),
+            ] {
                 params.insert(k.into(), v);
             }
         }
@@ -403,7 +509,14 @@ mod tests {
     }
 
     fn masks() -> Vec<Value> {
-        fixture()["cases"].as_array().unwrap().iter().filter(|c| c["width"] == 1920).enumerate().map(|(i, c)| json!({"id": format!("m{i}"), "type": c["type"], "params": c["params"]})).collect()
+        fixture()["cases"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|c| c["width"] == 1920)
+            .enumerate()
+            .map(|(i, c)| json!({"id": format!("m{i}"), "type": c["type"], "params": c["params"]}))
+            .collect()
     }
 
     #[test]
@@ -436,7 +549,11 @@ mod tests {
         assert_eq!(cut[6]["type"], "ellipse", "a mask Film did not reshape keeps its type");
         assert_eq!(cut[6]["params"]["mode"], "subtract");
         assert_eq!(cut[6]["params"]["opacity"], 0.5);
-        assert_eq!((cut[6]["params"].get("units"), &cut[6]["params"]["expansion"], &cut[6]["params"]["feather"]), (None, &json!(3), &json!(5)), "Film's feather in the canvas's pixels, Cut's own");
+        assert_eq!(
+            (cut[6]["params"].get("units"), &cut[6]["params"]["expansion"], &cut[6]["params"]["feather"]),
+            (None, &json!(3), &json!(5)),
+            "Film's feather in the canvas's pixels, Cut's own"
+        );
         assert_eq!(cut[6]["name"], "Hole");
         assert_eq!(cut[16]["type"], "custom");
         assert_eq!(cut[16]["params"]["units"], "clip");
@@ -497,5 +614,77 @@ mod tests {
         assert_eq!((&cut[3]["params"]["units"], &cut[3]["params"]["feather"]), (&json!("canvas"), &json!(6)));
         assert_eq!(&cut[5]["params"]["units"], &json!("clip"));
         assert_eq!(film_masks(&cut, &b()).unwrap().iter().map(|m| m.units).collect::<Vec<_>>(), film.iter().map(|m| m.units).collect::<Vec<_>>());
+    }
+
+    /// Cut's text mask as the editor builds it (OpenCut `masks/definitions/text.ts` `buildDefault`, the editor-built fixture's).
+    fn cut_text_mask() -> Value {
+        json!({"id": "t1", "type": "text", "params": {"feather": 0, "inverted": false, "strokeColor": "#ffffff", "strokeWidth": 0, "strokeAlign": "center",
+            "content": "Mask", "fontSize": 15, "fontFamily": "Arial", "fontWeight": "normal", "fontStyle": "normal", "textDecoration": "none",
+            "letterSpacing": 0, "lineHeight": 1.2, "centerX": 0, "centerY": 0, "rotation": 0, "scale": 1}})
+    }
+
+    /// files/989 (tool choice: both tools edit everything and draw the same thing): Cut's text mask opens in Film as Film's text mask,
+    /// laid in the element's box with Cut's numbers (its shape is its text; its path is empty); unchanged it is written back exactly,
+    /// and Film's edit rewrites only the parameters it changed.
+    #[test]
+    fn cut_s_text_mask_is_film_s_text_mask_both_ways() {
+        let b = ElementBox { x: 0.0, y: 0.0, w: 1920.0, h: 1080.0 };
+        let mut o = masks();
+        o.push(cut_text_mask());
+        o[16]["params"]["feather"] = json!(5);
+        let mut film = film_masks(&o, &b).unwrap();
+        let t = film[16].text.clone().expect("a text mask");
+        assert_eq!((t.content.as_str(), t.family.as_str(), t.size, t.line_height, t.frame), ("Mask", "Arial", 15.0, 1.2, [0.0, 0.0, 1920.0, 1080.0]));
+        assert_eq!((film[16].name.as_str(), film[16].units, film[16].feather.value.as_f64()), ("Text", MaskUnits::Canvas, Some(5.0)));
+        assert!(film[16].path_at(filmcraft_time::Tick(0)).is_empty());
+        assert_eq!(cut_masks(&film, &o, &b).unwrap(), o, "unchanged, written back exactly");
+        let t = film[16].text.as_mut().unwrap();
+        t.content = "Film".into();
+        t.bold = true;
+        t.center = Vec2::new(0.25, -0.1);
+        let cut = cut_masks(&film, &o, &b).unwrap();
+        let mut want = o[16].clone();
+        for (k, v) in [("content", json!("Film")), ("fontWeight", json!("bold")), ("centerX", json!(0.25)), ("centerY", json!(-0.1))] {
+            want["params"][k] = v;
+        }
+        assert_eq!(cut[16], want, "only what Film changed");
+        assert_eq!(film_masks(&cut, &b).unwrap()[16], film[16], "Film's edit opens in Film as Film had it");
+    }
+
+    /// A text mask Film adds is Cut's text mask; laid in another box of the clip (a Cut graphic's element is a 512-pixel square in a
+    /// frame-sized clip) it is moved onto the element's box with its centre where it is in the clip and its font the same clip pixels.
+    #[test]
+    fn a_text_mask_film_adds_is_cut_s_text_mask_on_the_element_s_box() {
+        let b = ElementBox { x: 704.0, y: 284.0, w: 512.0, h: 512.0 };
+        let mut t = MaskText::new("Hi\nthere", [0.0, 0.0, 1920.0, 1080.0]);
+        t.size = 9.0;
+        t.center = Vec2::new(0.05, 0.0);
+        t.letter_spacing = 2.0;
+        t.decoration = TextDecoration::Underline;
+        let film = vec![Mask::text("Words", t)];
+        let cut = cut_masks(&film, &[], &b).unwrap();
+        assert_eq!((&cut[0]["type"], &cut[0]["name"]), (&json!("text"), &json!("Words")));
+        let p = &cut[0]["params"];
+        assert_eq!(
+            (&p["content"], &p["textDecoration"], &p["letterSpacing"], &p["units"]),
+            (&json!("Hi\nthere"), &json!("underline"), &json!(2), &json!("clip"))
+        );
+        // the centre 96 clip pixels right of the clip's (1056, 540): 0.6875 of the box right of its centre (960, 540); 108 clip pixels
+        // of font (9 · 1080 / 90) are 18.984375 90ths of the box's 512
+        assert_eq!((&p["centerX"], &p["centerY"], &p["fontSize"]), (&json!(0.1875), &json!(0), &json!(18.984375)));
+        let back = film_masks(&cut, &b).unwrap();
+        let t = back[0].text.as_ref().unwrap();
+        assert_eq!((t.frame, t.size * t.frame[3] / 90.0), ([704.0, 284.0, 512.0, 512.0], 108.0));
+    }
+
+    #[test]
+    fn a_text_mask_cut_cannot_hold_is_refused_by_name() {
+        let b = ElementBox { x: 0.0, y: 0.0, w: 100.0, h: 100.0 };
+        let mut odd = cut_text_mask();
+        odd["params"]["fontWeight"] = json!("600");
+        assert_eq!(film_masks(&[odd], &b).unwrap_err(), "a text mask's weight \"600\", which is not one of Cut's");
+        let mut m = Mask::text("T", MaskText::new("x", [0.0, 0.0, 100.0, 100.0]));
+        m.path = Param::new(ParamValue::Path(MaskPath::rect(0.0, 0.0, 5.0, 5.0)));
+        assert!(cut_masks(&[m], &[], &b).unwrap_err().starts_with("text-mask-path-not-in-cut: "));
     }
 }

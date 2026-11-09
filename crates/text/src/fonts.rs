@@ -319,6 +319,21 @@ impl Face {
         (origin.is_finite() && origin.abs() < px * 4.0).then_some(origin)
     }
 
+    /// The em box at a pixel size: `(over, under)`, its top above the baseline and its bottom below it, summing to `px`. A browser's
+    /// `textBaseline = "middle"` is halfway between them (Chromium's `NormalizedTypoAscentAndDescent`): the OS/2 typo ascender and
+    /// descender scaled to one em, else the ascent and descent ([`Face::metrics`]) scaled to one em.
+    pub fn em_box(&self, px: f32) -> (f32, f32) {
+        use skrifa::raw::TableProvider;
+        let typo =
+            self.font().and_then(|f| f.os2().ok()).map(|t| (f32::from(t.s_typo_ascender()), -f32::from(t.s_typo_descender()))).filter(|(a, d)| a + d > 0.0);
+        let (a, d) = typo.unwrap_or_else(|| {
+            let m = self.metrics(px);
+            (m.ascent, m.descent)
+        });
+        let over = if a + d > 0.0 { px * a / (a + d) } else { px * 0.8 };
+        (over, px - over)
+    }
+
     pub fn metrics(&self, px: f32) -> VMetrics {
         let Some(f) = self.font() else {
             return VMetrics {

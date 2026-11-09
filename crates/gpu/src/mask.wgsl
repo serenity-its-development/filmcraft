@@ -1,5 +1,6 @@
 // Mask coverage + masked-effect mix (same math as filmcraft_render::mask; see its docs).
-// Masks arrive flattened to polygons in working-image pixels, active ones only (mode != None). Each carries the linear map from
+// Masks arrive flattened to closed polygons in working-image pixels, active ones only (mode != None), as the segments of every one of
+// their contours (a text mask is many contours, its glyphs' counters among them, filled by one non-zero winding). Each carries the linear map from
 // working pixels to the pixels its feather, expansion and edge distance are measured in (identity for clip pixels; the clip's map to
 // the sequence frame for canvas pixels).
 
@@ -25,7 +26,8 @@ struct MaskInfo {
 
 @group(0) @binding(0) var<uniform> params: Params;
 @group(0) @binding(1) var<storage, read> masks: array<MaskInfo>;
-@group(0) @binding(2) var<storage, read> pts: array<vec2<f32>>;
+// segment (a.xy, b.xy); a mask's are segs[start .. start + len]
+@group(0) @binding(2) var<storage, read> segs: array<vec4<f32>>;
 @group(0) @binding(3) var<storage, read> original: array<vec4<f32>>;
 @group(0) @binding(4) var<storage, read> effected: array<vec4<f32>>;
 @group(0) @binding(5) var<storage, read_write> out_px: array<vec4<f32>>;
@@ -73,13 +75,14 @@ fn seg_dist2(p: vec2<f32>, a: vec2<f32>, b: vec2<f32>, metric: mat2x2<f32>) -> f
 fn mask_value(m: MaskInfo, p: vec2<f32>) -> f32 {
     let band = abs(m.expansion) + max(m.feather, 1.0) * 0.5 + 1.0;
     var sd = -band;
-    if (m.len >= 3u) {
+    if (m.len >= 1u) {
         var wind = 0;
         var d2 = band * band;
         let metric = mat2x2<f32>(m.metric.xy, m.metric.zw);
         for (var i = 0u; i < m.len; i = i + 1u) {
-            let a = pts[m.start + i];
-            let c = pts[m.start + (i + 1u) % m.len];
+            let s = segs[m.start + i];
+            let a = s.xy;
+            let c = s.zw;
             if ((a.y <= p.y) != (c.y <= p.y)) {
                 let t = (p.y - a.y) / (c.y - a.y);
                 if (a.x + (c.x - a.x) * t < p.x) {

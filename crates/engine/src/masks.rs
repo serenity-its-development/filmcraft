@@ -10,7 +10,9 @@
 //! key folds a continuous drag into one step).
 
 use filmcraft_geom::{Affine, Vec2};
-use filmcraft_project::{ClipId, EffectInstance, Mask, MaskMode, MaskPath, MaskUnits, MaskVertex, ParamValue, TrackKind, TrackMethod};
+use filmcraft_project::{
+    ClipId, EffectInstance, Mask, MaskMode, MaskPath, MaskText, MaskUnits, MaskVertex, ParamValue, TextDecoration, TrackKind, TrackMethod,
+};
 use filmcraft_time::Tick;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -38,14 +40,14 @@ pub(crate) fn commands() -> Vec<CommandSpec> {
         spec(
             "masks.add",
             "Create Mask",
-            r#"{"clip":id?,"effect":index|id?="opacity","shape":"ellipse"|"polygon"|"rectangle"|"bezier","path":[[x,y]…]|{vertices}?,"center":[x,y]?,"size":[w,h]?,"cornerRadius":px?}"#,
+            r#"{"clip":id?,"effect":index|id?="opacity","shape":"ellipse"|"polygon"|"rectangle"|"bezier"|"text","path":[[x,y]…]|{vertices}?,"center":[x,y]?,"size":[w,h]?,"cornerRadius":px?,"text":{content?,family?,bold?,italic?,decoration?:"none|underline|line-through",size?,letterSpacing?,lineHeight?,center?:[x,y],rotation?,scale?}?}"#,
             add,
         ),
         spec("masks.remove", "Delete Mask", r#"{"clip":id?,"effect":index|id?,"mask":n?}"#, remove),
         spec(
             "masks.set",
             "Change Mask",
-            r#"{"clip":id?,"effect":index|id?,"mask":n?,"name":str?,"inverted":bool?,"mode":"none|add|subtract|intersect|lighten|darken|difference"?,"trackMethod":"position|positionRotation|positionScaleRotation"?,"units":"clip|canvas"?,"feather":px?,"opacity":pct?,"expansion":px?,"path":path?,"time":ticks?,"merge":key?}"#,
+            r#"{"clip":id?,"effect":index|id?,"mask":n?,"name":str?,"inverted":bool?,"mode":"none|add|subtract|intersect|lighten|darken|difference"?,"trackMethod":"position|positionRotation|positionScaleRotation"?,"units":"clip|canvas"?,"feather":px?,"opacity":pct?,"expansion":px?,"path":path?,"text":{content?,family?,bold?,italic?,decoration?,size?,letterSpacing?,lineHeight?,center?,rotation?,scale?}?,"time":ticks?,"merge":key?}"#,
             set,
         ),
         spec(
@@ -200,6 +202,46 @@ fn edit_mask<R>(s: &mut Session, p: &Value, label: &str, f: impl FnOnce(&mut Mas
     }
 }
 
+/// [`edit_mask`] for a command that edits a mask's path: a text mask, whose shape is its text, is refused by name.
+fn edit_path_mask<R>(s: &mut Session, p: &Value, label: &str, f: impl FnOnce(&mut Mask, Tick) -> Result<R>) -> Result<R> {
+    let l = label.to_string();
+    edit_mask(s, p, label, move |m, t| {
+        if m.text.is_some() {
+            return Err(bad(&l, format!("text-mask-has-no-vertices: \"{}\" is a text mask, its shape its text (masks.set {{text}})", m.name)));
+        }
+        f(m, t)
+    })
+}
+
+/// A text mask's text from `masks.add`/`masks.set`'s `text` object onto `t`: `content`, `family`, `bold`, `italic`,
+/// `decoration` (none, underline, line-through), `size` (90ths of the box's height), `letterSpacing` (pixels of the mask's units),
+/// `lineHeight` (font sizes), `center` ([x, y], fractions of the box from its centre), `rotation` (degrees), `scale`.
+fn apply_text(label: &str, t: &mut MaskText, v: &Value) -> Result<()> {
+    let o = v.as_object().ok_or_else(|| bad(label, "`text` is an object"))?;
+    for (k, x) in o {
+        let num = || x.as_f64().filter(|f| f.is_finite()).ok_or_else(|| bad(label, format!("`text.{k}` is a number")));
+        let flag = || x.as_bool().ok_or_else(|| bad(label, format!("`text.{k}` is true or false")));
+        match k.as_str() {
+            "content" => t.content = x.as_str().ok_or_else(|| bad(label, "`text.content` is a string"))?.to_string(),
+            "family" => t.family = x.as_str().filter(|f| !f.trim().is_empty()).ok_or_else(|| bad(label, "`text.family` names a font"))?.to_string(),
+            "bold" => t.bold = flag()?,
+            "italic" => t.italic = flag()?,
+            "decoration" => {
+                let d = x.as_str().unwrap_or("");
+                t.decoration = TextDecoration::from_name(d).ok_or_else(|| bad(label, format!("`text.decoration` `{d}`: none, underline or line-through")))?;
+            }
+            "size" => t.size = num()?.max(0.0),
+            "letterSpacing" => t.letter_spacing = num()?,
+            "lineHeight" => t.line_height = num()?,
+            "center" => t.center = pt(x).ok_or_else(|| bad(label, "`text.center` is [x, y]"))?,
+            "rotation" => t.rotation = num()?,
+            "scale" => t.scale = num()?.max(0.0),
+            other => return Err(bad(label, format!("`text.{other}` is not a text mask's"))),
+        }
+    }
+    Ok(())
+}
+
 fn set_path_at(m: &mut Mask, t: Tick, path: MaskPath) {
     m.path.set_at(t, ParamValue::Path(path));
 }
@@ -211,8 +253,21 @@ fn add(s: &mut Session, p: &Value) -> Result<Value> {
     let center = p.get("center").and_then(pt).unwrap_or(Vec2::new(w / 2.0, h / 2.0));
     let r = w.min(h) * 0.2;
     let size = p.get("size").and_then(pt).unwrap_or(Vec2::new(r * 2.0, r * 2.0));
+    // A text mask laid in the clip's own pixels (Cut's defaults, then `text`), centred on `center`.
+    let text = if shape == "text" {
+        let mut t = MaskText::new("Mask", [0.0, 0.0, w, h]);
+        t.center = Vec2::new((center.x - w / 2.0) / w, (center.y - h / 2.0) / h);
+        if let Some(v) = p.get("text") {
+            apply_text("masks.add", &mut t, v)?;
+        }
+        Some(t)
+    } else {
+        None
+    };
     let path = match p.get("path") {
+        Some(_) if text.is_some() => return Err(bad("masks.add", "a text mask's shape is its text, not a `path`")),
         Some(v) => path_from_json(v).ok_or_else(|| bad("masks.add", "bad `path`"))?,
+        None if text.is_some() => MaskPath::default(),
         None => match shape.as_str() {
             "ellipse" => MaskPath::ellipse(center, size * 0.5),
             "polygon" | "rectangle" | "rect" | "4-point" => {
@@ -226,7 +281,7 @@ fn add(s: &mut Session, p: &Value) -> Result<Value> {
             _ => return Err(bad("masks.add", "a bezier mask needs `path` (pen points)")),
         },
     };
-    if path.len() < 3 && path.closed {
+    if path.len() < 3 && path.closed && text.is_none() {
         return Err(bad("masks.add", "a mask needs at least 3 vertices"));
     }
     let eff = p.get("effect").cloned();
@@ -244,7 +299,10 @@ fn add(s: &mut Session, p: &Value) -> Result<Value> {
         }
         let n = e.masks.iter().filter_map(|m| m.name.strip_prefix("Mask (")?.strip_suffix(')')?.parse::<usize>().ok()).max().unwrap_or(0) + 1;
         let name = format!("Mask ({n})");
-        e.masks.push(Mask::new(name.clone(), path));
+        e.masks.push(match text {
+            Some(t) => Mask::text(name.clone(), t),
+            None => Mask::new(name.clone(), path),
+        });
         let mi = e.masks.len() - 1;
         st.selected_mask = Some(MaskSel { clip, effect: ei, mask: mi });
         st.selected_effect = None;
@@ -295,6 +353,7 @@ fn set(s: &mut Session, p: &Value) -> Result<Value> {
         None => None,
     };
     let name = str_p(p, "name").map(str::to_string);
+    let text = p.get("text").cloned();
     let inverted = bool_p(p, "inverted");
     let nums: Vec<(&str, f64)> = ["feather", "opacity", "expansion"].into_iter().filter_map(|k| f64_p(p, k).map(|v| (k, v))).collect();
     edit_mask(s, p, "Change Mask", move |m, t| {
@@ -323,7 +382,15 @@ fn set(s: &mut Session, p: &Value) -> Result<Value> {
                 prm.set_at(t, ParamValue::Float(v));
             }
         }
+        if let Some(v) = &text {
+            let name = m.name.clone();
+            let tx = m.text.as_mut().ok_or_else(|| bad("masks.set", format!("mask-not-text: \"{name}\" is a path mask; `text` sets a text mask's text")))?;
+            apply_text("masks.set", tx, v)?;
+        }
         if let Some(path) = path {
+            if m.text.is_some() {
+                return Err(bad("masks.set", format!("text-mask-has-no-vertices: \"{}\" is a text mask, its shape its text", m.name)));
+            }
             set_path_at(m, t, path);
         }
         Ok(())
@@ -343,7 +410,7 @@ fn move_vertex(s: &mut Session, p: &Value) -> Result<Value> {
     if to.is_none() && delta.is_none() {
         return Err(bad("masks.moveVertex", "need `to` or `delta`"));
     }
-    edit_mask(s, p, "Move Mask Vertex", move |m, t| {
+    edit_path_mask(s, p, "Move Mask Vertex", move |m, t| {
         let mut path = m.path_at(t);
         let v = path.vertices.get_mut(vi).ok_or_else(|| bad("masks.moveVertex", format!("no vertex {vi}")))?;
         match handle.as_str() {
@@ -388,7 +455,7 @@ fn move_vertices(s: &mut Session, p: &Value) -> Result<Value> {
         return Err(bad(ID, "`vertices` moves points by `delta`"));
     }
     let d = p.get("delta").and_then(pt).ok_or_else(|| bad(ID, "need `delta`"))?;
-    edit_mask(s, p, "Move Mask Vertex", move |m, t| {
+    edit_path_mask(s, p, "Move Mask Vertex", move |m, t| {
         let mut path = m.path_at(t);
         for &vi in &only {
             let v = path.vertices.get_mut(vi).ok_or_else(|| bad(ID, format!("no vertex {vi}")))?;
@@ -403,6 +470,15 @@ fn move_vertices(s: &mut Session, p: &Value) -> Result<Value> {
 fn translate(s: &mut Session, p: &Value) -> Result<Value> {
     let d = p.get("delta").and_then(pt).ok_or_else(|| bad("masks.translate", "need `delta`"))?;
     edit_mask(s, p, "Move Mask", move |m, t| {
+        if let Some(tx) = m.text.as_mut() {
+            // a text mask moves its centre by `delta` clip pixels (fractions of its box)
+            let [_, _, w, h] = tx.frame;
+            if w <= 0.0 || h <= 0.0 {
+                return Err(bad("masks.translate", "the text mask's box has no size"));
+            }
+            tx.center = Vec2::new(tx.center.x + d.x / w, tx.center.y + d.y / h);
+            return Ok(());
+        }
         let path = m.path_at(t).transformed(&Affine::translate(d.x, d.y));
         set_path_at(m, t, path);
         Ok(())
@@ -413,7 +489,7 @@ fn translate(s: &mut Session, p: &Value) -> Result<Value> {
 fn add_vertex(s: &mut Session, p: &Value) -> Result<Value> {
     let after = u64_p(p, "after").ok_or_else(|| bad("masks.addVertex", "need `after`"))? as usize;
     let at = p.get("at").and_then(pt).ok_or_else(|| bad("masks.addVertex", "need `at`"))?;
-    edit_mask(s, p, "Add Mask Vertex", move |m, t| {
+    edit_path_mask(s, p, "Add Mask Vertex", move |m, t| {
         let n = m.path_at(t).vertices.len();
         // clamp against the length before any insertion, so the index stays valid in the grown path
         let i = (after + 1).min(n);
@@ -451,7 +527,7 @@ fn add_vertex(s: &mut Session, p: &Value) -> Result<Value> {
 
 fn remove_vertex(s: &mut Session, p: &Value) -> Result<Value> {
     let vi = u64_p(p, "vertex").ok_or_else(|| bad("masks.removeVertex", "need `vertex`"))? as usize;
-    edit_mask(s, p, "Delete Mask Vertex", move |m, t| {
+    edit_path_mask(s, p, "Delete Mask Vertex", move |m, t| {
         if m.path_at(t).len() <= 3 {
             return Err(bad("masks.removeVertex", "a mask keeps at least 3 vertices"));
         }
@@ -480,7 +556,7 @@ fn drop_all(m: &mut Mask, _t: Tick, f: impl Fn(&mut MaskPath)) {
 
 fn toggle_smooth(s: &mut Session, p: &Value) -> Result<Value> {
     let vi = u64_p(p, "vertex").ok_or_else(|| bad("masks.toggleVertexSmooth", "need `vertex`"))? as usize;
-    edit_mask(s, p, "Convert Mask Vertex", move |m, t| {
+    edit_path_mask(s, p, "Convert Mask Vertex", move |m, t| {
         let mut path = m.path_at(t);
         let n = path.vertices.len();
         if vi >= n {
@@ -522,7 +598,7 @@ fn round_corners(s: &mut Session, p: &Value) -> Result<Value> {
             Some(out)
         }
     };
-    let rounded = edit_mask(s, p, "Round Mask Corners", move |m, t| {
+    let rounded = edit_path_mask(s, p, "Round Mask Corners", move |m, t| {
         let mut corners = m.path_at(t).roundable_corners();
         if let Some(only) = &only {
             corners.retain(|i| only.binary_search(i).is_ok());
@@ -582,6 +658,7 @@ fn list(s: &mut Session, p: &Value) -> Result<Value> {
                         "opacity": m.opacity.f64_at(mt),
                         "expansion": m.expansion.f64_at(mt),
                         "path": path_to_json(&m.path_at(mt)),
+                        "text": m.text.as_ref().map(|t| json!({"content": t.content, "family": t.family, "bold": t.bold, "italic": t.italic, "decoration": t.decoration.label(), "size": t.size, "letterSpacing": t.letter_spacing, "lineHeight": t.line_height, "center": [t.center.x, t.center.y], "rotation": t.rotation, "scale": t.scale, "frame": t.frame})),
                         "pathKeyframes": m.path.keyframes.iter().map(|k| k.time.0).collect::<Vec<_>>(),
                         "selected": s.state.selected_mask == Some(MaskSel { clip: it.id, effect: ei, mask: mi }),
                     }));
@@ -632,6 +709,12 @@ fn track(s: &mut Session, p: &Value) -> Result<Value> {
         .or(sel.filter(|x| x.clip == clip && x.effect == ei).map(|x| x.mask))
         .ok_or_else(|| bad("masks.track", "need `mask`"))?;
     let mask = it.effects[ei].masks.get(mi).cloned().ok_or_else(|| bad("masks.track", format!("no mask {mi}")))?;
+    if mask.text.is_some() {
+        return Err(bad(
+            "masks.track",
+            format!("text-mask-not-tracked: \"{}\" is a text mask, its shape its text, which holds no keyframes to track into", mask.name),
+        ));
+    }
     if s.mask_jobs.iter().any(|j| j.target.clip == clip && j.target.effect == ei && j.target.mask == mi) {
         return Err(bad("masks.track", "this mask is already being tracked"));
     }

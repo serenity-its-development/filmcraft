@@ -85,11 +85,18 @@ impl GpuMask {
             params.extend_from_slice(&v.to_le_bytes());
         }
         let mut infos = Vec::new();
-        let mut pts: Vec<f32> = Vec::new();
+        // every edge of every contour as one segment (a, b), so a mask is any number of closed contours under one winding
+        let mut segs: Vec<f32> = Vec::new();
         for m in &active {
-            let start = (pts.len() / 2) as u32;
-            pts.extend(m.pts.iter().flatten());
-            for v in [start, m.pts.len() as u32, m.mode.index(), u32::from(m.inverted)] {
+            let start = (segs.len() / 4) as u32;
+            for c in &m.contours {
+                for i in 0..c.len() {
+                    let (a, b) = (c[i], c[(i + 1) % c.len()]);
+                    segs.extend([a[0], a[1], b[0], b[1]]);
+                }
+            }
+            let len = (segs.len() / 4) as u32 - start;
+            for v in [start, len, m.mode.index(), u32::from(m.inverted)] {
                 infos.extend_from_slice(&v.to_le_bytes());
             }
             for v in [m.feather, m.expansion, m.opacity, 0.0] {
@@ -99,14 +106,14 @@ impl GpuMask {
                 infos.extend_from_slice(&v.to_le_bytes());
             }
         }
-        if pts.is_empty() {
-            pts.extend([0.0, 0.0]);
+        if segs.is_empty() {
+            segs.extend([0.0; 4]);
         }
         let d = &self.device;
         let init = |label: &str, contents: &[u8], usage| d.create_buffer_init(&wgpu::util::BufferInitDescriptor { label: Some(label), contents, usage });
         let ub = init("mask-params", &params, wgpu::BufferUsages::UNIFORM);
         let mb = init("mask-infos", &infos, wgpu::BufferUsages::STORAGE);
-        let pb = init("mask-pts", &f32_bytes(&pts), wgpu::BufferUsages::STORAGE);
+        let pb = init("mask-segs", &f32_bytes(&segs), wgpu::BufferUsages::STORAGE);
         let dummy = [0.0f32; 4];
         let (o, e) = mix.unwrap_or((&dummy, &dummy));
         let ob = init("mask-original", &f32_bytes(o), wgpu::BufferUsages::STORAGE);

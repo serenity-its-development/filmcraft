@@ -403,6 +403,91 @@ impl MaskUnits {
     }
 }
 
+/// A text mask's decoration (one line under or through each line of text).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum TextDecoration {
+    #[default]
+    None,
+    Underline,
+    LineThrough,
+}
+
+impl TextDecoration {
+    pub fn label(self) -> &'static str {
+        match self {
+            TextDecoration::None => "none",
+            TextDecoration::Underline => "underline",
+            TextDecoration::LineThrough => "line-through",
+        }
+    }
+    pub fn from_name(s: &str) -> Option<Self> {
+        match s {
+            "none" => Some(TextDecoration::None),
+            "underline" => Some(TextDecoration::Underline),
+            "line-through" => Some(TextDecoration::LineThrough),
+            _ => None,
+        }
+    }
+}
+
+/// A text mask: its shape is the text's glyphs (every contour of every glyph, counters included, filled by one non-zero winding), laid
+/// out in a box of the clip as Cut lays out its text mask (OneOS doctrine files/989, tool choice: both tools draw the same thing).
+///
+/// The text is drawn on a canvas the size of the box as the mask draws it: the box's own clip pixels for a mask in clip pixels, its
+/// size in the sequence frame (through the clip's Motion at that frame, per axis) for a mask in the canvas's pixels, each side rounded
+/// to whole pixels. On that canvas the font is `size · height / 90` pixels, each line's middle is `line_height` font sizes below the
+/// last, the lines' block is centred on the box's centre offset by `center` (fractions of the box), every line centred on it, and the
+/// whole is scaled by `scale` and turned by `rotation` about that centre; `letter_spacing` is added after every character, in the
+/// canvas's pixels. The canvas is then laid on the box.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct MaskText {
+    pub content: String,
+    pub family: String,
+    #[serde(default)]
+    pub bold: bool,
+    #[serde(default)]
+    pub italic: bool,
+    #[serde(default)]
+    pub decoration: TextDecoration,
+    /// The font size in 90ths of the canvas's height.
+    pub size: f64,
+    /// Pixels of the canvas the text is drawn on, after every character.
+    #[serde(default)]
+    pub letter_spacing: f64,
+    /// The distance between lines' middles in font sizes.
+    pub line_height: f64,
+    /// The box the text is laid out in, in clip pixels: `[x, y, width, height]`.
+    pub frame: [f64; 4],
+    /// The text's centre, offset from the box's centre in fractions of its width and height.
+    #[serde(default)]
+    pub center: Vec2,
+    /// Degrees, clockwise on screen.
+    #[serde(default)]
+    pub rotation: f64,
+    pub scale: f64,
+}
+
+impl MaskText {
+    /// Text in a box of the clip with Cut's defaults (OpenCut `masks/definitions/text.ts` `buildDefault`).
+    pub fn new(content: impl Into<String>, frame: [f64; 4]) -> Self {
+        Self {
+            content: content.into(),
+            family: "Arial".into(),
+            bold: false,
+            italic: false,
+            decoration: TextDecoration::None,
+            size: 15.0,
+            letter_spacing: 0.0,
+            line_height: 1.2,
+            frame,
+            center: Vec2::ZERO,
+            rotation: 0.0,
+            scale: 1.0,
+        }
+    }
+}
+
 /// A mask on an effect instance.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Mask {
@@ -424,6 +509,9 @@ pub struct Mask {
     /// Where `feather` and `expansion` are measured (absent: clip pixels, as every mask before it).
     #[serde(default, skip_serializing_if = "MaskUnits::is_clip")]
     pub units: MaskUnits,
+    /// A text mask's text, which is its shape (its `path` is then empty and unused); absent for a path mask.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub text: Option<MaskText>,
 }
 
 /// Mask parameter ids (keyframe commands address them with `"mask": n`).
@@ -441,7 +529,12 @@ impl Mask {
             mode: MaskMode::Add,
             track_method: TrackMethod::default(),
             units: MaskUnits::Clip,
+            text: None,
         }
+    }
+    /// A text mask (its shape is `text`'s glyphs; its path is empty).
+    pub fn text(name: impl Into<String>, text: MaskText) -> Self {
+        Self { text: Some(text), ..Self::new(name, MaskPath::default()) }
     }
     pub fn param(&self, id: &str) -> Option<&Param> {
         match id {
@@ -555,6 +648,19 @@ mod tests {
         let s = serde_json::to_string(&m).unwrap();
         let back: Mask = serde_json::from_str(&s).unwrap();
         assert_eq!(back, m);
+        assert!(!s.contains("\"text\""), "a path mask writes no text: {s}");
+    }
+
+    #[test]
+    fn a_text_mask_round_trips() {
+        let mut t = MaskText::new("Ma\nsk", [0.0, 0.0, 1920.0, 1080.0]);
+        t.decoration = TextDecoration::LineThrough;
+        t.center = Vec2::new(0.1, -0.2);
+        let m = Mask::text("Text", t);
+        assert!(m.path_at(Tick(0)).is_empty());
+        let s = serde_json::to_string(&m).unwrap();
+        assert!(s.contains("\"line-through\""), "{s}");
+        assert_eq!(serde_json::from_str::<Mask>(&s).unwrap(), m);
     }
 
     #[test]

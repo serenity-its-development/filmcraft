@@ -33,8 +33,8 @@ use std::sync::Arc;
 
 use filmcraft_geom::Vec2;
 use filmcraft_project::{
-    ClipId, EffectInstance, HexColor, ItemId, ItemKind, Keyframe, Label, Marker, MarkerId, MarkerKind, MediaRef, Param, ParamValue, Project, Track, TrackId, TrackItem,
-    TrackKind, find_effect, graphic,
+    ClipId, EffectInstance, HexColor, ItemId, ItemKind, Keyframe, Label, Marker, MarkerId, MarkerKind, MediaRef, Param, ParamValue, Project, Track, TrackId,
+    TrackItem, TrackKind, find_effect, graphic,
 };
 use filmcraft_time::{FrameRate, TICKS_PER_SECOND, Tick, TimeRange};
 use serde_json::{Map, Value, json};
@@ -232,14 +232,23 @@ fn color_of(v: &Value) -> Result<[f32; 4], String> {
     let byte = |i: usize| u8::from_str_radix(h.get(i..i + 2).unwrap_or("zz"), 16).map(|b| b as f32 / 255.0);
     match h.len() {
         6 => Ok([byte(0).map_err(|e| e.to_string())?, byte(2).map_err(|e| e.to_string())?, byte(4).map_err(|e| e.to_string())?, 1.0]),
-        8 => Ok([byte(0).map_err(|e| e.to_string())?, byte(2).map_err(|e| e.to_string())?, byte(4).map_err(|e| e.to_string())?, byte(6).map_err(|e| e.to_string())?]),
+        8 => Ok([
+            byte(0).map_err(|e| e.to_string())?,
+            byte(2).map_err(|e| e.to_string())?,
+            byte(4).map_err(|e| e.to_string())?,
+            byte(6).map_err(|e| e.to_string())?,
+        ]),
         _ => Err(format!("the colour {s} is not #rrggbb or #rrggbbaa")),
     }
 }
 
 fn hex_of(c: [f32; 4]) -> Value {
     let b = |x: f32| (x.clamp(0.0, 1.0) * 255.0).round() as u8;
-    if b(c[3]) == 255 { json!(format!("#{:02x}{:02x}{:02x}", b(c[0]), b(c[1]), b(c[2]))) } else { json!(format!("#{:02x}{:02x}{:02x}{:02x}", b(c[0]), b(c[1]), b(c[2]), b(c[3]))) }
+    if b(c[3]) == 255 {
+        json!(format!("#{:02x}{:02x}{:02x}", b(c[0]), b(c[1]), b(c[2])))
+    } else {
+        json!(format!("#{:02x}{:02x}{:02x}{:02x}", b(c[0]), b(c[1]), b(c[2]), b(c[3])))
+    }
 }
 
 /// Set `ptr` (a JSON pointer) in `v`, making objects on the way; `Null` removes the key (Cut leaves an unset optional field out).
@@ -309,7 +318,10 @@ fn unfit(f: Frame, ti: &TrackItem) -> Result<f64, String> {
         return Ok(1.0);
     }
     let Some(b) = f.el else {
-        return Err(format!("scale-not-in-cut: \"{}\" is not fitted to the frame in Film and the file does not carry its pixel size, so Cut, which fits every picture, has no scale for it", ti.name));
+        return Err(format!(
+            "scale-not-in-cut: \"{}\" is not fitted to the frame in Film and the file does not carry its pixel size, so Cut, which fits every picture, has no scale for it",
+            ti.name
+        ));
     };
     let m = fx(ti, "motion").ok_or("the clip has no motion")?;
     if ["scale", "scale_width"].iter().any(|k| m.params.get(*k).is_some_and(Param::is_animated)) {
@@ -376,21 +388,36 @@ struct Field {
     set: Set,
 }
 
-fn field(ptr: &str, default: Value, get: impl Fn(Frame, &TrackItem, &Value) -> Result<Value, String> + 'static, set: impl Fn(Frame, &mut TrackItem, &Value) -> Result<(), String> + 'static) -> Field {
+fn field(
+    ptr: &str,
+    default: Value,
+    get: impl Fn(Frame, &TrackItem, &Value) -> Result<Value, String> + 'static,
+    set: impl Fn(Frame, &mut TrackItem, &Value) -> Result<(), String> + 'static,
+) -> Field {
     Field { ptr: format!("{ELEMENT}{ptr}"), default, get: Box::new(get), set: Box::new(set) }
 }
 
 /// A parameter of an effect on the clip, as a number Cut scales by `k`.
 fn scaled(ptr: &str, default: f64, effect: &'static str, id: &'static str, k: impl Fn(Frame) -> f64 + Copy + 'static) -> Field {
-    field(ptr, json!(default), move |f, ti, _| Ok(num(float(fx(ti, effect).ok_or(format!("the clip has no {effect}"))?, id)? / k(f))), move |f, ti, v| {
-        let x = want_f64(v)?;
-        set(fx_mut(ti, effect)?, id, ParamValue::Float(x * k(f)));
-        Ok(())
-    })
+    field(
+        ptr,
+        json!(default),
+        move |f, ti, _| Ok(num(float(fx(ti, effect).ok_or(format!("the clip has no {effect}"))?, id)? / k(f))),
+        move |f, ti, v| {
+            let x = want_f64(v)?;
+            set(fx_mut(ti, effect)?, id, ParamValue::Float(x * k(f)));
+            Ok(())
+        },
+    )
 }
 
 /// A parameter of the clip's graphic layer.
-fn on_layer(ptr: &str, default: Value, get: impl Fn(Frame, &EffectInstance) -> Result<Value, String> + 'static, put_: impl Fn(Frame, &mut EffectInstance, &Value) -> Result<(), String> + 'static) -> Field {
+fn on_layer(
+    ptr: &str,
+    default: Value,
+    get: impl Fn(Frame, &EffectInstance) -> Result<Value, String> + 'static,
+    put_: impl Fn(Frame, &mut EffectInstance, &Value) -> Result<(), String> + 'static,
+) -> Field {
     field(ptr, default, move |f, ti, _| get(f, layer(ti).ok_or("the clip has no graphic layer")?), move |f, ti, v| put_(f, layer_mut(ti)?, v))
 }
 
@@ -413,10 +440,15 @@ fn layer_color(ptr: &str, default: &str, id: &'static str, switch: Option<&'stat
 }
 
 fn layer_float(ptr: &str, default: f64, id: &'static str, k: impl Fn(Frame) -> f64 + Copy + 'static) -> Field {
-    on_layer(ptr, json!(default), move |f, e| Ok(num(float(e, id)? / k(f))), move |f, e, v| {
-        set(e, id, ParamValue::Float(want_f64(v)? * k(f)));
-        Ok(())
-    })
+    on_layer(
+        ptr,
+        json!(default),
+        move |f, e| Ok(num(float(e, id)? / k(f))),
+        move |f, e, v| {
+            set(e, id, ParamValue::Float(want_f64(v)? * k(f)));
+            Ok(())
+        },
+    )
 }
 
 fn layer_text(ptr: &str, default: &str, id: &'static str) -> Field {
@@ -436,14 +468,19 @@ fn layer_text(ptr: &str, default: &str, id: &'static str) -> Field {
 
 /// A choice of Cut's (text) as a switch of Film's.
 fn layer_switch(ptr: &str, default: &'static str, on: &'static str, id: &'static str) -> Field {
-    on_layer(ptr, json!(default), move |_, e| Ok(json!(if boolean(e, id)? { on } else { default })), move |_, e, v| {
-        let s = want_str(v)?;
-        if s != on && s != default {
-            return Err(format!("{s} is not {default} or {on}"));
-        }
-        set(e, id, ParamValue::Bool(s == on));
-        Ok(())
-    })
+    on_layer(
+        ptr,
+        json!(default),
+        move |_, e| Ok(json!(if boolean(e, id)? { on } else { default })),
+        move |_, e, v| {
+            let s = want_str(v)?;
+            if s != on && s != default {
+                return Err(format!("{s} is not {default} or {on}"));
+            }
+            set(e, id, ParamValue::Bool(s == on));
+            Ok(())
+        },
+    )
 }
 
 /// The fields of the clip's transform and opacity (Motion and Opacity in Film; position is from the frame's centre in Cut).
@@ -451,15 +488,25 @@ fn look_fields(origin: &Value) -> Vec<Field> {
     let tf = origin.pointer(&format!("{ELEMENT}/transform"));
     let uniform_only = tf.is_some_and(|t| t.get("scale").is_some());
     let mut v = vec![
-        field("/hidden", json!(false), |_, ti, _| Ok(json!(!ti.enabled)), |_, ti, v| {
-            ti.enabled = !v.as_bool().ok_or("hidden is not a switch")?;
-            Ok(())
-        }),
+        field(
+            "/hidden",
+            json!(false),
+            |_, ti, _| Ok(json!(!ti.enabled)),
+            |_, ti, v| {
+                ti.enabled = !v.as_bool().ok_or("hidden is not a switch")?;
+                Ok(())
+            },
+        ),
         scaled("/opacity", 1.0, "opacity", "opacity", |_| 100.0),
-        field("/transform/rotate", json!(0), |_, ti, _| Ok(num(float(fx(ti, "motion").ok_or("the clip has no motion")?, "rotation")?)), |_, ti, v| {
-            set(fx_mut(ti, "motion")?, "rotation", ParamValue::Float(want_f64(v)?));
-            Ok(())
-        }),
+        field(
+            "/transform/rotate",
+            json!(0),
+            |_, ti, _| Ok(num(float(fx(ti, "motion").ok_or("the clip has no motion")?, "rotation")?)),
+            |_, ti, v| {
+                set(fx_mut(ti, "motion")?, "rotation", ParamValue::Float(want_f64(v)?));
+                Ok(())
+            },
+        ),
     ];
     for (axis, i) in [("x", 0usize), ("y", 1usize)] {
         v.push(field(
@@ -554,13 +601,21 @@ fn effects_field() -> Field {
         |f, ti, origin| {
             let was = origin.pointer(&format!("{ELEMENT}/effects")).and_then(Value::as_array).cloned().unwrap_or_default();
             let mut out = Vec::new();
-            for e in ti.effects.iter().filter(|e| !matches!(e.effect.as_str(), "motion" | "opacity" | "time_remap" | "volume" | "channel_volume" | "panner") && !graphic::is_layer(e)) {
+            for e in ti
+                .effects
+                .iter()
+                .filter(|e| !matches!(e.effect.as_str(), "motion" | "opacity" | "time_remap" | "volume" | "channel_volume" | "panner") && !graphic::is_layer(e))
+            {
                 if e.effect != "gaussian_blur" {
                     return Err(format!("effect-not-in-cut: Film's {} has no equivalent among Cut's effects (Cut has blur)", e.effect));
                 }
                 let i = out.len();
                 let id = was.get(i).and_then(|w| w.get("id")).cloned().unwrap_or_else(|| json!(format!("film-fx-{}-{i}", ti.id.0)));
-                let mut x = was.get(i).filter(|w| w.get("type").and_then(Value::as_str) == Some("blur")).cloned().unwrap_or_else(|| json!({"id": id, "type": "blur", "params": {}, "enabled": true}));
+                let mut x = was
+                    .get(i)
+                    .filter(|w| w.get("type").and_then(Value::as_str) == Some("blur"))
+                    .cloned()
+                    .unwrap_or_else(|| json!({"id": id, "type": "blur", "params": {}, "enabled": true}));
                 x["id"] = id;
                 x["enabled"] = json!(e.enabled);
                 x["params"]["intensity"] = num(float(e, "blurriness")? / blur_k(f));
@@ -586,14 +641,17 @@ fn effects_field() -> Field {
 }
 
 /// The element's masks as Film's masks on the clip (its Opacity's masks), written back in Cut's shape (`cut_masks`). Cut's masks Film
-/// cannot show yet (a text mask) are carried as the file holds them, and Film adds none beside them.
+/// cannot read (a mask of a kind, units, mode or tracking Film does not know) are carried as the file holds them, and Film adds none beside them.
 fn masks_field() -> Field {
     field(
         "/masks",
         Value::Null,
         move |f, ti, origin| {
             if let Some(e) = ti.effects.iter().find(|e| e.effect != "opacity" && !e.masks.is_empty()) {
-                return Err(format!("effect-mask-not-in-cut: Film masks its {} on \"{}\", where Cut's masks are the element's, not an effect's", e.effect, ti.name));
+                return Err(format!(
+                    "effect-mask-not-in-cut: Film masks its {} on \"{}\", where Cut's masks are the element's, not an effect's",
+                    e.effect, ti.name
+                ));
             }
             let film: &[filmcraft_project::Mask] = fx(ti, "opacity").map(|e| e.masks.as_slice()).unwrap_or(&[]);
             let was = origin.pointer(&format!("{ELEMENT}/masks"));
@@ -603,7 +661,10 @@ fn masks_field() -> Field {
                 if film.is_empty() {
                     return Ok(carried());
                 }
-                return Err(format!("mask-size-unknown: the file does not carry the pixel size of \"{}\"'s medium, so Film's mask has no place in Cut's fractions of it", ti.name));
+                return Err(format!(
+                    "mask-size-unknown: the file does not carry the pixel size of \"{}\"'s medium, so Film's mask has no place in Cut's fractions of it",
+                    ti.name
+                ));
             };
             if let Err(why) = cut_masks::film_masks(&origin_masks, &b) {
                 if film.is_empty() {
@@ -670,12 +731,17 @@ fn text_fields() -> Vec<Field> {
             },
         ),
         layer_float("/letterSpacing", 0.0, "tracking", |_| 1.0),
-        on_layer("/background/enabled", json!(false), |_, e| Ok(json!(boolean(e, "background")?)), |_, e, v| {
-            set(e, "background", ParamValue::Bool(v.as_bool().ok_or("background.enabled is not a switch")?));
-            // Cut's background colour carries its own opacity.
-            set(e, "background_opacity", ParamValue::Float(100.0));
-            Ok(())
-        }),
+        on_layer(
+            "/background/enabled",
+            json!(false),
+            |_, e| Ok(json!(boolean(e, "background")?)),
+            |_, e, v| {
+                set(e, "background", ParamValue::Bool(v.as_bool().ok_or("background.enabled is not a switch")?));
+                // Cut's background colour carries its own opacity.
+                set(e, "background_opacity", ParamValue::Float(100.0));
+                Ok(())
+            },
+        ),
         layer_color("/background/color", "#000000", "background_color", None),
     ]
 }
@@ -686,12 +752,17 @@ fn shape_fields(definition: &str) -> Vec<Field> {
     let mut v = vec![
         layer_color("/params/fill", "#ffffff", "fill_color", Some("fill")),
         layer_color("/params/stroke", "#000000", "stroke_color", None),
-        on_layer("/params/strokeWidth", json!(0), |_, e| Ok(num(if boolean(e, "stroke")? { float(e, "stroke_width")? } else { 0.0 })), |_, e, v| {
-            let w = want_f64(v)?;
-            set(e, "stroke_width", ParamValue::Float(w));
-            set(e, "stroke", ParamValue::Bool(w > 0.0));
-            Ok(())
-        }),
+        on_layer(
+            "/params/strokeWidth",
+            json!(0),
+            |_, e| Ok(num(if boolean(e, "stroke")? { float(e, "stroke_width")? } else { 0.0 })),
+            |_, e, v| {
+                let w = want_f64(v)?;
+                set(e, "stroke_width", ParamValue::Float(w));
+                set(e, "stroke", ParamValue::Bool(w > 0.0));
+                Ok(())
+            },
+        ),
     ];
     if definition == "rectangle" || definition == "polygon" {
         v.push(layer_float("/params/cornerRadius", 0.0, "corner_radius", |_| 1.0));
@@ -707,22 +778,35 @@ const CUT_VOLUME_DB: (f64, f64) = (-60.0, 20.0);
 
 /// Cut's volume IS Film's clip gain: both are decibels (OpenCut `animation/property-registry.ts`: volume, -60 to 20 dB; default 0).
 fn volume_field() -> Field {
-    field("/volume", json!(0), |_, ti, _| {
-        if !(CUT_VOLUME_DB.0..=CUT_VOLUME_DB.1).contains(&ti.gain_db) {
-            return Err(format!("volume-not-in-cut: a gain of {} dB, where Cut's volume holds {} to {} dB", ti.gain_db, CUT_VOLUME_DB.0, CUT_VOLUME_DB.1));
-        }
-        Ok(num(ti.gain_db))
-    }, |_, ti, v| {
-        ti.gain_db = want_f64(v)?;
-        Ok(())
-    })
+    field(
+        "/volume",
+        json!(0),
+        |_, ti, _| {
+            if !(CUT_VOLUME_DB.0..=CUT_VOLUME_DB.1).contains(&ti.gain_db) {
+                return Err(format!("volume-not-in-cut: a gain of {} dB, where Cut's volume holds {} to {} dB", ti.gain_db, CUT_VOLUME_DB.0, CUT_VOLUME_DB.1));
+            }
+            Ok(num(ti.gain_db))
+        },
+        |_, ti, v| {
+            ti.gain_db = want_f64(v)?;
+            Ok(())
+        },
+    )
 }
 
 fn audio_fields() -> Vec<Field> {
-    vec![volume_field(), field("/muted", json!(false), |_, ti, _| Ok(json!(!ti.enabled)), |_, ti, v| {
-        ti.enabled = !v.as_bool().ok_or("muted is not a switch")?;
-        Ok(())
-    })]
+    vec![
+        volume_field(),
+        field(
+            "/muted",
+            json!(false),
+            |_, ti, _| Ok(json!(!ti.enabled)),
+            |_, ti, v| {
+                ti.enabled = !v.as_bool().ok_or("muted is not a switch")?;
+                Ok(())
+            },
+        ),
+    ]
 }
 
 fn fields_for(kind: Kind, origin: &Value) -> Vec<Field> {
@@ -924,7 +1008,13 @@ fn cut_channel(origin: &Value, path: &str, keys: &[&str]) -> Option<Vec<Vec<CutK
 /// Write Cut's channel at `path` into the clip `c` (Cut's shape), or remove it when it holds no keys.
 fn put_channel(c: &mut Value, path: &str, a: &Anim, comps: Option<&[Vec<CutKey>]>) {
     let bindings = format!("{ELEMENT}/animations/bindings");
-    let was: Vec<String> = c.pointer(&bindings).and_then(|b| b.get(path)).and_then(|b| b.get("components")).and_then(Value::as_array).map(|x| x.iter().filter_map(|y| y.get("channelId").and_then(Value::as_str).map(str::to_string)).collect()).unwrap_or_default();
+    let was: Vec<String> = c
+        .pointer(&bindings)
+        .and_then(|b| b.get(path))
+        .and_then(|b| b.get("components"))
+        .and_then(Value::as_array)
+        .map(|x| x.iter().filter_map(|y| y.get("channelId").and_then(Value::as_str).map(str::to_string)).collect())
+        .unwrap_or_default();
     match comps.filter(|x| x.iter().any(|k| !k.is_empty())) {
         None => {
             if let Some(Value::Object(m)) = c.pointer_mut(&bindings) {
@@ -973,7 +1063,8 @@ fn read_anims(kind: Kind, f: Frame, ti: &mut TrackItem, origin: &Value) -> Resul
     // Uniform scale: Cut's two axes animate as one only when they are the same curve.
     let sx = cut_channel(origin, "transform.scaleX", VALUE);
     let sy = cut_channel(origin, "transform.scaleY", VALUE);
-    if (sx.is_some() || sy.is_some()) && !matches!((&sx, &sy), (Some(x), Some(y)) if same_curve(&x[0], &y[0]))
+    if (sx.is_some() || sy.is_some())
+        && !matches!((&sx, &sy), (Some(x), Some(y)) if same_curve(&x[0], &y[0]))
         && let Some(m) = ti.effects.iter_mut().find(|e| e.effect == "motion")
     {
         set(m, "uniform_scale", ParamValue::Bool(false));
@@ -994,17 +1085,33 @@ fn read_anims(kind: Kind, f: Frame, ti: &mut TrackItem, origin: &Value) -> Resul
         let like = e.params.get(g[0].param).map(|p| p.value.clone()).ok_or_else(|| format!("animates {}, which has no {} in Film", g[0].path, g[0].param))?;
         let statics = film_parts(&like, &g);
         // Each component as Cut's channel; one Cut does not animate is held at its value through the others' keys.
-        let flat: Vec<Vec<CutKey>> = if g[0].colour.is_some() { chans[0].clone().unwrap_or_default() } else { chans.iter().map(|c| c.as_ref().map(|x| x[0].clone()).unwrap_or_default()).collect() };
+        let flat: Vec<Vec<CutKey>> = if g[0].colour.is_some() {
+            chans[0].clone().unwrap_or_default()
+        } else {
+            chans.iter().map(|c| c.as_ref().map(|x| x[0].clone()).unwrap_or_default()).collect()
+        };
         let lead = flat.iter().find(|c| !c.is_empty()).cloned().unwrap_or_default();
         let comps: Vec<Vec<CutKey>> = flat
             .iter()
             .enumerate()
-            .map(|(i, c)| if c.is_empty() { lead.iter().map(|k| CutKey { value: statics[i], right: k.right.map(|h| (h.0, 0.0)), left: k.left.map(|h| (h.0, 0.0)), ..k.clone() }).collect() } else { c.clone() })
+            .map(|(i, c)| {
+                if c.is_empty() {
+                    lead.iter()
+                        .map(|k| CutKey { value: statics[i], right: k.right.map(|h| (h.0, 0.0)), left: k.left.map(|h| (h.0, 0.0)), ..k.clone() })
+                        .collect()
+                } else {
+                    c.clone()
+                }
+            })
             .collect();
         let per_cut: Vec<f64> = if g[0].colour.is_some() { g[0].per_cut() } else { g.iter().map(|a| a.k).collect() };
         let keys = cut_to_film(&comps, &|c| film_value(&like, c, &g), &[], &per_cut).map_err(|why| format!("animates {}: {why}", g[0].path))?;
         let back = film_to_cut(&keys, &|v| film_parts(v, &g), &comps, &g[0].path, &per_cut)?;
-        let tol = |a: &[CutKey], b: &[CutKey]| a.len() == b.len() && a.iter().zip(b).all(|(x, y)| x.time == y.time && (x.value - y.value).abs() <= 1e-6 * x.value.abs().max(1.0)) && same_curve(&round6(a), &round6(b));
+        let tol = |a: &[CutKey], b: &[CutKey]| {
+            a.len() == b.len()
+                && a.iter().zip(b).all(|(x, y)| x.time == y.time && (x.value - y.value).abs() <= 1e-6 * x.value.abs().max(1.0))
+                && same_curve(&round6(a), &round6(b))
+        };
         for (i, c) in flat.iter().enumerate() {
             if !c.is_empty() && !(if g[0].colour.is_some() { tol(c, &back[i]) } else { same_curve(c, &back[i]) }) {
                 return Err(format!("animates {} in a way that does not read back from Film exactly", g[0].path));
@@ -1055,14 +1162,24 @@ fn write_anims(kind: Kind, f: Frame, ti: &TrackItem, c: &mut Value, a0: &Anims, 
         if g[0].param == "scale_width" && uniform {
             continue;
         }
-        let prior: Vec<Vec<CutKey>> = if g[0].colour.is_some() { a0.get(&g[0].path).cloned().unwrap_or_default() } else { g.iter().map(|a| a0.get(&a.path).and_then(|x| x.first().cloned()).unwrap_or_default()).collect() };
+        let prior: Vec<Vec<CutKey>> = if g[0].colour.is_some() {
+            a0.get(&g[0].path).cloned().unwrap_or_default()
+        } else {
+            g.iter().map(|a| a0.get(&a.path).and_then(|x| x.first().cloned()).unwrap_or_default()).collect()
+        };
         let per_cut: Vec<f64> = if g[0].colour.is_some() { g[0].per_cut() } else { g.iter().map(|a| a.k).collect() };
-        let chans = film_to_cut(&p.keyframes, &|v| film_parts(v, &g), &prior, &format!("film-{}-{}", ti.id.0, g[0].path), &per_cut).map_err(|why| format!("keyframes-not-in-cut: Film's {} {} on \"{name}\": {why}", e.effect, g[0].param))?;
+        let chans = film_to_cut(&p.keyframes, &|v| film_parts(v, &g), &prior, &format!("film-{}-{}", ti.id.0, g[0].path), &per_cut)
+            .map_err(|why| format!("keyframes-not-in-cut: Film's {} {} on \"{name}\": {why}", e.effect, g[0].param))?;
         if let Some(space) = g[0].colour {
             // A colour is written in its channel's own space; Film eases it there too (its keys say so), so both draw it alike.
             let linear = space == Space::Linear;
             if p.keyframes.iter().any(|k| k.linear_light != linear) {
-                return Err(format!("keyframes-not-in-cut: Film eases \"{name}\"'s {} in {}, where its channel in Cut eases in {}", g[0].path, if linear { "sRGB" } else { "linear light" }, if linear { "linear light" } else { "sRGB" }));
+                return Err(format!(
+                    "keyframes-not-in-cut: Film eases \"{name}\"'s {} in {}, where its channel in Cut eases in {}",
+                    g[0].path,
+                    if linear { "sRGB" } else { "linear light" },
+                    if linear { "linear light" } else { "sRGB" }
+                ));
             }
             now.insert(g[0].path.clone(), chans);
         } else {
@@ -1148,8 +1265,18 @@ fn held_maps(kind: Kind) -> Vec<HeldMap> {
                 _ => Err("align-not-in-cut: Film's justified text has no place in Cut's alignment".into()),
             },
         },
-        HeldMap { path: "fontWeight", params: &["faux_bold"], to_film: |s| Ok(vec![ParamValue::Bool(s == "bold")]), from_film: |v| switch_of(v, "normal", "bold") },
-        HeldMap { path: "fontStyle", params: &["faux_italic"], to_film: |s| Ok(vec![ParamValue::Bool(s == "italic")]), from_film: |v| switch_of(v, "normal", "italic") },
+        HeldMap {
+            path: "fontWeight",
+            params: &["faux_bold"],
+            to_film: |s| Ok(vec![ParamValue::Bool(s == "bold")]),
+            from_film: |v| switch_of(v, "normal", "bold"),
+        },
+        HeldMap {
+            path: "fontStyle",
+            params: &["faux_italic"],
+            to_film: |s| Ok(vec![ParamValue::Bool(s == "italic")]),
+            from_film: |v| switch_of(v, "normal", "italic"),
+        },
         HeldMap {
             path: "textDecoration",
             params: &["underline", "strikethrough"],
@@ -1169,7 +1296,12 @@ fn held_channel(origin: &Value, path: &str) -> Option<Vec<(i64, String, Value)>>
     let b = origin.pointer(&format!("{ELEMENT}/animations/bindings"))?.get(path)?;
     let id = b.get("components")?.as_array()?.first()?.get("channelId")?.as_str()?;
     let ch = origin.pointer(&format!("{ELEMENT}/animations/channels"))?.get(id)?;
-    let keys: Vec<(i64, String, Value)> = ch.get("keys")?.as_array()?.iter().map(|k| Some((k.get("time")?.as_i64()?, k.get("value")?.as_str()?.to_string(), k.get("id").cloned().unwrap_or(Value::Null)))).collect::<Option<_>>()?;
+    let keys: Vec<(i64, String, Value)> = ch
+        .get("keys")?
+        .as_array()?
+        .iter()
+        .map(|k| Some((k.get("time")?.as_i64()?, k.get("value")?.as_str()?.to_string(), k.get("id").cloned().unwrap_or(Value::Null))))
+        .collect::<Option<_>>()?;
     (!keys.is_empty()).then_some(keys)
 }
 
@@ -1180,7 +1312,11 @@ fn read_held(kind: Kind, ti: &mut TrackItem, origin: &Value) -> Result<Held, Str
     let mut h0 = Held::new();
     for h in held_maps(kind) {
         let Some(keys) = held_channel(origin, h.path) else { continue };
-        let own = origin.pointer(&format!("{ELEMENT}/{}", h.path)).and_then(Value::as_str).ok_or_else(|| format!("animates {} with no value of its own", h.path))?.to_string();
+        let own = origin
+            .pointer(&format!("{ELEMENT}/{}", h.path))
+            .and_then(Value::as_str)
+            .ok_or_else(|| format!("animates {} with no value of its own", h.path))?
+            .to_string();
         let mut film: Vec<(i64, String)> = keys.iter().map(|(t, v, _)| (*t, v.clone())).collect();
         if film.first().is_some_and(|(t, _)| *t > 0) {
             film.insert(0, (0, own));
@@ -1208,13 +1344,15 @@ fn write_held(kind: Kind, ti: &TrackItem, c: &mut Value, h0: &Held, name: &str) 
     let mut now = Held::new();
     let Some(e) = layer(ti) else { return Ok(now) };
     for h in held_maps(kind) {
-        let params: Vec<&Param> = h.params.iter().map(|p| e.params.get(*p).ok_or_else(|| format!("\"{name}\" has no {p} on its text layer"))).collect::<Result<_, _>>()?;
+        let params: Vec<&Param> =
+            h.params.iter().map(|p| e.params.get(*p).ok_or_else(|| format!("\"{name}\" has no {p} on its text layer"))).collect::<Result<_, _>>()?;
         let mut times: Vec<Tick> = params.iter().flat_map(|p| p.keyframes.iter().map(|k| k.time)).collect();
         times.sort();
         times.dedup();
         let mut keys: Vec<(i64, String)> = Vec::new();
         for t in &times {
-            let at = cut_ticks(*t).ok_or_else(|| format!("keyframes-not-in-cut: Film keys \"{name}\"'s {} at Film tick {}, not a whole tick of Cut's clock", h.path, t.0))?;
+            let at = cut_ticks(*t)
+                .ok_or_else(|| format!("keyframes-not-in-cut: Film keys \"{name}\"'s {} at Film tick {}, not a whole tick of Cut's clock", h.path, t.0))?;
             let v: Vec<ParamValue> = params.iter().map(|p| p.value_at(*t)).collect();
             keys.push((at, (h.from_film)(&v).map_err(|why| format!("keyframes-not-in-cut: \"{name}\"'s {}: {why}", h.path))?));
         }
@@ -1278,7 +1416,9 @@ fn read_time(v: &Value) -> Option<(Tick, Tick)> {
 }
 
 fn graphic_source(p: &mut Project, w: u32, h: u32, rate: FrameRate) -> ItemId {
-    if let Some((id, _)) = p.items.iter().find(|(id, i)| !p.source_graphics.contains_key(id) && matches!(i.kind, ItemKind::Graphic { width, height, rate: r } if width == w && height == h && r == rate)) {
+    if let Some((id, _)) = p.items.iter().find(|(id, i)| {
+        !p.source_graphics.contains_key(id) && matches!(i.kind, ItemKind::Graphic { width, height, rate: r } if width == w && height == h && r == rate)
+    }) {
         return *id;
     }
     p.add_item("Graphic", Label::Rose, ItemKind::Graphic { width: w, height: h, rate }, None)
@@ -1290,11 +1430,7 @@ fn kind_of_generator(c: &Value) -> Result<Kind, String> {
         "OpenCut.text" => Ok(Kind::Text),
         "OpenCut.graphic" => {
             let d = c.pointer(&format!("{ELEMENT}/definitionId")).and_then(Value::as_str).unwrap_or("");
-            if SHAPES.contains(&d) {
-                Ok(Kind::Shape)
-            } else {
-                Err(format!("holds the graphic \"{d}\", which Film's shape layer has no shape for yet"))
-            }
+            if SHAPES.contains(&d) { Ok(Kind::Shape) } else { Err(format!("holds the graphic \"{d}\", which Film's shape layer has no shape for yet")) }
         }
         "OpenCut.effect" => {
             let t = c.pointer(&format!("{ELEMENT}/effectType")).and_then(Value::as_str).unwrap_or("");
@@ -1306,7 +1442,15 @@ fn kind_of_generator(c: &Value) -> Result<Kind, String> {
 }
 
 /// One of Cut's clips as a Film clip on a track of `kind`, and what Film keeps of it.
-fn read_clip(p: &mut Project, root: &Map<String, Value>, c: &Value, track_kind: TrackKind, f: Frame, rate: FrameRate, (start, src, dur): (Tick, Tick, Tick)) -> Result<(TrackItem, CutClip), String> {
+fn read_clip(
+    p: &mut Project,
+    root: &Map<String, Value>,
+    c: &Value,
+    track_kind: TrackKind,
+    f: Frame,
+    rate: FrameRate,
+    (start, src, dur): (Tick, Tick, Tick),
+) -> Result<(TrackItem, CutClip), String> {
     let px = medium_px(root, c);
     let name = c.get("name").and_then(Value::as_str).unwrap_or("").to_string();
     let r = c.pointer("/media_references/DEFAULT_MEDIA").ok_or_else(|| format!("holds the clip \"{name}\" without a medium"))?;
@@ -1338,10 +1482,13 @@ fn read_clip(p: &mut Project, root: &Map<String, Value>, c: &Value, track_kind: 
                 return Err(format!("holds the {} \"{name}\" on an audio track", kind.cut_type()));
             }
             let item = match kind {
-                Kind::Effect => p.add_item("Adjustment Layer", Label::Lavender, ItemKind::AdjustmentLayer { width: w, height: h, rate, duration: src + dur }, None),
+                Kind::Effect => {
+                    p.add_item("Adjustment Layer", Label::Lavender, ItemKind::AdjustmentLayer { width: w, height: h, rate, duration: src + dur }, None)
+                }
                 _ => graphic_source(p, w, h, rate),
             };
-            let mut ti = p.make_track_item(item, TrackKind::Video, start, TimeRange::new(src, dur), rate).ok_or_else(|| format!("could not place \"{name}\""))?;
+            let mut ti =
+                p.make_track_item(item, TrackKind::Video, start, TimeRange::new(src, dur), rate).ok_or_else(|| format!("could not place \"{name}\""))?;
             let centre = Vec2::new(f.w / 2.0, f.h / 2.0);
             match kind {
                 Kind::Text => {
@@ -1423,7 +1570,8 @@ fn track_default(ptr: &str) -> Value {
 impl CutParts {
     /// Film entities for Cut's parts of the file (`split`), placed in `p`; a part Film would damage is locked, named.
     pub(super) fn read(p: &mut Project, film_seqs: &[ItemId], split: Split, file: &Value) -> Result<CutParts, String> {
-        let mut c = CutParts { project_mode: file.pointer("/metadata/opencut/project").is_some_and(Value::is_object), root: split.root.clone(), ..Default::default() };
+        let mut c =
+            CutParts { project_mode: file.pointer("/metadata/opencut/project").is_some_and(Value::is_object), root: split.root.clone(), ..Default::default() };
         let (w, h, rate) = c.frame_of(p, film_seqs);
         c.frame = (w, h);
         let f = Frame { w: w as f64, h: h as f64, el: None, picture: false };
@@ -1482,14 +1630,18 @@ impl CutParts {
     fn read_track(&mut self, p: &mut Project, seq_id: ItemId, (after, order): (Option<TrackId>, usize), t: &Value, f: Frame, rate: FrameRate) {
         let lock = |c: &mut CutParts, reason: String| c.locked.push(Locked::Track { seq: seq_id, after, order, value: t.clone(), reason });
         let ty = track_type(t);
-        let lanes: Vec<&Value> = if schema_name(t) == "Stack" { t.get("children").and_then(Value::as_array).map(|a| a.iter().collect()).unwrap_or_default() } else { vec![t] };
+        let lanes: Vec<&Value> =
+            if schema_name(t) == "Stack" { t.get("children").and_then(Value::as_array).map(|a| a.iter().collect()).unwrap_or_default() } else { vec![t] };
         let kind = if lanes.first().and_then(|l| l.get("kind")).and_then(Value::as_str) == Some("Audio") { TrackKind::Audio } else { TrackKind::Video };
         for (k, x) in [("source_range", Value::Null), ("enabled", json!(true))] {
             if lanes.iter().chain(std::iter::once(&t)).any(|l| l.get(k).is_some_and(|v| !same(v, &x))) {
                 return lock(self, format!("its {k} is set, which Cut does not show either"));
             }
         }
-        if lanes.iter().chain(std::iter::once(&t)).any(|l| l.get("effects").and_then(Value::as_array).is_some_and(|e| !e.is_empty()) || l.get("markers").and_then(Value::as_array).is_some_and(|m| !m.is_empty())) {
+        if lanes.iter().chain(std::iter::once(&t)).any(|l| {
+            l.get("effects").and_then(Value::as_array).is_some_and(|e| !e.is_empty())
+                || l.get("markers").and_then(Value::as_array).is_some_and(|m| !m.is_empty())
+        }) {
             return lock(self, "it carries effects or markers of its own".into());
         }
         let Some(mut seq) = p.sequence(seq_id).cloned() else { return };
@@ -1512,7 +1664,9 @@ impl CutParts {
                         None => return lock(self, "it holds a gap without a length".into()),
                     },
                     "Clip" => {
-                        let Some((src, dur)) = c.get("source_range").and_then(read_time) else { return lock(self, "it holds a clip without a source range".into()) };
+                        let Some((src, dur)) = c.get("source_range").and_then(read_time) else {
+                            return lock(self, "it holds a clip without a source range".into());
+                        };
                         match read_clip(p, &self.root, c, kind, f, rate, (pos, src, dur)) {
                             Ok((ti, cc)) => {
                                 clips.push((ti.id, cc));
@@ -1622,7 +1776,8 @@ impl CutParts {
             q.items.remove(&s.seq);
             remove_from_bins(&mut q.root, s.seq);
         }
-        let lanes: BTreeSet<TrackId> = self.tracks.iter().filter(|t| !self.scenes.iter().any(|s| s.seq == t.seq)).flat_map(|t| t.lanes.iter().copied()).collect();
+        let lanes: BTreeSet<TrackId> =
+            self.tracks.iter().filter(|t| !self.scenes.iter().any(|s| s.seq == t.seq)).flat_map(|t| t.lanes.iter().copied()).collect();
         let ids: Vec<ItemId> = q.items.keys().copied().collect();
         for id in ids {
             if let Some(s) = q.sequence_mut(id) {
@@ -1632,9 +1787,15 @@ impl CutParts {
             }
         }
         // Items Film made for Cut's parts (a medium, a graphic, an adjustment layer) that nothing of Film's own uses.
-        let used: BTreeSet<ItemId> =
-            q.items.values().filter_map(|i| i.as_sequence()).flat_map(|s| s.video_tracks.iter().chain(s.audio_tracks.iter())).flat_map(|t| t.items.iter().map(|it| it.item)).collect();
-        let unused: Vec<ItemId> = q.items.keys().filter(|id| !film_items.contains(id) && !used.contains(id) && q.items[id].as_sequence().is_none()).copied().collect();
+        let used: BTreeSet<ItemId> = q
+            .items
+            .values()
+            .filter_map(|i| i.as_sequence())
+            .flat_map(|s| s.video_tracks.iter().chain(s.audio_tracks.iter()))
+            .flat_map(|t| t.items.iter().map(|it| it.item))
+            .collect();
+        let unused: Vec<ItemId> =
+            q.items.keys().filter(|id| !film_items.contains(id) && !used.contains(id) && q.items[id].as_sequence().is_none()).copied().collect();
         for id in unused {
             q.items.remove(&id);
             remove_from_bins(&mut q.root, id);
@@ -1658,7 +1819,10 @@ fn mark_fields(m: &Marker, origin: &Value) -> Fields {
     let mut f = Fields::new();
     f.insert("/name".into(), json!(m.name));
     f.insert("/metadata/opencut/bookmark/note".into(), if !m.name.is_empty() || had("note") { json!(m.name) } else { Value::Null });
-    f.insert("/metadata/opencut/bookmark/color".into(), m.custom_color.map(|c| json!(format!("#{:02x}{:02x}{:02x}", c.0[0], c.0[1], c.0[2]))).unwrap_or(Value::Null));
+    f.insert(
+        "/metadata/opencut/bookmark/color".into(),
+        m.custom_color.map(|c| json!(format!("#{:02x}{:02x}{:02x}", c.0[0], c.0[1], c.0[2]))).unwrap_or(Value::Null),
+    );
     f.insert(
         "/metadata/opencut/bookmark/duration".into(),
         match cut_ticks(m.duration) {
@@ -1682,15 +1846,23 @@ fn kind_of_clip(p: &Project, ti: &TrackItem, track_kind: TrackKind) -> Result<Ki
             let layers: Vec<&EffectInstance> = ti.effects.iter().filter(|e| graphic::is_layer(e)).collect();
             match layers.as_slice() {
                 [l] if l.effect == graphic::TEXT_LAYER => Ok(Kind::Text),
-                [l] if l.effect == graphic::SHAPE_LAYER && matches!(l.params.get("shape").map(|p| &p.value), Some(ParamValue::Choice(0..=2))) => Ok(Kind::Shape),
-                _ => Err(format!("element-not-in-cut: the graphic \"{}\" holds layers Cut's text or shape element cannot hold (one text, or one rectangle, ellipse or polygon)", ti.name)),
+                [l] if l.effect == graphic::SHAPE_LAYER && matches!(l.params.get("shape").map(|p| &p.value), Some(ParamValue::Choice(0..=2))) => {
+                    Ok(Kind::Shape)
+                }
+                _ => Err(format!(
+                    "element-not-in-cut: the graphic \"{}\" holds layers Cut's text or shape element cannot hold (one text, or one rectangle, ellipse or polygon)",
+                    ti.name
+                )),
             }
         }
         ItemKind::AdjustmentLayer { .. } => {
             let own: Vec<&EffectInstance> = ti.effects.iter().filter(|e| !matches!(e.effect.as_str(), "motion" | "opacity" | "time_remap")).collect();
             match own.as_slice() {
                 [e] if e.effect == "gaussian_blur" => Ok(Kind::Effect),
-                _ => Err(format!("element-not-in-cut: the adjustment layer \"{}\" holds effects other than one Gaussian Blur, which Cut's effect element cannot hold", ti.name)),
+                _ => Err(format!(
+                    "element-not-in-cut: the adjustment layer \"{}\" holds effects other than one Gaussian Blur, which Cut's effect element cannot hold",
+                    ti.name
+                )),
             }
         }
         ItemKind::Media(m) => match &m.media {
@@ -1770,7 +1942,10 @@ impl Out<'_> {
                     && changed.iter().any(|k| k.ends_with("/volume"))
                     && c.pointer(&format!("{ELEMENT}/animations/bindings/volume")).is_some()
                 {
-                    return Err(format!("volume-keyframed-in-cut: \"{}\"'s volume is animated in Cut, which Film shows on a video clip once its sound is linked audio", ti.name));
+                    return Err(format!(
+                        "volume-keyframed-in-cut: \"{}\"'s volume is animated in Cut, which Film shows on a video clip once its sound is linked audio",
+                        ti.name
+                    ));
                 }
                 for k in changed {
                     put(&mut c, k, now[k].clone());
@@ -1835,7 +2010,9 @@ impl Out<'_> {
             c["media_references"]["DEFAULT_MEDIA"] = json!({"OTIO_SCHEMA": "GeneratorReference.1", "name": ti.name, "generator_kind": format!("OpenCut.{}", kind.cut_type()), "parameters": {}, "available_range": null, "metadata": {}});
         } else {
             let (url, name) = media_url(self.p, ti).ok_or_else(|| format!("media-not-referenced: \"{}\" is not a OneOS file", ti.name))?;
-            let px = (kind != Kind::Audio).then(|| self.p.item(ti.item).and_then(|i| i.as_media()).and_then(|m| m.info.video.as_ref()).map(|v| (v.width, v.height))).flatten();
+            let px = (kind != Kind::Audio)
+                .then(|| self.p.item(ti.item).and_then(|i| i.as_media()).and_then(|m| m.info.video.as_ref()).map(|v| (v.width, v.height)))
+                .flatten();
             let mut meta = json!({});
             if self.parts.project_mode {
                 let (key, entry) = media_entry(&url, &name, kind, px).ok_or_else(|| format!("media-not-referenced: \"{}\" is not a OneOS file", ti.name))?;
@@ -1893,12 +2070,21 @@ impl Out<'_> {
                         "graphic" => "graphic".into(),
                         other => other.into(),
                     },
-                    _ => return Err(format!("track-not-in-cut: the track \"{}\" holds {} kinds of element; a track of Cut's holds one", first.name, kinds.len())),
+                    _ => {
+                        return Err(format!(
+                            "track-not-in-cut: the track \"{}\" holds {} kinds of element; a track of Cut's holds one",
+                            first.name,
+                            kinds.len()
+                        ));
+                    }
                 }
             }
         };
         let rate_of = |v: &Value| -> f64 {
-            v.get("children").and_then(Value::as_array).and_then(|c| c.iter().find_map(|x| x.pointer("/source_range/duration/rate").and_then(Value::as_f64))).unwrap_or(CUT_TICKS as f64)
+            v.get("children")
+                .and_then(Value::as_array)
+                .and_then(|c| c.iter().find_map(|x| x.pointer("/source_range/duration/rate").and_then(Value::as_f64)))
+                .unwrap_or(CUT_TICKS as f64)
         };
         let mut body = match ct {
             Some(t) => t.origin.clone(),
@@ -2045,7 +2231,16 @@ impl Out<'_> {
                 }
                 let body = self.track(seq, None, &[t.id], kind)?;
                 let ty = track_type(&body);
-                self.r.tracks.push(CutTrack { seq: s.seq, lanes: vec![t.id], kind, after: None, order: next, origin: body.clone(), f0: track_fields(&ty, seq, &[t.id]), ty });
+                self.r.tracks.push(CutTrack {
+                    seq: s.seq,
+                    lanes: vec![t.id],
+                    kind,
+                    after: None,
+                    order: next,
+                    origin: body.clone(),
+                    f0: track_fields(&ty, seq, &[t.id]),
+                    ty,
+                });
                 placed.push((next, body));
                 next += 1;
             }
@@ -2064,7 +2259,8 @@ impl CutParts {
         let mut o = Out { p, parts: self, r: Rendered::default() };
         for (i, seq_id) in film_seqs.iter().enumerate() {
             let Some(seq) = p.sequence(*seq_id) else { continue };
-            let order: Vec<TrackId> = seq.video_tracks.iter().chain(seq.audio_tracks.iter()).map(|t| t.id).filter(|id| !self.tracks.iter().any(|t| t.lanes.contains(id))).collect();
+            let order: Vec<TrackId> =
+                seq.video_tracks.iter().chain(seq.audio_tracks.iter()).map(|t| t.id).filter(|id| !self.tracks.iter().any(|t| t.lanes.contains(id))).collect();
             let mut inserts: Vec<(Option<TrackId>, usize, Value)> = Vec::new();
             for ct in self.tracks.iter().filter(|t| t.seq == *seq_id) {
                 if ct.lanes.iter().all(|id| seq.track(*id).is_none()) {

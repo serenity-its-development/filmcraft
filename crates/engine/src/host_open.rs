@@ -31,7 +31,9 @@ impl std::fmt::Display for Refusal {
             Self::NotEditable(name) => write!(f, "format-not-editable: Film edits OpenTimelineIO timelines (.otio); {name} is not opened for editing"),
             Self::Unreadable { name, error } => write!(f, "file-unreadable: {name} could not be read as an OpenTimelineIO timeline: {error}"),
             Self::NotRoundTrip { name, reason } => write!(f, "format-not-round-trip: {name} {reason}, so a save would change it; it is not opened for editing"),
-            Self::MediaNotReferenced { name, media } => write!(f, "media-not-referenced: {name} names the medium {media}, which is not a OneOS file and version"),
+            Self::MediaNotReferenced { name, media } => {
+                write!(f, "media-not-referenced: {name} names the medium {media}, which is not a OneOS file and version")
+            }
         }
     }
 }
@@ -90,7 +92,9 @@ mod tests {
                     _ => Some(format!("{at}/{k}")),
                 })
             }
-            (Value::Array(x), Value::Array(y)) if x.len() == y.len() => x.iter().zip(y).enumerate().find_map(|(i, (p, q))| first_difference(p, q, &format!("{at}/{i}"))),
+            (Value::Array(x), Value::Array(y)) if x.len() == y.len() => {
+                x.iter().zip(y).enumerate().find_map(|(i, (p, q))| first_difference(p, q, &format!("{at}/{i}")))
+            }
             (Value::Number(x), Value::Number(y)) if x.as_f64() == y.as_f64() => None,
             _ if a == b => None,
             _ => Some(if at.is_empty() { "/".into() } else { at.into() }),
@@ -170,10 +174,13 @@ mod tests {
         use serde_json::json;
         let rt = |value: i64| json!({"OTIO_SCHEMA": "RationalTime.1", "rate": 120000, "value": value});
         let range = |s: i64, d: i64| json!({"OTIO_SCHEMA": "TimeRange.1", "start_time": rt(s), "duration": rt(d)});
-        let text = |name: &str, s: i64| json!({"OTIO_SCHEMA": "Clip.2", "name": name, "source_range": range(0, 120000), "effects": [], "markers": [], "enabled": true,
+        let text = |name: &str, s: i64| {
+            json!({"OTIO_SCHEMA": "Clip.2", "name": name, "source_range": range(0, 120000), "effects": [], "markers": [], "enabled": true,
             "media_references": {"DEFAULT_MEDIA": {"OTIO_SCHEMA": "GeneratorReference.1", "name": name, "generator_kind": "OpenCut.text", "parameters": {}, "available_range": null, "metadata": {}}},
-            "active_media_reference_key": "DEFAULT_MEDIA", "metadata": {"opencut": {"element": {"content": "Hello", "fontSize": 64, "trimEnd": 0, "start": s}}}});
-        let gap = |d: i64| json!({"OTIO_SCHEMA": "Gap.1", "name": "", "source_range": range(0, d), "effects": [], "markers": [], "enabled": true, "metadata": {}});
+            "active_media_reference_key": "DEFAULT_MEDIA", "metadata": {"opencut": {"element": {"content": "Hello", "fontSize": 64, "trimEnd": 0, "start": s}}}})
+        };
+        let gap =
+            |d: i64| json!({"OTIO_SCHEMA": "Gap.1", "name": "", "source_range": range(0, d), "effects": [], "markers": [], "enabled": true, "metadata": {}});
         let track = |name: &str, meta: Value, children: Value| json!({"OTIO_SCHEMA": "Track.1", "name": name, "kind": "Video", "source_range": null, "effects": [], "markers": [], "enabled": true, "metadata": meta, "children": children});
         let titles = track("Titles", json!({"opencut": {"track": {"type": "text", "hidden": false}}}), json!([text("Title", 0), gap(120000), text("End", 2)]));
         let lanes = json!({"OTIO_SCHEMA": "Stack.1", "name": "Stickers", "source_range": null, "effects": [], "markers": [], "enabled": true, "metadata": {"opencut": {"track": {"type": "graphic", "hidden": false}}},
@@ -363,7 +370,9 @@ mod tests {
     /// The JSON pointer of the first clip named `name` in `v`.
     fn clip_ptr(v: &Value, name: &str, at: &str) -> Option<String> {
         match v {
-            Value::Object(o) if o.get("OTIO_SCHEMA").and_then(Value::as_str) == Some("Clip.2") && o.get("name").and_then(Value::as_str) == Some(name) => Some(at.to_string()),
+            Value::Object(o) if o.get("OTIO_SCHEMA").and_then(Value::as_str) == Some("Clip.2") && o.get("name").and_then(Value::as_str) == Some(name) => {
+                Some(at.to_string())
+            }
             Value::Object(o) => o.iter().find_map(|(k, x)| clip_ptr(x, name, &format!("{at}/{k}"))),
             Value::Array(a) => a.iter().enumerate().find_map(|(i, x)| clip_ptr(x, name, &format!("{at}/{i}"))),
             _ => None,
@@ -371,11 +380,12 @@ mod tests {
     }
 
     /// files/989 part 2 ("Masks, both ways"): Film EDITS Cut's masks as its own. On Cut's editor-built project (Beach's text mask taken
-    /// out, which Film draws once its text mask is built), Beach's masks open as Film's masks on the clip's Opacity, one of each of Cut's
+    /// out for the pinned file Cut opens), Beach's masks open as Film's masks on the clip's Opacity, one of each of Cut's
     /// types, each the path Cut's editor draws (an open custom path kept with its mode None, as Cut does not draw it), and an unedited
     /// save is the file. Film's change of a feather and the masks Film adds (on Beach, and on the Logo, which had none) are written back in
-    /// Cut's shape (a feather Film set in the mask's own units, Film's mask as Cut's custom path) and nothing else changes. With its text mask,
-    /// Beach's masks are carried as the file holds them, and a mask Film would add beside them is refused by name.
+    /// Cut's shape (a feather Film set in the mask's own units, Film's mask as Cut's custom path) and nothing else changes. With its text mask
+    /// (Film's text mask, files/989 tool choice), Beach's masks open as Film's too, nothing carried: an unedited save is the file, and Film's
+    /// change of the text and a mask Film adds beside it are written in Cut's shape.
     #[test]
     fn film_edits_cut_s_masks_as_its_own_and_writes_them_in_cut_s_shape() {
         use filmcraft_project::{Mask, MaskMode, MaskPath};
@@ -394,7 +404,16 @@ mod tests {
         let masks = masks_of(&s, "Beach");
         assert_eq!(
             masks.iter().map(|m| (m.name.as_str(), m.mode)).collect::<Vec<_>>(),
-            vec![("Split", MaskMode::Add), ("Cinematic Bars", MaskMode::Add), ("Rectangle", MaskMode::Add), ("Ellipse", MaskMode::Add), ("Heart", MaskMode::Add), ("Diamond", MaskMode::Add), ("Star", MaskMode::Add), ("Custom", MaskMode::None)],
+            vec![
+                ("Split", MaskMode::Add),
+                ("Cinematic Bars", MaskMode::Add),
+                ("Rectangle", MaskMode::Add),
+                ("Ellipse", MaskMode::Add),
+                ("Heart", MaskMode::Add),
+                ("Diamond", MaskMode::Add),
+                ("Star", MaskMode::Add),
+                ("Custom", MaskMode::None)
+            ],
             "each of Cut's masks is Film's"
         );
         let unedited: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap_or_else(|e| panic!("{e}"))).unwrap();
@@ -429,15 +448,40 @@ mod tests {
         want.pointer_mut(&logo_el).unwrap()["masks"] = logo_got.clone();
         assert_eq!(first_difference(&want, &saved, ""), None, "only the rectangle's feather changed and Film's masks were added");
         for m in [&got[8], &logo_got[0]] {
-            assert_eq!((&m["type"], &m["name"], &m["params"]["mode"], &m["params"]["units"], &m["params"]["closed"]), (&serde_json::json!("custom"), &serde_json::json!("Hole"), &serde_json::json!("subtract"), &serde_json::json!("clip"), &serde_json::json!(true)));
+            assert_eq!(
+                (&m["type"], &m["name"], &m["params"]["mode"], &m["params"]["units"], &m["params"]["closed"]),
+                (
+                    &serde_json::json!("custom"),
+                    &serde_json::json!("Hole"),
+                    &serde_json::json!("subtract"),
+                    &serde_json::json!("clip"),
+                    &serde_json::json!(true)
+                )
+            );
         }
-        // With its text mask, Beach's masks are carried; Film adds none beside them.
+        // With its text mask, Beach's masks open as Film's, the text mask as Film's text mask.
+        let whole: Value = serde_json::from_slice(bytes).unwrap();
         let mut s = session();
         open_host_file(&mut s, "trip.otio", bytes).unwrap();
-        assert!(masks_of(&s, "Beach").is_empty(), "carried, not shown");
-        edit_clip(&mut s, "Main", "Beach", |c| c.effects.iter_mut().find(|e| e.effect == "opacity").unwrap().masks.push(hole()));
-        let e = save_host_file(&mut s).unwrap_err();
-        assert!(e.contains("masks-carried") && e.contains("text mask"), "{e}");
+        let masks = masks_of(&s, "Beach");
+        assert_eq!(masks.len(), 9, "nothing carried");
+        let text = masks[7].text.as_ref().expect("Beach's text mask is Film's text mask");
+        assert_eq!((masks[7].name.as_str(), text.content.as_str(), text.size), ("Text", "Mask", 15.0));
+        let unedited: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap_or_else(|e| panic!("{e}"))).unwrap();
+        assert_eq!(first_difference(&whole, &unedited, ""), None, "an unedited save is the file");
+        edit_clip(&mut s, "Main", "Beach", |c| {
+            let o = c.effects.iter_mut().find(|e| e.effect == "opacity").unwrap();
+            o.masks[7].text.as_mut().unwrap().content = "Film".into();
+            o.masks.push(hole());
+        });
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap_or_else(|e| panic!("{e}"))).unwrap();
+        let got = saved.pointer(&beach).unwrap().as_array().unwrap().clone();
+        let mut want = whole.clone();
+        let list = want.pointer_mut(&beach).unwrap().as_array_mut().unwrap();
+        list[7]["params"]["content"] = serde_json::json!("Film");
+        list.push(got[9].clone());
+        assert_eq!(first_difference(&want, &saved, ""), None, "only the text changed and Film's mask was added");
+        assert_eq!((&got[7]["type"], &got[9]["type"], &got[9]["name"]), (&serde_json::json!("text"), &serde_json::json!("custom"), &serde_json::json!("Hole")));
     }
 
     /// files/989 (Mona 2026-11-09: "Build canvas feather in Film"): on Cut's editor-built project with Beach scaled unevenly (160 % wide,
@@ -524,7 +568,13 @@ mod tests {
     fn keys_of(s: &Session, seq: &str, clip: &str, effect: &str, param: &str) -> Vec<filmcraft_project::Keyframe> {
         let (id, kind, ti, ci) = find(s, seq, clip);
         let c = &s.project.sequence(id).unwrap().tracks(kind)[ti].items[ci];
-        c.effects.iter().filter(|e| e.effect == effect).find_map(|e| e.params.get(param)).unwrap_or_else(|| panic!("{clip} has no {effect} {param}")).keyframes.clone()
+        c.effects
+            .iter()
+            .filter(|e| e.effect == effect)
+            .find_map(|e| e.params.get(param))
+            .unwrap_or_else(|| panic!("{clip} has no {effect} {param}"))
+            .keyframes
+            .clone()
     }
 
     /// files/989 step 2 (Mona: "yes, so this becomes a tool choice not a file type choicer"): Film EDITS Cut's keyframes. On Cut's
@@ -541,10 +591,11 @@ mod tests {
         let locked = s.host_shared.locked();
         assert!(locked.iter().all(|l| l.contains("sticker")), "{locked:?}");
         let op = keys_of(&s, "Main", "Beach", "opacity", "opacity");
-        assert_eq!(op.iter().map(|k| (k.time.0, k.value.clone(), k.interp)).collect::<Vec<_>>(), vec![
-            (0, ParamValue::Float(0.0), Interpolation::Linear),
-            (filmcraft_time::TICKS_PER_SECOND, ParamValue::Float(100.0), Interpolation::Linear),
-        ], "Cut's opacity channel is Film's Opacity keyframes");
+        assert_eq!(
+            op.iter().map(|k| (k.time.0, k.value.clone(), k.interp)).collect::<Vec<_>>(),
+            vec![(0, ParamValue::Float(0.0), Interpolation::Linear), (filmcraft_time::TICKS_PER_SECOND, ParamValue::Float(100.0), Interpolation::Linear),],
+            "Cut's opacity channel is Film's Opacity keyframes"
+        );
         let pos = keys_of(&s, "Main", "Beach", "motion", "position");
         // Cut's canvas is 1080 x 1920; its position is from the centre; Y, not animated, is held at its value.
         assert_eq!(pos.iter().map(|k| k.value.clone()).collect::<Vec<_>>(), vec![ParamValue::Vec2(filmcraft_geom::Vec2::new(540.0 + 40.0, 960.0 - 4.0))]);
@@ -582,7 +633,10 @@ mod tests {
         let mut s = session();
         open_host_file(&mut s, "Keys.otio", bytes).unwrap_or_else(|e| panic!("{e}"));
         let pos = keys_of(&s, "Edit", "Keyed", "motion", "position");
-        assert_eq!((pos[1].value.clone(), pos[1].interp, pos[1].out_influence), (ParamValue::Vec2(filmcraft_geom::Vec2::new(1020.0, 500.0)), Interpolation::EaseOut, 0.5));
+        assert_eq!(
+            (pos[1].value.clone(), pos[1].interp, pos[1].out_influence),
+            (ParamValue::Vec2(filmcraft_geom::Vec2::new(1020.0, 500.0)), Interpolation::EaseOut, 0.5)
+        );
         let blur = keys_of(&s, "Edit", "Keyed", "gaussian_blur", "blurriness");
         assert_eq!(blur.iter().map(|k| k.interp).collect::<Vec<_>>(), vec![Interpolation::Linear, Interpolation::Hold, Interpolation::Linear]);
         let (id, kind, ti, ci) = find(&s, "Edit", "Keyed sound");
@@ -609,17 +663,31 @@ mod tests {
         let size = keys_of(&s, "Main", "Title", "graphic_text", "size");
         assert_eq!(size.len(), 2);
         assert!((size[0].value.as_f64().unwrap() - 64.0 * k).abs() < 1e-9 && (size[1].value.as_f64().unwrap() - 96.0 * k).abs() < 1e-9, "{size:?}");
-        assert_eq!((size[0].out_influence, size[0].out_rise.as_ref().map(|r| (r[0] - 12.0 * k).abs() < 1e-6)), (0.25, Some(true)), "Cut's sloped handle is Film's: a quarter of the segment, rising 12 of Cut's pixels");
+        assert_eq!(
+            (size[0].out_influence, size[0].out_rise.as_ref().map(|r| (r[0] - 12.0 * k).abs() < 1e-6)),
+            (0.25, Some(true)),
+            "Cut's sloped handle is Film's: a quarter of the segment, rising 12 of Cut's pixels"
+        );
         let text = keys_of(&s, "Main", "Title", "graphic_text", "text");
-        assert_eq!(text.iter().map(|k| (k.time.0, k.value.clone())).collect::<Vec<_>>(), vec![(0, ParamValue::Text("Hello 日本語".into())), (filmcraft_time::TICKS_PER_SECOND, ParamValue::Text("Goodbye".into()))]);
+        assert_eq!(
+            text.iter().map(|k| (k.time.0, k.value.clone())).collect::<Vec<_>>(),
+            vec![(0, ParamValue::Text("Hello 日本語".into())), (filmcraft_time::TICKS_PER_SECOND, ParamValue::Text("Goodbye".into()))]
+        );
         let font = keys_of(&s, "Main", "Title", "graphic_text", "font");
-        assert_eq!(font.iter().map(|k| (k.time.0, k.value.clone(), k.interp)).collect::<Vec<_>>(), vec![
-            (0, ParamValue::Text("Inter".into()), Interpolation::Hold),
-            (filmcraft_time::TICKS_PER_SECOND, ParamValue::Text("Roboto".into()), Interpolation::Hold),
-        ], "keyed at the start with Cut's own font, which Cut shows before its first key");
+        assert_eq!(
+            font.iter().map(|k| (k.time.0, k.value.clone(), k.interp)).collect::<Vec<_>>(),
+            vec![
+                (0, ParamValue::Text("Inter".into()), Interpolation::Hold),
+                (filmcraft_time::TICKS_PER_SECOND, ParamValue::Text("Roboto".into()), Interpolation::Hold),
+            ],
+            "keyed at the start with Cut's own font, which Cut shows before its first key"
+        );
         let under = keys_of(&s, "Main", "Title", "graphic_text", "underline");
         let struck = keys_of(&s, "Main", "Title", "graphic_text", "strikethrough");
-        assert_eq!((under.iter().map(|k| k.value.clone()).collect::<Vec<_>>(), struck.iter().map(|k| k.value.clone()).collect::<Vec<_>>()), (vec![ParamValue::Bool(true), ParamValue::Bool(false)], vec![ParamValue::Bool(false), ParamValue::Bool(true)]));
+        assert_eq!(
+            (under.iter().map(|k| k.value.clone()).collect::<Vec<_>>(), struck.iter().map(|k| k.value.clone()).collect::<Vec<_>>()),
+            (vec![ParamValue::Bool(true), ParamValue::Bool(false)], vec![ParamValue::Bool(false), ParamValue::Bool(true)])
+        );
         assert_eq!(keys_of(&s, "Main", "Title", "graphic_text", "align").last().map(|k| k.value.clone()), Some(ParamValue::Choice(0)));
         let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
         assert_eq!(first_difference(&cut, &saved, ""), None, "unedited: Cut's project comes back value for value");
@@ -639,7 +707,10 @@ mod tests {
         // Film's new tracking key: an id of Film's (the clip and the path), at the start, Cut's linear segment.
         let new_id = edited.pointer(&format!("{}/keys/0/id", ch("letterSpacing:value"))).and_then(Value::as_str).unwrap_or_default().to_string();
         assert!(new_id.starts_with("film-") && new_id.ends_with("-letterSpacing-0-0"), "{new_id}");
-        want.pointer_mut(&ch("letterSpacing:value")).unwrap()["keys"].as_array_mut().unwrap().insert(0, serde_json::json!({"id": new_id, "time": 0, "value": 2, "segmentToNext": "linear", "tangentMode": "flat"}));
+        want.pointer_mut(&ch("letterSpacing:value")).unwrap()["keys"]
+            .as_array_mut()
+            .unwrap()
+            .insert(0, serde_json::json!({"id": new_id, "time": 0, "value": 2, "segmentToNext": "linear", "tangentMode": "flat"}));
         // Film's new weight key at half a second; the key Film set at the start for Cut's own weight (bold) is not written as Cut's.
         let normal = want.pointer(&ch("fontWeight:value")).unwrap()["keys"][0].clone();
         want.pointer_mut(&ch("fontWeight:value")).unwrap()["keys"] = serde_json::json!([{"id": "film-fontWeight-0", "time": 60000, "value": "bold"}, normal]);
@@ -674,16 +745,27 @@ mod tests {
         assert_eq!(edited.pointer(&format!("{el}/bindings/background.color/colorSpace")), Some(&serde_json::json!("srgb")));
         let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../interchange/tests/it/oneos");
         // The frames Film draws, every tenth of the second between the keys (Cut's ticks from the element's start).
-        let at = |k: &[filmcraft_project::Keyframe], t: i64| filmcraft_project::Param { value: k[0].value.clone(), keyframes: k.to_vec() }.value_at(filmcraft_time::Tick(t * (tps / 120_000))).as_color().unwrap();
-        let frames: Vec<Value> = (0..=10).map(|i| i * 12_000).map(|t| serde_json::json!({"time": t, "color": at(&fill, t), "background.color": at(&bg, t)})).collect();
+        let at = |k: &[filmcraft_project::Keyframe], t: i64| {
+            filmcraft_project::Param { value: k[0].value.clone(), keyframes: k.to_vec() }
+                .value_at(filmcraft_time::Tick(t * (tps / 120_000)))
+                .as_color()
+                .unwrap()
+        };
+        let frames: Vec<Value> =
+            (0..=10).map(|i| i * 12_000).map(|t| serde_json::json!({"time": t, "color": at(&fill, t), "background.color": at(&bg, t)})).collect();
         let frames = serde_json::to_string_pretty(&frames).unwrap() + "\n";
         if std::env::var_os("FILMCRAFT_BLESS").is_some() {
             std::fs::write(dir.join("film-coloured-cut.otio"), &out).unwrap();
             std::fs::write(dir.join("colour-frames.json"), &frames).unwrap();
         }
-        let pinned: Value = serde_json::from_slice(&std::fs::read(dir.join("film-coloured-cut.otio")).expect("film-coloured-cut.otio (FILMCRAFT_BLESS=1 writes it)")).unwrap();
+        let pinned: Value =
+            serde_json::from_slice(&std::fs::read(dir.join("film-coloured-cut.otio")).expect("film-coloured-cut.otio (FILMCRAFT_BLESS=1 writes it)")).unwrap();
         assert_eq!(first_difference(&pinned, &edited, ""), None, "Film saves the colours as pinned");
-        assert_eq!(std::fs::read_to_string(dir.join("colour-frames.json")).expect("colour-frames.json (FILMCRAFT_BLESS=1 writes it)"), frames, "Film draws them as pinned");
+        assert_eq!(
+            std::fs::read_to_string(dir.join("colour-frames.json")).expect("colour-frames.json (FILMCRAFT_BLESS=1 writes it)"),
+            frames,
+            "Film draws them as pinned"
+        );
         let mut again = session();
         open_host_file(&mut again, "trip.otio", &out).unwrap();
         assert_eq!(keys_of(&again, "Main", "Title", "graphic_text", "fill_color"), fill, "reopened in Film as the very keyframes");

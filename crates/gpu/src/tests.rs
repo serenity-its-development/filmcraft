@@ -440,6 +440,48 @@ fn gpu_mask_coverage_after_motion_matches_cpu() {
     assert!(cpu.iter().any(|v| *v > 0.2 && *v < 0.8));
 }
 
+/// files/989 (tool choice): a text mask (every glyph's contours, counters among them, under one winding, with a strike through
+/// them) draws alike on the GPU, in clip pixels and in the canvas's through a turned, uneven scale, before Motion and after it.
+#[test]
+fn gpu_text_mask_coverage_matches_cpu() {
+    let Some((dev, q)) = device() else {
+        eprintln!("no GPU adapter; skipping");
+        return;
+    };
+    use filmcraft_project::{Mask, MaskMode, MaskPath, MaskText, MaskUnits, ParamValue, TextDecoration};
+    let g = crate::GpuMask::new(&dev, &q);
+    let mut t = MaskText::new("Bob\ng8", [20.0, 10.0, 280.0, 160.0]);
+    t.family = "Inter".into();
+    t.size = 32.0;
+    t.rotation = 9.0;
+    t.decoration = TextDecoration::LineThrough;
+    let mut a = Mask::text("Text", t);
+    a.feather.value = ParamValue::Float(3.0);
+    a.expansion.value = ParamValue::Float(1.5);
+    let mut b = a.clone();
+    b.units = MaskUnits::Canvas;
+    b.mode = MaskMode::Difference;
+    b.text.as_mut().unwrap().center = Vec2::new(0.1, 0.05);
+    let mut c = Mask::new("c", MaskPath::rect(40.0, 30.0, 120.0, 90.0));
+    c.mode = MaskMode::Subtract;
+    let masks = [a, b, c];
+    let (w, h) = (320, 180);
+    let to_canvas = Affine::rotate_deg(14.0).then_apply(&Affine::scale(1.6, 0.8));
+    let to_output = Affine::translate(30.0, 10.0).then_apply(&Affine::rotate_deg(12.0)).then_apply(&Affine::scale(0.9, 0.6));
+    for (what, flat) in [
+        ("before Motion", filmcraft_render::mask::prepare(&masks, filmcraft_time::Tick(0), 1.0, &to_canvas)),
+        ("after Motion", filmcraft_render::mask::prepare_placed(&masks, filmcraft_time::Tick(0), &to_output, 0.5).unwrap()),
+    ] {
+        assert!(flat[0].contours.len() > 8, "{what}: {} contours", flat[0].contours.len());
+        let cpu = filmcraft_render::mask::coverage(&flat, w, h).unwrap();
+        let gpu = g.coverage(&flat, w, h).expect("gpu coverage");
+        let worst = cpu.iter().zip(&gpu).map(|(a, b)| (a - b).abs()).fold(0f32, f32::max);
+        eprintln!("text mask coverage {what}: max |cpu − gpu| = {worst:e}");
+        assert!(worst < 2e-4, "{what}: {worst}");
+        assert!(cpu.iter().any(|v| *v > 0.99) && cpu.iter().any(|v| *v < 0.01) && cpu.iter().any(|v| *v > 0.2 && *v < 0.8), "{what}");
+    }
+}
+
 #[test]
 fn gpu_masked_mix_matches_cpu() {
     let Some((dev, q)) = device() else {

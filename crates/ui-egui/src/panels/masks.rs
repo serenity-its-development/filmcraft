@@ -53,6 +53,7 @@ pub(crate) fn effect_rows(
         (Icon::Ellipse, "ellipse", tl!("Create ellipse mask")),
         (Icon::Rectangle, "polygon", tl!("Create 4-point polygon mask")),
         (Icon::Pen, "pen", tl!("Free draw bezier")),
+        (Icon::Type, "text", tl!("Create text mask")),
     ]
     .into_iter()
     .enumerate()
@@ -95,7 +96,9 @@ pub(crate) fn effect_rows(
         // shape glyph: ellipse for smooth paths, square for polygons
         let path = m.path_at(mt);
         let glyph = Rect::from_center_size(pos2(r.min.x + 42.0, r.center().y), vec2(12.0, 12.0));
-        let gi = if path.vertices.iter().all(|v| v.is_corner()) {
+        let gi = if m.text.is_some() {
+            Icon::Type
+        } else if path.vertices.iter().all(|v| v.is_corner()) {
             Icon::Rectangle
         } else if path.len() == 4 {
             Icon::Ellipse
@@ -152,6 +155,10 @@ pub(crate) fn effect_rows(
             continue;
         }
         for pd in defs {
+            // a text mask's shape is its text (its rows below), not a path
+            if pd.id == "path" && m.text.is_some() {
+                continue;
+            }
             crate::panels::effect_controls::param_row(app, ui, body, clip, idx, e, Some(k), pd, mt, actions, lane, lx, it, keys);
             if pd.id != "path"
                 && app.ui.expanded_fx.contains(&crate::panels::effect_controls::graph_key(clip, idx, &format!("mask{k}.{}", pd.id)))
@@ -160,6 +167,37 @@ pub(crate) fn effect_rows(
             {
                 crate::panels::effect_controls::graph_rows(app, ui, body, clip, idx, Some(k), pd, param, lane, it, actions);
             }
+        }
+        // a text mask's text and size (files/989, tool choice: Film edits Cut's text mask as its own)
+        if let Some(tx) = &m.text {
+            let (r, _) = ui.allocate_exact_size(vec2(body.width(), ROW_H), Sense::hover());
+            crate::panels::effect_controls::row_line(ui, r, lane, &t);
+            ui.painter().text(pos2(r.min.x + 40.0, r.center().y), Align2::LEFT_CENTER, tl!("Text"), Tokens::ui(12.0), t.text);
+            let cr = Rect::from_min_max(pos2(r.min.x + (r.width() * 0.5).max(150.0), r.min.y + 2.0), pos2(r.max.x - 8.0, r.max.y - 2.0));
+            let mut cui = ui.new_child(egui::UiBuilder::new().max_rect(cr).layout(egui::Layout::left_to_right(egui::Align::Center)));
+            crate::panels::effect_controls::fit_to_row(&mut cui);
+            let mut content = tx.content.clone();
+            if crate::widgets::accessible_name(cui.add(egui::TextEdit::singleline(&mut content).desired_width(cr.width())), "Mask text").changed() {
+                actions.push((
+                    "masks.set".into(),
+                    json!({"clip": clip.0, "effect": idx, "mask": k, "text": {"content": content}, "merge": format!("text-{}-{idx}-{k}", clip.0)}),
+                ));
+            }
+            app.auto.add(&format!("{base}.text"), cr, "Mask text");
+            let (r, _) = ui.allocate_exact_size(vec2(body.width(), ROW_H), Sense::hover());
+            crate::panels::effect_controls::row_line(ui, r, lane, &t);
+            ui.painter().text(pos2(r.min.x + 40.0, r.center().y), Align2::LEFT_CENTER, tl!("Font Size"), Tokens::ui(12.0), t.text);
+            let cr = Rect::from_min_size(pos2(r.min.x + (r.width() * 0.5).max(150.0), r.min.y + 2.0), vec2(64.0, ROW_H - 4.0));
+            let mut cui = ui.new_child(egui::UiBuilder::new().max_rect(cr).layout(egui::Layout::left_to_right(egui::Align::Center)));
+            crate::panels::effect_controls::fit_to_row(&mut cui);
+            let mut size = tx.size;
+            if crate::widgets::accessible_name(cui.add(egui::DragValue::new(&mut size).range(0.0..=1000.0).speed(0.1)), "Mask font size").changed() {
+                actions.push((
+                    "masks.set".into(),
+                    json!({"clip": clip.0, "effect": idx, "mask": k, "text": {"size": size}, "merge": format!("text-size-{}-{idx}-{k}", clip.0)}),
+                ));
+            }
+            app.auto.add(&format!("{base}.fontSize"), cr, "Mask font size");
         }
         // Inverted
         let (r, _) = ui.allocate_exact_size(vec2(body.width(), ROW_H), Sense::hover());

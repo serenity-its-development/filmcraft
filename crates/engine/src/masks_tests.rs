@@ -177,6 +177,53 @@ fn a_mask_measures_its_feather_in_clip_or_canvas_pixels() {
     assert_eq!(s.execute("masks.list", json!({})).unwrap()["masks"][0]["units"], "clip");
 }
 
+/// files/989 (tool choice: both tools edit everything): Film makes and edits a text mask (`masks.add {shape: "text"}`, `masks.set
+/// {text}`, moved by `masks.translate`), draws it on the program (inside the glyphs, not in an O's counter), saves it in the project
+/// file and undoes it as one step; the commands that edit a path refuse it by name.
+#[test]
+fn film_makes_and_edits_a_text_mask() {
+    let (mut s, _) = demo();
+    let plain = s.render_program(0.25).unwrap();
+    s.execute("effects.apply", json!({"effect": "invert"})).unwrap();
+    s.execute("masks.add", json!({"effect": "invert", "shape": "text", "text": {"content": "O", "family": "Inter", "size": 70}})).unwrap();
+    s.execute("masks.set", json!({"feather": 0})).unwrap();
+    let l = s.execute("masks.list", json!({})).unwrap();
+    let m = &l["masks"][0];
+    assert_eq!((&m["text"]["content"], &m["text"]["size"], &m["text"]["center"]), (&json!("O"), &json!(70.0), &json!([0.0, 0.0])));
+    let img = s.render_program(0.25).unwrap();
+    // the O's counter on the frame's centre line is not inverted, its ring is, and so is nothing far outside it
+    let (w, h) = (img.w, img.h);
+    let row = (h as f32 * (0.5 - 0.1)) as usize;
+    let inverted = |x: usize| dist(img.get(x, row), plain.get(x, row)) > 0.05;
+    let hits: Vec<usize> = (0..w).filter(|x| inverted(*x)).collect();
+    assert!(!hits.is_empty(), "the ring is inverted");
+    let (a, b) = (hits[0], *hits.last().unwrap());
+    assert!(!inverted((a + b) / 2), "the counter is not");
+    assert!(!inverted(w / 20), "outside the O is not");
+    s.execute("masks.set", json!({"text": {"content": "Film", "bold": true, "decoration": "underline"}})).unwrap();
+    s.execute("masks.translate", json!({"delta": [192.0, 0.0]})).unwrap();
+    let l = s.execute("masks.list", json!({})).unwrap();
+    let t = &l["masks"][0]["text"];
+    assert_eq!((&t["content"], &t["bold"], &t["decoration"]), (&json!("Film"), &json!(true), &json!("underline")));
+    assert!(t["center"][0].as_f64().unwrap() > 0.0, "moved right: {t}");
+    let back = filmcraft_format::decode(&filmcraft_format::encode(&s.project, false)).unwrap().project;
+    assert_eq!(&back, &*s.project);
+    for (cmd, args) in [
+        ("masks.moveVertex", json!({"vertex": 0, "delta": [1, 1]})),
+        ("masks.addVertex", json!({"after": 0, "at": [1, 1]})),
+        ("masks.roundCorners", json!({"radius": 4})),
+    ] {
+        let e = s.execute(cmd, args).unwrap_err().to_string();
+        assert!(e.contains("text-mask-has-no-vertices"), "{cmd}: {e}");
+    }
+    let e = s.execute("masks.track", json!({})).unwrap_err().to_string();
+    assert!(e.contains("text-mask-not-tracked"), "{e}");
+    let e = s.execute("masks.set", json!({"text": {"weight": 7}})).unwrap_err().to_string();
+    assert!(e.contains("`text.weight` is not a text mask's"), "{e}");
+    s.execute("edit.undo", json!({})).unwrap();
+    assert_eq!(s.execute("masks.list", json!({})).unwrap()["masks"][0]["text"]["content"], "Film", "the move undone, the text kept");
+}
+
 // ---------------------------------------------------------------- tracking
 
 /// A 320×240 24 fps clip of a textured disc moving under a known similarity motion over a static
