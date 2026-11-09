@@ -410,7 +410,14 @@ mod tests {
             o.masks.push(hole());
         });
         edit_clip(&mut s, "Main", "Logo", |c| c.effects.iter_mut().find(|e| e.effect == "opacity").unwrap().masks.push(hole()));
-        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap_or_else(|e| panic!("{e}"))).unwrap();
+        let out = save_host_file(&mut s).unwrap_or_else(|e| panic!("{e}"));
+        // Pinned as `film-masked-cut.otio` (`FILMCRAFT_BLESS=1` writes it), the file the OpenCut fork's `film-masks.test.ts` opens in Cut.
+        let golden = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../interchange/tests/it/oneos/film-masked-cut.otio");
+        if std::env::var_os("FILMCRAFT_BLESS").is_some() {
+            std::fs::write(&golden, &out).unwrap();
+        }
+        assert_eq!(std::fs::read(&golden).expect("film-masked-cut.otio (FILMCRAFT_BLESS=1 writes it)"), out, "Film saves Cut's masks as pinned");
+        let saved: Value = serde_json::from_slice(&out).unwrap();
         let got = saved.pointer(&beach).unwrap().as_array().unwrap().clone();
         let logo_got = saved.pointer(&logo).unwrap_or_else(|| panic!("the Logo has masks")).clone();
         let mut want = cut.clone();

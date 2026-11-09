@@ -1,0 +1,3109 @@
+{
+  "OTIO_SCHEMA": "SerializableCollection.1",
+  "children": [
+    {
+      "OTIO_SCHEMA": "Timeline.1",
+      "global_start_time": null,
+      "metadata": {
+        "opencut": {
+          "scene": {
+            "createdAt": "2026-11-08T00:00:00.000Z",
+            "id": "s1",
+            "isMain": true,
+            "updatedAt": "2026-11-08T01:00:00.000Z"
+          }
+        }
+      },
+      "name": "Main",
+      "tracks": {
+        "OTIO_SCHEMA": "Stack.1",
+        "children": [
+          {
+            "OTIO_SCHEMA": "Track.1",
+            "children": [
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "ExternalReference.1",
+                    "available_image_bounds": null,
+                    "available_range": null,
+                    "metadata": {},
+                    "name": "beach.mp4",
+                    "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz0?version=v3"
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "animations": {
+                        "bindings": {
+                          "effects.id-001.params.intensity": {
+                            "components": [
+                              {
+                                "channelId": "effects.id-001.params.intensity:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "effects.id-001.params.intensity"
+                          },
+                          "opacity": {
+                            "components": [
+                              {
+                                "channelId": "opacity:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "opacity"
+                          },
+                          "transform.positionX": {
+                            "components": [
+                              {
+                                "channelId": "transform.positionX:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "transform.positionX"
+                          },
+                          "volume": {
+                            "components": [
+                              {
+                                "channelId": "volume:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "volume"
+                          }
+                        },
+                        "channels": {
+                          "effects.id-001.params.intensity:value": {
+                            "keys": [
+                              {
+                                "id": "id-015",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 40
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "opacity:value": {
+                            "keys": [
+                              {
+                                "id": "id-011",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 0,
+                                "value": 0
+                              },
+                              {
+                                "id": "id-012",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 1
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "transform.positionX:value": {
+                            "keys": [
+                              {
+                                "id": "id-013",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 240000,
+                                "value": 40
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "volume:value": {
+                            "keys": [
+                              {
+                                "id": "id-014",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 360000,
+                                "value": 0.2
+                              }
+                            ],
+                            "kind": "scalar"
+                          }
+                        }
+                      },
+                      "blendMode": "screen",
+                      "effects": [
+                        {
+                          "enabled": true,
+                          "id": "id-001",
+                          "params": {
+                            "intensity": 15
+                          },
+                          "type": "blur"
+                        }
+                      ],
+                      "hidden": false,
+                      "id": "v1",
+                      "isSourceAudioEnabled": true,
+                      "masks": [
+                        {
+                          "id": "id-002",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "inverted": false,
+                            "rotation": 0,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0
+                          },
+                          "type": "split"
+                        },
+                        {
+                          "id": "id-003",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 1.1473474844178635
+                          },
+                          "type": "cinematic-bars"
+                        },
+                        {
+                          "id": "id-004",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "expansion": 0,
+                            "feather": 6,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "units": "clip",
+                            "width": 0.3375
+                          },
+                          "type": "rectangle"
+                        },
+                        {
+                          "id": "id-005",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 0.3375
+                          },
+                          "type": "ellipse"
+                        },
+                        {
+                          "id": "id-006",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 0.3375
+                          },
+                          "type": "heart"
+                        },
+                        {
+                          "id": "id-007",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 0.3375
+                          },
+                          "type": "diamond"
+                        },
+                        {
+                          "id": "id-008",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 0.3375
+                          },
+                          "type": "star"
+                        },
+                        {
+                          "id": "id-010",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "closed": false,
+                            "feather": 0,
+                            "inverted": false,
+                            "path": [],
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0
+                          },
+                          "type": "custom"
+                        },
+                        {
+                          "id": "film-mask-8",
+                          "name": "Hole",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "closed": true,
+                            "expansion": 0,
+                            "feather": 10,
+                            "inverted": false,
+                            "mode": "subtract",
+                            "path": [
+                              {
+                                "id": "film-p0",
+                                "inX": -0.011505932,
+                                "inY": 0,
+                                "outX": 0.011505932,
+                                "outY": 0,
+                                "x": 0,
+                                "y": -0.027777778
+                              },
+                              {
+                                "id": "film-p1",
+                                "inX": 0,
+                                "inY": -0.015341243,
+                                "outX": 0,
+                                "outY": 0.015341243,
+                                "x": 0.020833333,
+                                "y": 0
+                              },
+                              {
+                                "id": "film-p2",
+                                "inX": 0.011505932,
+                                "inY": 0,
+                                "outX": -0.011505932,
+                                "outY": 0,
+                                "x": 0,
+                                "y": 0.027777778
+                              },
+                              {
+                                "id": "film-p3",
+                                "inX": 0,
+                                "inY": 0.015341243,
+                                "outX": 0,
+                                "outY": -0.015341243,
+                                "x": -0.020833333,
+                                "y": 0
+                              }
+                            ],
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "units": "clip"
+                          },
+                          "type": "custom"
+                        }
+                      ],
+                      "mediaId": "m-video",
+                      "muted": false,
+                      "opacity": 0.9,
+                      "retime": {
+                        "maintainPitch": true,
+                        "rate": 1.5
+                      },
+                      "sourceDuration": 960000,
+                      "transform": {
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
+                      },
+                      "trimEnd": 240000,
+                      "type": "video",
+                      "volume": 0.7
+                    }
+                  }
+                },
+                "name": "Beach",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 600000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 120000
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Gap.1",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "metadata": {},
+                "name": "",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 240000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "ExternalReference.1",
+                    "available_image_bounds": null,
+                    "available_range": null,
+                    "metadata": {},
+                    "name": "logo.png",
+                    "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz1?version=v1"
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "blendMode": "normal",
+                      "hidden": false,
+                      "id": "i1",
+                      "masks": [
+                        {
+                          "id": "film-mask-0",
+                          "name": "Hole",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "closed": true,
+                            "expansion": 0,
+                            "feather": 10,
+                            "inverted": false,
+                            "mode": "subtract",
+                            "path": [
+                              {
+                                "id": "film-p0",
+                                "inX": -0.043147246,
+                                "inY": 0,
+                                "outX": 0.043147246,
+                                "outY": 0,
+                                "x": 1.375,
+                                "y": 0.49609375
+                              },
+                              {
+                                "id": "film-p1",
+                                "inX": 0,
+                                "inY": -0.032360435,
+                                "outX": 0,
+                                "outY": 0.032360435,
+                                "x": 1.453125,
+                                "y": 0.5546875
+                              },
+                              {
+                                "id": "film-p2",
+                                "inX": 0.043147246,
+                                "inY": 0,
+                                "outX": -0.043147246,
+                                "outY": 0,
+                                "x": 1.375,
+                                "y": 0.61328125
+                              },
+                              {
+                                "id": "film-p3",
+                                "inX": 0,
+                                "inY": 0.032360435,
+                                "outX": 0,
+                                "outY": -0.032360435,
+                                "x": 1.296875,
+                                "y": 0.5546875
+                              }
+                            ],
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "units": "clip"
+                          },
+                          "type": "custom"
+                        }
+                      ],
+                      "mediaId": "m-image",
+                      "opacity": 1,
+                      "transform": {
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "rotate": 0,
+                        "scaleX": 1,
+                        "scaleY": 1
+                      },
+                      "trimEnd": 0,
+                      "type": "image"
+                    }
+                  }
+                },
+                "name": "Logo",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 360000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              }
+            ],
+            "effects": [],
+            "enabled": true,
+            "kind": "Video",
+            "markers": [],
+            "metadata": {
+              "opencut": {
+                "order": [
+                  "v1",
+                  "i1"
+                ],
+                "slot": "main",
+                "track": {
+                  "hidden": false,
+                  "id": "s1-main",
+                  "muted": false,
+                  "type": "video"
+                }
+              }
+            },
+            "name": "Main",
+            "source_range": null
+          },
+          {
+            "OTIO_SCHEMA": "Track.1",
+            "children": [
+              {
+                "OTIO_SCHEMA": "Gap.1",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "metadata": {},
+                "name": "",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 120000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.text",
+                    "metadata": {},
+                    "name": "Title",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "animations": {
+                        "bindings": {
+                          "color": {
+                            "colorSpace": "srgb-linear",
+                            "components": [
+                              {
+                                "channelId": "color:r",
+                                "key": "r"
+                              },
+                              {
+                                "channelId": "color:g",
+                                "key": "g"
+                              },
+                              {
+                                "channelId": "color:b",
+                                "key": "b"
+                              },
+                              {
+                                "channelId": "color:a",
+                                "key": "a"
+                              }
+                            ],
+                            "kind": "color",
+                            "path": "color"
+                          },
+                          "content": {
+                            "components": [
+                              {
+                                "channelId": "content:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "discrete",
+                            "path": "content"
+                          },
+                          "fontFamily": {
+                            "components": [
+                              {
+                                "channelId": "fontFamily:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "discrete",
+                            "path": "fontFamily"
+                          },
+                          "fontSize": {
+                            "components": [
+                              {
+                                "channelId": "fontSize:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "fontSize"
+                          },
+                          "fontStyle": {
+                            "components": [
+                              {
+                                "channelId": "fontStyle:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "discrete",
+                            "path": "fontStyle"
+                          },
+                          "fontWeight": {
+                            "components": [
+                              {
+                                "channelId": "fontWeight:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "discrete",
+                            "path": "fontWeight"
+                          },
+                          "letterSpacing": {
+                            "components": [
+                              {
+                                "channelId": "letterSpacing:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "letterSpacing"
+                          },
+                          "opacity": {
+                            "components": [
+                              {
+                                "channelId": "opacity:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "opacity"
+                          },
+                          "textAlign": {
+                            "components": [
+                              {
+                                "channelId": "textAlign:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "discrete",
+                            "path": "textAlign"
+                          },
+                          "textDecoration": {
+                            "components": [
+                              {
+                                "channelId": "textDecoration:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "discrete",
+                            "path": "textDecoration"
+                          }
+                        },
+                        "channels": {
+                          "color:a": {
+                            "keys": [
+                              {
+                                "id": "id-018",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 1
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "color:b": {
+                            "keys": [
+                              {
+                                "id": "id-018",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 0
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "color:g": {
+                            "keys": [
+                              {
+                                "id": "id-018",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 0
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "color:r": {
+                            "keys": [
+                              {
+                                "id": "id-018",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 1
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "content:value": {
+                            "keys": [
+                              {
+                                "id": "id-022",
+                                "time": 0,
+                                "value": "Hello 日本語"
+                              },
+                              {
+                                "id": "id-023",
+                                "time": 120000,
+                                "value": "Goodbye"
+                              }
+                            ],
+                            "kind": "discrete"
+                          },
+                          "fontFamily:value": {
+                            "keys": [
+                              {
+                                "id": "id-024",
+                                "time": 120000,
+                                "value": "Roboto"
+                              }
+                            ],
+                            "kind": "discrete"
+                          },
+                          "fontSize:value": {
+                            "keys": [
+                              {
+                                "id": "id-019",
+                                "rightHandle": {
+                                  "dt": 30000,
+                                  "dv": 12
+                                },
+                                "segmentToNext": "bezier",
+                                "tangentMode": "broken",
+                                "time": 0,
+                                "value": 64
+                              },
+                              {
+                                "id": "id-020",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 96
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "fontStyle:value": {
+                            "keys": [
+                              {
+                                "id": "id-027",
+                                "time": 120000,
+                                "value": "normal"
+                              }
+                            ],
+                            "kind": "discrete"
+                          },
+                          "fontWeight:value": {
+                            "keys": [
+                              {
+                                "id": "id-026",
+                                "time": 120000,
+                                "value": "normal"
+                              }
+                            ],
+                            "kind": "discrete"
+                          },
+                          "letterSpacing:value": {
+                            "keys": [
+                              {
+                                "id": "id-021",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 60000,
+                                "value": 4
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "opacity:value": {
+                            "keys": [
+                              {
+                                "id": "id-017",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 0,
+                                "value": 0
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "textAlign:value": {
+                            "keys": [
+                              {
+                                "id": "id-025",
+                                "time": 120000,
+                                "value": "left"
+                              }
+                            ],
+                            "kind": "discrete"
+                          },
+                          "textDecoration:value": {
+                            "keys": [
+                              {
+                                "id": "id-028",
+                                "time": 0,
+                                "value": "underline"
+                              },
+                              {
+                                "id": "id-029",
+                                "time": 120000,
+                                "value": "line-through"
+                              }
+                            ],
+                            "kind": "discrete"
+                          }
+                        }
+                      },
+                      "background": {
+                        "color": "#00000080",
+                        "cornerRadius": 8,
+                        "enabled": true,
+                        "offsetX": 0,
+                        "offsetY": 0,
+                        "paddingX": 4,
+                        "paddingY": 2
+                      },
+                      "blendMode": "normal",
+                      "color": "#ffffff",
+                      "content": "Hello 日本語",
+                      "effects": [
+                        {
+                          "enabled": true,
+                          "id": "id-016",
+                          "params": {
+                            "intensity": 15
+                          },
+                          "type": "blur"
+                        }
+                      ],
+                      "fontFamily": "Inter",
+                      "fontSize": 64,
+                      "fontStyle": "italic",
+                      "fontWeight": "bold",
+                      "id": "t1",
+                      "letterSpacing": 1,
+                      "lineHeight": 1.2,
+                      "opacity": 1,
+                      "textAlign": "center",
+                      "textDecoration": "underline",
+                      "transform": {
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "text"
+                    }
+                  }
+                },
+                "name": "Title",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 240000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              }
+            ],
+            "effects": [],
+            "enabled": true,
+            "kind": "Video",
+            "markers": [],
+            "metadata": {
+              "opencut": {
+                "order": [
+                  "t1"
+                ],
+                "slot": "overlay",
+                "track": {
+                  "hidden": false,
+                  "id": "s1-text",
+                  "type": "text"
+                }
+              }
+            },
+            "name": "Titles",
+            "source_range": null
+          },
+          {
+            "OTIO_SCHEMA": "Track.1",
+            "children": [
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.sticker",
+                    "metadata": {},
+                    "name": "Star",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "blendMode": "normal",
+                      "id": "g1",
+                      "opacity": 0.5,
+                      "stickerId": "shapes:star",
+                      "transform": {
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "sticker"
+                    }
+                  }
+                },
+                "name": "Star",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 120000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Gap.1",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "metadata": {},
+                "name": "",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 120000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.graphic",
+                    "metadata": {},
+                    "name": "Rectangle",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "animations": {
+                        "bindings": {
+                          "params.strokeWidth": {
+                            "components": [
+                              {
+                                "channelId": "params.strokeWidth:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "params.strokeWidth"
+                          }
+                        },
+                        "channels": {
+                          "params.strokeWidth:value": {
+                            "keys": [
+                              {
+                                "id": "id-030",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 1
+                              }
+                            ],
+                            "kind": "scalar"
+                          }
+                        }
+                      },
+                      "blendMode": "normal",
+                      "definitionId": "rectangle",
+                      "id": "g2",
+                      "masks": [
+                        {
+                          "id": "id-031",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 0.6
+                          },
+                          "type": "ellipse"
+                        }
+                      ],
+                      "opacity": 1,
+                      "params": {
+                        "cornerRadius": 0,
+                        "fill": "#ffffff",
+                        "stroke": "#000000",
+                        "strokeAlign": "center",
+                        "strokeWidth": 0
+                      },
+                      "transform": {
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "graphic"
+                    }
+                  }
+                },
+                "name": "Rectangle",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 240000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.graphic",
+                    "metadata": {},
+                    "name": "Ellipse",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "blendMode": "normal",
+                      "definitionId": "ellipse",
+                      "id": "g3",
+                      "opacity": 1,
+                      "params": {
+                        "fill": "#ffffff",
+                        "stroke": "#000000",
+                        "strokeAlign": "center",
+                        "strokeWidth": 0
+                      },
+                      "transform": {
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "graphic"
+                    }
+                  }
+                },
+                "name": "Ellipse",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 240000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.graphic",
+                    "metadata": {},
+                    "name": "Polygon",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "blendMode": "normal",
+                      "definitionId": "polygon",
+                      "id": "g4",
+                      "opacity": 1,
+                      "params": {
+                        "cornerRadius": 0,
+                        "fill": "#ffffff",
+                        "sides": 5,
+                        "stroke": "#000000",
+                        "strokeAlign": "center",
+                        "strokeWidth": 0
+                      },
+                      "transform": {
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "graphic"
+                    }
+                  }
+                },
+                "name": "Polygon",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 240000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.graphic",
+                    "metadata": {},
+                    "name": "Star",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "blendMode": "normal",
+                      "definitionId": "star",
+                      "id": "g5",
+                      "opacity": 1,
+                      "params": {
+                        "depth": 45,
+                        "fill": "#ffffff",
+                        "points": 5,
+                        "stroke": "#000000",
+                        "strokeAlign": "center",
+                        "strokeWidth": 0
+                      },
+                      "transform": {
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "graphic"
+                    }
+                  }
+                },
+                "name": "Star",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 240000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              }
+            ],
+            "effects": [],
+            "enabled": true,
+            "kind": "Video",
+            "markers": [],
+            "metadata": {
+              "opencut": {
+                "order": [
+                  "g1",
+                  "g2",
+                  "g3",
+                  "g4",
+                  "g5"
+                ],
+                "slot": "overlay",
+                "track": {
+                  "hidden": true,
+                  "id": "s1-gfx",
+                  "type": "graphic"
+                }
+              }
+            },
+            "name": "Graphics",
+            "source_range": null
+          },
+          {
+            "OTIO_SCHEMA": "Track.1",
+            "children": [
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.effect",
+                    "metadata": {},
+                    "name": "Grade",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "effectType": "blur",
+                      "id": "e1",
+                      "params": {
+                        "intensity": 15
+                      },
+                      "trimEnd": 0,
+                      "type": "effect"
+                    }
+                  }
+                },
+                "name": "Grade",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 1200000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              }
+            ],
+            "effects": [],
+            "enabled": true,
+            "kind": "Video",
+            "markers": [],
+            "metadata": {
+              "opencut": {
+                "order": [
+                  "e1"
+                ],
+                "slot": "overlay",
+                "track": {
+                  "hidden": false,
+                  "id": "s1-fx",
+                  "type": "effect"
+                }
+              }
+            },
+            "name": "Adjust",
+            "source_range": null
+          },
+          {
+            "OTIO_SCHEMA": "Track.1",
+            "children": [
+              {
+                "OTIO_SCHEMA": "Gap.1",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "metadata": {},
+                "name": "",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 60000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "ExternalReference.1",
+                    "available_image_bounds": null,
+                    "available_range": null,
+                    "metadata": {},
+                    "name": "song.wav",
+                    "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz2?version=v9"
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "id": "a1",
+                      "mediaId": "m-audio",
+                      "muted": false,
+                      "retime": {
+                        "rate": 0.9
+                      },
+                      "sourceDuration": 21600000,
+                      "sourceType": "upload",
+                      "trimEnd": 0,
+                      "type": "audio",
+                      "volume": 0.4
+                    }
+                  }
+                },
+                "name": "Song",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 1080000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 360000
+                  }
+                }
+              }
+            ],
+            "effects": [],
+            "enabled": true,
+            "kind": "Audio",
+            "markers": [],
+            "metadata": {
+              "opencut": {
+                "order": [
+                  "a1"
+                ],
+                "slot": "audio",
+                "track": {
+                  "id": "s1-a1",
+                  "muted": true,
+                  "type": "audio"
+                }
+              }
+            },
+            "name": "Music",
+            "source_range": null
+          }
+        ],
+        "effects": [],
+        "enabled": true,
+        "markers": [
+          {
+            "OTIO_SCHEMA": "Marker.2",
+            "color": "RED",
+            "comment": "",
+            "marked_range": {
+              "OTIO_SCHEMA": "TimeRange.1",
+              "duration": {
+                "OTIO_SCHEMA": "RationalTime.1",
+                "rate": 120000,
+                "value": 120000
+              },
+              "start_time": {
+                "OTIO_SCHEMA": "RationalTime.1",
+                "rate": 120000,
+                "value": 240000
+              }
+            },
+            "metadata": {
+              "opencut": {
+                "bookmark": {
+                  "color": "#ff0000",
+                  "duration": 120000,
+                  "note": "Cut here"
+                }
+              }
+            },
+            "name": "Cut here"
+          },
+          {
+            "OTIO_SCHEMA": "Marker.2",
+            "color": "RED",
+            "comment": "",
+            "marked_range": {
+              "OTIO_SCHEMA": "TimeRange.1",
+              "duration": {
+                "OTIO_SCHEMA": "RationalTime.1",
+                "rate": 120000,
+                "value": 0
+              },
+              "start_time": {
+                "OTIO_SCHEMA": "RationalTime.1",
+                "rate": 120000,
+                "value": 1080000
+              }
+            },
+            "metadata": {
+              "opencut": {
+                "bookmark": {}
+              }
+            },
+            "name": ""
+          }
+        ],
+        "metadata": {},
+        "name": "tracks",
+        "source_range": null
+      }
+    },
+    {
+      "OTIO_SCHEMA": "Timeline.1",
+      "global_start_time": null,
+      "metadata": {
+        "opencut": {
+          "scene": {
+            "createdAt": "2026-11-08T00:00:00.000Z",
+            "id": "s2",
+            "isMain": false,
+            "updatedAt": "2026-11-08T01:00:00.000Z"
+          }
+        }
+      },
+      "name": "B-roll",
+      "tracks": {
+        "OTIO_SCHEMA": "Stack.1",
+        "children": [
+          {
+            "OTIO_SCHEMA": "Track.1",
+            "children": [
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "ExternalReference.1",
+                    "available_image_bounds": null,
+                    "available_range": null,
+                    "metadata": {},
+                    "name": "beach.mp4",
+                    "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz0?version=v3"
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "animations": {
+                        "bindings": {
+                          "effects.id-032.params.intensity": {
+                            "components": [
+                              {
+                                "channelId": "effects.id-032.params.intensity:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "effects.id-032.params.intensity"
+                          },
+                          "opacity": {
+                            "components": [
+                              {
+                                "channelId": "opacity:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "opacity"
+                          },
+                          "transform.positionX": {
+                            "components": [
+                              {
+                                "channelId": "transform.positionX:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "transform.positionX"
+                          },
+                          "volume": {
+                            "components": [
+                              {
+                                "channelId": "volume:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "volume"
+                          }
+                        },
+                        "channels": {
+                          "effects.id-032.params.intensity:value": {
+                            "keys": [
+                              {
+                                "id": "id-046",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 40
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "opacity:value": {
+                            "keys": [
+                              {
+                                "id": "id-042",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 0,
+                                "value": 0
+                              },
+                              {
+                                "id": "id-043",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 1
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "transform.positionX:value": {
+                            "keys": [
+                              {
+                                "id": "id-044",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 240000,
+                                "value": 40
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "volume:value": {
+                            "keys": [
+                              {
+                                "id": "id-045",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 360000,
+                                "value": 0.2
+                              }
+                            ],
+                            "kind": "scalar"
+                          }
+                        }
+                      },
+                      "blendMode": "screen",
+                      "effects": [
+                        {
+                          "enabled": true,
+                          "id": "id-032",
+                          "params": {
+                            "intensity": 15
+                          },
+                          "type": "blur"
+                        }
+                      ],
+                      "hidden": false,
+                      "id": "v1",
+                      "isSourceAudioEnabled": true,
+                      "masks": [
+                        {
+                          "id": "id-033",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "inverted": false,
+                            "rotation": 0,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0
+                          },
+                          "type": "split"
+                        },
+                        {
+                          "id": "id-034",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 1.1473474844178635
+                          },
+                          "type": "cinematic-bars"
+                        },
+                        {
+                          "id": "id-035",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 0.3375
+                          },
+                          "type": "rectangle"
+                        },
+                        {
+                          "id": "id-036",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 0.3375
+                          },
+                          "type": "ellipse"
+                        },
+                        {
+                          "id": "id-037",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 0.3375
+                          },
+                          "type": "heart"
+                        },
+                        {
+                          "id": "id-038",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 0.3375
+                          },
+                          "type": "diamond"
+                        },
+                        {
+                          "id": "id-039",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 0.3375
+                          },
+                          "type": "star"
+                        },
+                        {
+                          "id": "id-040",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "content": "Mask",
+                            "feather": 0,
+                            "fontFamily": "Arial",
+                            "fontSize": 15,
+                            "fontStyle": "normal",
+                            "fontWeight": "normal",
+                            "inverted": false,
+                            "letterSpacing": 0,
+                            "lineHeight": 1.2,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "textDecoration": "none"
+                          },
+                          "type": "text"
+                        },
+                        {
+                          "id": "id-041",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "closed": false,
+                            "feather": 0,
+                            "inverted": false,
+                            "path": [],
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0
+                          },
+                          "type": "custom"
+                        }
+                      ],
+                      "mediaId": "m-video",
+                      "muted": false,
+                      "opacity": 0.9,
+                      "retime": {
+                        "maintainPitch": true,
+                        "rate": 1.5
+                      },
+                      "sourceDuration": 960000,
+                      "transform": {
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
+                      },
+                      "trimEnd": 240000,
+                      "type": "video",
+                      "volume": 0.7
+                    }
+                  }
+                },
+                "name": "Beach",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 600000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 120000
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Gap.1",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "metadata": {},
+                "name": "",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 240000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "ExternalReference.1",
+                    "available_image_bounds": null,
+                    "available_range": null,
+                    "metadata": {},
+                    "name": "logo.png",
+                    "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz1?version=v1"
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "blendMode": "normal",
+                      "hidden": false,
+                      "id": "i1",
+                      "mediaId": "m-image",
+                      "opacity": 1,
+                      "transform": {
+                        "position": {
+                          "x": 0,
+                          "y": 0
+                        },
+                        "rotate": 0,
+                        "scaleX": 1,
+                        "scaleY": 1
+                      },
+                      "trimEnd": 0,
+                      "type": "image"
+                    }
+                  }
+                },
+                "name": "Logo",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 360000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              }
+            ],
+            "effects": [],
+            "enabled": true,
+            "kind": "Video",
+            "markers": [],
+            "metadata": {
+              "opencut": {
+                "order": [
+                  "v1",
+                  "i1"
+                ],
+                "slot": "main",
+                "track": {
+                  "hidden": false,
+                  "id": "s2-main",
+                  "muted": false,
+                  "type": "video"
+                }
+              }
+            },
+            "name": "Main",
+            "source_range": null
+          },
+          {
+            "OTIO_SCHEMA": "Track.1",
+            "children": [
+              {
+                "OTIO_SCHEMA": "Gap.1",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "metadata": {},
+                "name": "",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 120000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.text",
+                    "metadata": {},
+                    "name": "Title",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "animations": {
+                        "bindings": {
+                          "color": {
+                            "colorSpace": "srgb-linear",
+                            "components": [
+                              {
+                                "channelId": "color:r",
+                                "key": "r"
+                              },
+                              {
+                                "channelId": "color:g",
+                                "key": "g"
+                              },
+                              {
+                                "channelId": "color:b",
+                                "key": "b"
+                              },
+                              {
+                                "channelId": "color:a",
+                                "key": "a"
+                              }
+                            ],
+                            "kind": "color",
+                            "path": "color"
+                          },
+                          "content": {
+                            "components": [
+                              {
+                                "channelId": "content:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "discrete",
+                            "path": "content"
+                          },
+                          "fontFamily": {
+                            "components": [
+                              {
+                                "channelId": "fontFamily:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "discrete",
+                            "path": "fontFamily"
+                          },
+                          "fontSize": {
+                            "components": [
+                              {
+                                "channelId": "fontSize:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "fontSize"
+                          },
+                          "fontStyle": {
+                            "components": [
+                              {
+                                "channelId": "fontStyle:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "discrete",
+                            "path": "fontStyle"
+                          },
+                          "fontWeight": {
+                            "components": [
+                              {
+                                "channelId": "fontWeight:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "discrete",
+                            "path": "fontWeight"
+                          },
+                          "letterSpacing": {
+                            "components": [
+                              {
+                                "channelId": "letterSpacing:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "letterSpacing"
+                          },
+                          "opacity": {
+                            "components": [
+                              {
+                                "channelId": "opacity:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "opacity"
+                          },
+                          "textAlign": {
+                            "components": [
+                              {
+                                "channelId": "textAlign:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "discrete",
+                            "path": "textAlign"
+                          },
+                          "textDecoration": {
+                            "components": [
+                              {
+                                "channelId": "textDecoration:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "discrete",
+                            "path": "textDecoration"
+                          }
+                        },
+                        "channels": {
+                          "color:a": {
+                            "keys": [
+                              {
+                                "id": "id-049",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 1
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "color:b": {
+                            "keys": [
+                              {
+                                "id": "id-049",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 0
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "color:g": {
+                            "keys": [
+                              {
+                                "id": "id-049",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 0
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "color:r": {
+                            "keys": [
+                              {
+                                "id": "id-049",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 1
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "content:value": {
+                            "keys": [
+                              {
+                                "id": "id-053",
+                                "time": 0,
+                                "value": "Hello 日本語"
+                              },
+                              {
+                                "id": "id-054",
+                                "time": 120000,
+                                "value": "Goodbye"
+                              }
+                            ],
+                            "kind": "discrete"
+                          },
+                          "fontFamily:value": {
+                            "keys": [
+                              {
+                                "id": "id-055",
+                                "time": 120000,
+                                "value": "Roboto"
+                              }
+                            ],
+                            "kind": "discrete"
+                          },
+                          "fontSize:value": {
+                            "keys": [
+                              {
+                                "id": "id-050",
+                                "rightHandle": {
+                                  "dt": 30000,
+                                  "dv": 12
+                                },
+                                "segmentToNext": "bezier",
+                                "tangentMode": "broken",
+                                "time": 0,
+                                "value": 64
+                              },
+                              {
+                                "id": "id-051",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 96
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "fontStyle:value": {
+                            "keys": [
+                              {
+                                "id": "id-058",
+                                "time": 120000,
+                                "value": "normal"
+                              }
+                            ],
+                            "kind": "discrete"
+                          },
+                          "fontWeight:value": {
+                            "keys": [
+                              {
+                                "id": "id-057",
+                                "time": 120000,
+                                "value": "normal"
+                              }
+                            ],
+                            "kind": "discrete"
+                          },
+                          "letterSpacing:value": {
+                            "keys": [
+                              {
+                                "id": "id-052",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 60000,
+                                "value": 4
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "opacity:value": {
+                            "keys": [
+                              {
+                                "id": "id-048",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 0,
+                                "value": 0
+                              }
+                            ],
+                            "kind": "scalar"
+                          },
+                          "textAlign:value": {
+                            "keys": [
+                              {
+                                "id": "id-056",
+                                "time": 120000,
+                                "value": "left"
+                              }
+                            ],
+                            "kind": "discrete"
+                          },
+                          "textDecoration:value": {
+                            "keys": [
+                              {
+                                "id": "id-059",
+                                "time": 0,
+                                "value": "underline"
+                              },
+                              {
+                                "id": "id-060",
+                                "time": 120000,
+                                "value": "line-through"
+                              }
+                            ],
+                            "kind": "discrete"
+                          }
+                        }
+                      },
+                      "background": {
+                        "color": "#00000080",
+                        "cornerRadius": 8,
+                        "enabled": true,
+                        "offsetX": 0,
+                        "offsetY": 0,
+                        "paddingX": 4,
+                        "paddingY": 2
+                      },
+                      "blendMode": "normal",
+                      "color": "#ffffff",
+                      "content": "Hello 日本語",
+                      "effects": [
+                        {
+                          "enabled": true,
+                          "id": "id-047",
+                          "params": {
+                            "intensity": 15
+                          },
+                          "type": "blur"
+                        }
+                      ],
+                      "fontFamily": "Inter",
+                      "fontSize": 64,
+                      "fontStyle": "italic",
+                      "fontWeight": "bold",
+                      "id": "t1",
+                      "letterSpacing": 1,
+                      "lineHeight": 1.2,
+                      "opacity": 1,
+                      "textAlign": "center",
+                      "textDecoration": "underline",
+                      "transform": {
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "text"
+                    }
+                  }
+                },
+                "name": "Title",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 240000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              }
+            ],
+            "effects": [],
+            "enabled": true,
+            "kind": "Video",
+            "markers": [],
+            "metadata": {
+              "opencut": {
+                "order": [
+                  "t1"
+                ],
+                "slot": "overlay",
+                "track": {
+                  "hidden": false,
+                  "id": "s2-text",
+                  "type": "text"
+                }
+              }
+            },
+            "name": "Titles",
+            "source_range": null
+          },
+          {
+            "OTIO_SCHEMA": "Track.1",
+            "children": [
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.sticker",
+                    "metadata": {},
+                    "name": "Star",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "blendMode": "normal",
+                      "id": "g1",
+                      "opacity": 0.5,
+                      "stickerId": "shapes:star",
+                      "transform": {
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "sticker"
+                    }
+                  }
+                },
+                "name": "Star",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 120000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Gap.1",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "metadata": {},
+                "name": "",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 120000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.graphic",
+                    "metadata": {},
+                    "name": "Rectangle",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "animations": {
+                        "bindings": {
+                          "params.strokeWidth": {
+                            "components": [
+                              {
+                                "channelId": "params.strokeWidth:value",
+                                "key": "value"
+                              }
+                            ],
+                            "kind": "number",
+                            "path": "params.strokeWidth"
+                          }
+                        },
+                        "channels": {
+                          "params.strokeWidth:value": {
+                            "keys": [
+                              {
+                                "id": "id-061",
+                                "segmentToNext": "linear",
+                                "tangentMode": "flat",
+                                "time": 120000,
+                                "value": 1
+                              }
+                            ],
+                            "kind": "scalar"
+                          }
+                        }
+                      },
+                      "blendMode": "normal",
+                      "definitionId": "rectangle",
+                      "id": "g2",
+                      "masks": [
+                        {
+                          "id": "id-062",
+                          "params": {
+                            "centerX": 0,
+                            "centerY": 0,
+                            "feather": 0,
+                            "height": 0.6,
+                            "inverted": false,
+                            "rotation": 0,
+                            "scale": 1,
+                            "strokeAlign": "center",
+                            "strokeColor": "#ffffff",
+                            "strokeWidth": 0,
+                            "width": 0.6
+                          },
+                          "type": "ellipse"
+                        }
+                      ],
+                      "opacity": 1,
+                      "params": {
+                        "cornerRadius": 0,
+                        "fill": "#ffffff",
+                        "stroke": "#000000",
+                        "strokeAlign": "center",
+                        "strokeWidth": 0
+                      },
+                      "transform": {
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "graphic"
+                    }
+                  }
+                },
+                "name": "Rectangle",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 240000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.graphic",
+                    "metadata": {},
+                    "name": "Ellipse",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "blendMode": "normal",
+                      "definitionId": "ellipse",
+                      "id": "g3",
+                      "opacity": 1,
+                      "params": {
+                        "fill": "#ffffff",
+                        "stroke": "#000000",
+                        "strokeAlign": "center",
+                        "strokeWidth": 0
+                      },
+                      "transform": {
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "graphic"
+                    }
+                  }
+                },
+                "name": "Ellipse",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 240000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.graphic",
+                    "metadata": {},
+                    "name": "Polygon",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "blendMode": "normal",
+                      "definitionId": "polygon",
+                      "id": "g4",
+                      "opacity": 1,
+                      "params": {
+                        "cornerRadius": 0,
+                        "fill": "#ffffff",
+                        "sides": 5,
+                        "stroke": "#000000",
+                        "strokeAlign": "center",
+                        "strokeWidth": 0
+                      },
+                      "transform": {
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "graphic"
+                    }
+                  }
+                },
+                "name": "Polygon",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 240000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.graphic",
+                    "metadata": {},
+                    "name": "Star",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "blendMode": "normal",
+                      "definitionId": "star",
+                      "id": "g5",
+                      "opacity": 1,
+                      "params": {
+                        "depth": 45,
+                        "fill": "#ffffff",
+                        "points": 5,
+                        "stroke": "#000000",
+                        "strokeAlign": "center",
+                        "strokeWidth": 0
+                      },
+                      "transform": {
+                        "position": {
+                          "x": 12,
+                          "y": -4
+                        },
+                        "rotate": 7.5,
+                        "scaleX": 1.25,
+                        "scaleY": 1.25
+                      },
+                      "trimEnd": 0,
+                      "type": "graphic"
+                    }
+                  }
+                },
+                "name": "Star",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 240000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              }
+            ],
+            "effects": [],
+            "enabled": true,
+            "kind": "Video",
+            "markers": [],
+            "metadata": {
+              "opencut": {
+                "order": [
+                  "g1",
+                  "g2",
+                  "g3",
+                  "g4",
+                  "g5"
+                ],
+                "slot": "overlay",
+                "track": {
+                  "hidden": true,
+                  "id": "s2-gfx",
+                  "type": "graphic"
+                }
+              }
+            },
+            "name": "Graphics",
+            "source_range": null
+          },
+          {
+            "OTIO_SCHEMA": "Track.1",
+            "children": [
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "GeneratorReference.1",
+                    "available_range": null,
+                    "generator_kind": "OpenCut.effect",
+                    "metadata": {},
+                    "name": "Grade",
+                    "parameters": {}
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "effectType": "blur",
+                      "id": "e1",
+                      "params": {
+                        "intensity": 15
+                      },
+                      "trimEnd": 0,
+                      "type": "effect"
+                    }
+                  }
+                },
+                "name": "Grade",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 1200000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              }
+            ],
+            "effects": [],
+            "enabled": true,
+            "kind": "Video",
+            "markers": [],
+            "metadata": {
+              "opencut": {
+                "order": [
+                  "e1"
+                ],
+                "slot": "overlay",
+                "track": {
+                  "hidden": false,
+                  "id": "s2-fx",
+                  "type": "effect"
+                }
+              }
+            },
+            "name": "Adjust",
+            "source_range": null
+          },
+          {
+            "OTIO_SCHEMA": "Track.1",
+            "children": [
+              {
+                "OTIO_SCHEMA": "Gap.1",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "metadata": {},
+                "name": "",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 60000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "OTIO_SCHEMA": "Clip.2",
+                "active_media_reference_key": "DEFAULT_MEDIA",
+                "effects": [],
+                "enabled": true,
+                "markers": [],
+                "media_references": {
+                  "DEFAULT_MEDIA": {
+                    "OTIO_SCHEMA": "ExternalReference.1",
+                    "available_image_bounds": null,
+                    "available_range": null,
+                    "metadata": {},
+                    "name": "song.wav",
+                    "target_url": "oneos:file/01jabcdefghjkmnpqrstvwxyz2?version=v9"
+                  }
+                },
+                "metadata": {
+                  "opencut": {
+                    "element": {
+                      "id": "a1",
+                      "mediaId": "m-audio",
+                      "muted": false,
+                      "retime": {
+                        "rate": 0.9
+                      },
+                      "sourceDuration": 21600000,
+                      "sourceType": "upload",
+                      "trimEnd": 0,
+                      "type": "audio",
+                      "volume": 0.4
+                    }
+                  }
+                },
+                "name": "Song",
+                "source_range": {
+                  "OTIO_SCHEMA": "TimeRange.1",
+                  "duration": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 1080000
+                  },
+                  "start_time": {
+                    "OTIO_SCHEMA": "RationalTime.1",
+                    "rate": 120000,
+                    "value": 360000
+                  }
+                }
+              }
+            ],
+            "effects": [],
+            "enabled": true,
+            "kind": "Audio",
+            "markers": [],
+            "metadata": {
+              "opencut": {
+                "order": [
+                  "a1"
+                ],
+                "slot": "audio",
+                "track": {
+                  "id": "s2-a1",
+                  "muted": true,
+                  "type": "audio"
+                }
+              }
+            },
+            "name": "Music",
+            "source_range": null
+          }
+        ],
+        "effects": [],
+        "enabled": true,
+        "markers": [
+          {
+            "OTIO_SCHEMA": "Marker.2",
+            "color": "RED",
+            "comment": "",
+            "marked_range": {
+              "OTIO_SCHEMA": "TimeRange.1",
+              "duration": {
+                "OTIO_SCHEMA": "RationalTime.1",
+                "rate": 120000,
+                "value": 120000
+              },
+              "start_time": {
+                "OTIO_SCHEMA": "RationalTime.1",
+                "rate": 120000,
+                "value": 240000
+              }
+            },
+            "metadata": {
+              "opencut": {
+                "bookmark": {
+                  "color": "#ff0000",
+                  "duration": 120000,
+                  "note": "Cut here"
+                }
+              }
+            },
+            "name": "Cut here"
+          },
+          {
+            "OTIO_SCHEMA": "Marker.2",
+            "color": "RED",
+            "comment": "",
+            "marked_range": {
+              "OTIO_SCHEMA": "TimeRange.1",
+              "duration": {
+                "OTIO_SCHEMA": "RationalTime.1",
+                "rate": 120000,
+                "value": 0
+              },
+              "start_time": {
+                "OTIO_SCHEMA": "RationalTime.1",
+                "rate": 120000,
+                "value": 1080000
+              }
+            },
+            "metadata": {
+              "opencut": {
+                "bookmark": {}
+              }
+            },
+            "name": ""
+          }
+        ],
+        "metadata": {},
+        "name": "tracks",
+        "source_range": null
+      }
+    }
+  ],
+  "metadata": {
+    "opencut": {
+      "media": [
+        {
+          "duration": 8,
+          "file": {
+            "id": "01jabcdefghjkmnpqrstvwxyz0",
+            "version": "v3"
+          },
+          "fps": 30,
+          "hasAudio": true,
+          "height": 1080,
+          "id": "m-video",
+          "name": "beach.mp4",
+          "type": "video",
+          "width": 1920
+        },
+        {
+          "file": {
+            "id": "01jabcdefghjkmnpqrstvwxyz1",
+            "version": "v1"
+          },
+          "height": 512,
+          "id": "m-image",
+          "name": "logo.png",
+          "type": "image",
+          "width": 512
+        },
+        {
+          "duration": 180,
+          "file": {
+            "id": "01jabcdefghjkmnpqrstvwxyz2",
+            "version": "v9"
+          },
+          "id": "m-audio",
+          "name": "song.wav",
+          "type": "audio"
+        }
+      ],
+      "project": {
+        "currentSceneId": "s2",
+        "metadata": {
+          "createdAt": "2026-11-08T00:00:00.000Z",
+          "duration": 1200000,
+          "id": "p1",
+          "name": "Trip",
+          "thumbnail": "data:image/png;base64,AAAA",
+          "updatedAt": "2026-11-08T02:00:00.000Z"
+        },
+        "settings": {
+          "background": {
+            "blurIntensity": 12,
+            "type": "blur"
+          },
+          "canvasSize": {
+            "height": 1920,
+            "width": 1080
+          },
+          "canvasSizeMode": "custom",
+          "fps": {
+            "denominator": 1001,
+            "numerator": 30000
+          },
+          "lastCustomCanvasSize": {
+            "height": 1920,
+            "width": 1080
+          },
+          "originalCanvasSize": null
+        },
+        "timelineViewState": {
+          "playheadTime": 360000,
+          "scrollLeft": 340,
+          "zoomLevel": 2.5
+        },
+        "version": 23
+      }
+    }
+  },
+  "name": "Trip"
+}
