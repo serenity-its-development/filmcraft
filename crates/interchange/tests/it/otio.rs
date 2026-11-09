@@ -918,6 +918,51 @@ fn oneos_film_writes_its_keyframes_for_cut() {
     assert_eq!(serde_json::from_slice::<Value>(&golden).unwrap(), serde_json::from_slice::<Value>(&bytes).unwrap(), "Film writes its keyframes as pinned");
 }
 
+/// files/989 step 2d (Mona: "Build linked audio, lock multicam"): Film's MULTI-CAMERA clip as Film writes it, the file the OpenCut fork's
+/// `oneos-tests/film-multicam.test.ts` opens in Cut (pinned there as `fixtures/film-multicam.otio`), where the track holding it is locked,
+/// named as Film's multicam clip, and carried untouched. "Cams" is a multi-camera source sequence of two angles (a video track each);
+/// "Edit" holds it on its first video track as a multicam clip showing angle 2, and a plain clip on its second video track. The nested
+/// stack names the source's cameras (`metadata.filmcraft.multicam`) and the clip its angle (`metadata.filmcraft.clip.multicam`).
+/// `FILMCRAFT_BLESS=1` writes the golden file; otherwise the writer must give it again, value for value, and Film reads it back whole.
+#[test]
+fn oneos_film_writes_its_multicam_clip_for_cut() {
+    use filmcraft_project::{Camera, MulticamAudio, MulticamSel, MulticamSource};
+    use serde_json::Value;
+    let r = FrameRate::FPS_24;
+    let mut p = Project::new("Multicam");
+    let a = media(&mut p, "oneos:file/01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1", true, false, r);
+    let b = media(&mut p, "oneos:file/01jabcdefghjkmnpqrstvwxyz2?version=01jabcdefghjkmnpqrstvwxyz3", true, false, r);
+    let cams = sequence(&mut p, "Cams", r, false);
+    clip(&mut p, cams, TrackKind::Video, 0, a, 0..48, 0);
+    clip(&mut p, cams, TrackKind::Video, 1, b, 0..48, 0);
+    {
+        let q = p.sequence_mut(cams).unwrap();
+        let (t0, t1) = (q.video_tracks[0].id, q.video_tracks[1].id);
+        let cam = |name: &str, t, source| Camera { name: name.into(), video_track: Some(t), audio_tracks: Vec::new(), enabled: true, source: Some(source) };
+        q.multicam = Some(MulticamSource { cameras: vec![cam("Wide", t0, a), cam("Close", t1, b)], audio: MulticamAudio::Camera1, sync: "in".into() });
+    }
+    let s = sequence(&mut p, "Edit", r, false);
+    let mc = clip(&mut p, s, TrackKind::Video, 0, cams, 0..48, 0);
+    clip(&mut p, s, TrackKind::Video, 1, a, 0..24, 12);
+    p.sequence_mut(s).unwrap().find_item_mut(mc).unwrap().1.multicam = Some(MulticamSel { enabled: true, angle: 1 });
+    let (bytes, _) = filmcraft_interchange::export_project(&p, &ExportOptions::default()).expect("Film writes the whole project");
+    let doc: Value = serde_json::from_slice(&bytes).unwrap();
+    let edit = doc["children"].as_array().unwrap().iter().find(|t| t["name"] == "Edit").expect("the Edit timeline");
+    let stack = &edit["tracks"]["children"][0]["children"][0];
+    assert_eq!(stack["OTIO_SCHEMA"], "Stack.1", "the multicam clip is a nested stack");
+    assert_eq!(stack["metadata"]["filmcraft"]["clip"]["multicam"], serde_json::json!({"enabled": true, "angle": 1}), "the clip names its angle");
+    let names: Vec<&str> = stack["metadata"]["filmcraft"]["multicam"]["cameras"].as_array().unwrap().iter().map(|c| c["name"].as_str().unwrap()).collect();
+    assert_eq!(names, ["Wide", "Close"], "the source names its cameras");
+    let (back, _) = import(&bytes, Format::Otio, None).expect("Film reads its file");
+    assert_eq!(serde_json::to_value(&back.project).unwrap(), serde_json::to_value(&p).unwrap(), "Film reads its multicam back whole");
+    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/it/oneos/film-multicam.otio");
+    if std::env::var_os("FILMCRAFT_BLESS").is_some() {
+        std::fs::write(path, &bytes).unwrap();
+    }
+    let golden = std::fs::read(path).expect("the golden Film multicam file (FILMCRAFT_BLESS=1 writes it)");
+    assert_eq!(serde_json::from_slice::<Value>(&golden).unwrap(), doc, "Film writes its multicam clip as pinned");
+}
+
 /// files/989 part 2 ("Masks, both ways", tool choice: Cut edits the masks on Film's OWN clips): Film's clip MASKED, in Film's shape, the
 /// file the OpenCut fork's `oneos-tests/film-own-masks.test.ts` opens in Cut and edits there (pinned there as `fixtures/film-masked.otio`).
 /// One video clip of a 1920 x 1080 medium whose Opacity holds an ellipse (Film's own, feathered in clip pixels), a polygon that subtracts

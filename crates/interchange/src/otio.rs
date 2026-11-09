@@ -163,14 +163,20 @@ pub(crate) fn export(p: &Project, seq_id: ItemId, opts: &ExportOptions, report: 
 impl Exp<'_, '_> {
     fn seq_meta(&self, id: ItemId) -> Value {
         let Some((it, s)) = self.p.item(id).and_then(|it| Some((it, it.as_sequence()?))) else { return json!({}) };
-        json!({
+        let mut m = json!({
             "item": id.0, "custom_colors": self.p.custom_colors, "custom_color_names": self.p.custom_color_names,
             "label": it.label, "custom_label_color": it.custom_label_color,
             "settings": s.settings,
             "start_timecode": s.start_timecode,
             "master_volume_db": s.master_volume_db,
             "master_effects": s.master_effects,
-        })
+        });
+        // OneOS (files/989, Mona: "lock multicam"): a multi-camera source sequence names its cameras, so another tool names it (Film
+        // reads its own multicam from the project it keeps, `whole_project`; a timeline read alone has new track ids, so it is not read).
+        if let Some(mc) = &s.multicam {
+            m["multicam"] = json!(mc);
+        }
+        m
     }
 
     /// The `Stack` for a sequence; `range` = (source in, duration) when nested in a track.
@@ -262,10 +268,14 @@ impl Exp<'_, '_> {
             }),
             MediaRef::File { path } => {
                 // OneOS (files/989): a OneOS medium is written as it was read, never as a file URL.
-                let url = if crate::common::is_oneos_media(path) { path.clone() } else { match &self.opts.relative_to {
-                    Some(base) => relative_path(path, base).map(|r| relative_url(&r)).unwrap_or_else(|| abs_url(path)),
-                    None => abs_url(path),
-                } };
+                let url = if crate::common::is_oneos_media(path) {
+                    path.clone()
+                } else {
+                    match &self.opts.relative_to {
+                        Some(base) => relative_path(path, base).map(|r| relative_url(&r)).unwrap_or_else(|| abs_url(path)),
+                        None => abs_url(path),
+                    }
+                };
                 json!({"OTIO_SCHEMA": "ExternalReference.1", "name": name, "target_url": url, "available_range": avail, "available_image_bounds": null, "metadata": meta})
             }
         }
@@ -316,6 +326,10 @@ impl Exp<'_, '_> {
             s["metadata"]["filmcraft"]["clip"] = meta["filmcraft"].clone();
             // Nested sequence markers stay on the Stack; clip instance markers live on the clip metadata.
             s["metadata"]["filmcraft"]["clip"]["markers"] = json!(markers);
+            // OneOS (files/989, Mona: "lock multicam"): a multi-camera clip says so (its angle), so another tool names it.
+            if let Some(m) = it.multicam {
+                s["metadata"]["filmcraft"]["clip"]["multicam"] = json!(m);
+            }
             return s;
         }
         let _ = generator_of(self.p, base);
@@ -508,8 +522,13 @@ fn whole_project(v: &Value, opts: &ImportOptions, report: &mut Report) -> Option
         return None;
     }
     // Top-level: the sequences no other sequence uses as a clip.
-    let nested: std::collections::BTreeSet<ItemId> =
-        project.items.values().filter_map(|i| i.as_sequence()).flat_map(|s| s.video_tracks.iter().chain(s.audio_tracks.iter())).flat_map(|t| t.items.iter().map(|it| it.item)).collect();
+    let nested: std::collections::BTreeSet<ItemId> = project
+        .items
+        .values()
+        .filter_map(|i| i.as_sequence())
+        .flat_map(|s| s.video_tracks.iter().chain(s.audio_tracks.iter()))
+        .flat_map(|t| t.items.iter().map(|it| it.item))
+        .collect();
     let sequences = seqs.into_iter().filter(|s| !nested.contains(s)).collect();
     Some(Imported { project, sequences })
 }
