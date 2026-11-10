@@ -1357,4 +1357,24 @@ mod tests {
         let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
         assert_eq!(first_difference(&file, &saved, ""), None, "unedited: Cut's file comes back value for value");
     }
+
+    /// OneOS (files/989, 2c nested sequences and generators; the rule of thumb): Cut locks Film's nested sequence and generators, named,
+    /// and carries them byte for byte, so Film opens Cut's edit beside them with its nested sequence and generators as its own.
+    #[test]
+    fn a_cut_edit_beside_film_s_nested_sequence_and_generators_opens_in_film() {
+        let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-nested-film.otio");
+        let file: Value = serde_json::from_slice(bytes).unwrap();
+        let mut s = session();
+        open_host_file(&mut s, "Nested.otio", bytes).unwrap_or_else(|e| panic!("Film refused Cut's edit beside its nested sequence: {e}"));
+        let edit = s.project.items.values().find(|i| i.name == "Edit" && i.as_sequence().is_some()).unwrap().id;
+        let q = s.project.sequence(edit).unwrap();
+        let f = |n: i64| q.settings.frame_rate.tick_of(n);
+        let at = |name: &str| q.video_tracks.iter().flat_map(|t| t.items.iter()).find(|i| i.name == name).map(|i| i.start);
+        assert_eq!(at("Plain"), Some(f(24)), "Cut's move of the plain clip");
+        let nested = q.video_tracks[0].items[0].item;
+        assert!(s.project.item(nested).and_then(|i| i.as_sequence()).is_some(), "the nested sequence is still Film's sequence");
+        assert_eq!((at("Nest"), at("Matte"), at("Bars")), (Some(f(0)), Some(f(0)), Some(f(24))));
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
+        assert_eq!(first_difference(&file, &saved, ""), None, "unedited: Cut's file comes back value for value");
+    }
 }

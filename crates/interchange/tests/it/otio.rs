@@ -1273,3 +1273,42 @@ fn oneos_film_writes_its_clip_markers_for_cut() {
     let golden = std::fs::read(path).expect("the golden Film clip-markers file (FILMCRAFT_BLESS=1 writes it)");
     assert_eq!(serde_json::from_slice::<Value>(&golden).unwrap(), doc, "Film writes its clip markers as pinned");
 }
+
+/// OneOS (files/989, 2c nested sequences and generators; Mona 2026-11-10's rule of thumb): Film writes a nested sequence as a `Stack.1` on
+/// its track (`metadata.filmcraft.clip`) and its generators as `GeneratorReference.1`s (`metadata.filmcraft.generator`). Cut names each
+/// and carries it locked. `FILMCRAFT_BLESS=1` writes `film-nested.otio`, which the OpenCut fork opens (`oneos-tests/film-nested.test.ts`).
+#[test]
+fn oneos_film_writes_its_nested_sequences_and_generators_for_cut() {
+    use serde_json::Value;
+    let r = FrameRate::FPS_24;
+    let mut p = Project::new("Nested");
+    let file = |n: u8| format!("oneos:file/01jabcdefghjkmnpqrstvwxy{n:02}?version=01jabcdefghjkmnpqrstvwxyz1");
+    let pic = media(&mut p, &file(10), true, false, r);
+    let inner = sequence(&mut p, "Inner", r, false);
+    clip(&mut p, inner, TrackKind::Video, 0, pic, 0..48, 0);
+    let matte = generator(&mut p, "Matte", Generator::ColorMatte { color: [0.25, 0.5, 0.75, 1.0] });
+    let bars = generator(&mut p, "Bars", Generator::BarsAndTone);
+    let s = sequence(&mut p, "Edit", r, false);
+    let v = TrackKind::Video;
+    let n = clip(&mut p, s, v, 0, inner, 0..48, 0);
+    let m = clip(&mut p, s, v, 1, matte, 0..24, 0);
+    let b = clip(&mut p, s, v, 1, bars, 24..48, 0);
+    let c = clip(&mut p, s, v, 2, pic, 0..48, 24);
+    for (id, name) in [(n, "Nest"), (m, "Matte"), (b, "Bars"), (c, "Plain")] {
+        p.sequence_mut(s).unwrap().find_item_mut(id).unwrap().1.name = name.into();
+    }
+    let (bytes, _) = filmcraft_interchange::export_project(&p, &ExportOptions::default()).expect("Film writes the whole project");
+    let doc: Value = serde_json::from_slice(&bytes).unwrap();
+    let edit = doc["children"].as_array().unwrap().iter().find(|t| t["name"] == "Edit").expect("the Edit timeline");
+    let first = |k: usize| edit["tracks"]["children"][k]["children"][0].clone();
+    assert_eq!(first(0)["OTIO_SCHEMA"], "Stack.1", "the nested sequence is a stack on its track");
+    assert!(first(0)["metadata"]["filmcraft"]["clip"].is_object(), "naming Film's clip");
+    assert!(first(1)["media_references"]["DEFAULT_MEDIA"]["metadata"]["filmcraft"]["generator"]["ColorMatte"].is_object());
+    assert_eq!(first(1)["media_references"]["DEFAULT_MEDIA"]["generator_kind"], "SolidColor");
+    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/it/oneos/film-nested.otio");
+    if std::env::var_os("FILMCRAFT_BLESS").is_some() {
+        std::fs::write(path, &bytes).unwrap();
+    }
+    let golden = std::fs::read(path).expect("the golden Film nested file (FILMCRAFT_BLESS=1 writes it)");
+    assert_eq!(serde_json::from_slice::<Value>(&golden).unwrap(), doc, "Film writes its nested sequences and generators as pinned");
+}
