@@ -17,12 +17,12 @@
 use std::collections::BTreeSet;
 use std::sync::Arc;
 
-use filmcraft_project::{ItemId, ItemKind, MediaRef, Project, TrackKind};
+use filmcraft_project::{ItemId, ItemKind, MediaRef, Project, TrackItem, TrackKind, Transition, TransitionAlign, TransitionId};
 use filmcraft_time::{TICKS_PER_SECOND, Tick, TimeRange};
 use serde_json::{Map, Value};
 
-use super::{export, export_project, is_caption_track, read_caption_track, read_tr, same_value, schema, schema_name, sequences_of};
-use crate::common::{MediaSpec, item_media, media_clip, media_info};
+use super::{export, export_project, is_caption_track, read_caption_track, read_rt, read_tr, same_value, schema, schema_name, sequences_of};
+use crate::common::{MediaSpec, item_media, media_clip, media_info, transition_name};
 use crate::{ExportOptions, ImportOptions, Report, is_oneos_media};
 
 pub use super::cut::{CutParts, Locked};
@@ -279,10 +279,101 @@ fn lane(children: &[Value]) -> Result<Vec<(Tick, Tick, Tick, &Value)>, String> {
                 out.push((pos, src, dur, c));
                 pos += dur;
             }
+            // A transition takes no time of its own (files/989, "Simple ones only": read apart by `transitions_in`).
+            "Transition" => {}
             other => return Err(format!("holds a {other} where it was changed outside Film")),
         }
     }
     Ok(out)
+}
+
+/// Film's simple transitions, the ones Cut edits and Film reads back from Cut's edit (files/989, Mona 2026-11-10: "Simple ones only").
+fn simple_transition(kind: TrackKind, effect: &str) -> bool {
+    match kind {
+        TrackKind::Video => matches!(effect, "cross_dissolve" | "dip_to_black" | "dip_to_white"),
+        TrackKind::Audio => matches!(effect, "constant_power" | "constant_gain"),
+    }
+}
+
+/// The `Transition.1`s among a track's children, each with the clips either side of it (their places among the clips `lane` reads; a gap
+/// or the track's edge is no side), as Film's own reader pairs them.
+fn transitions_in(children: &[Value]) -> Vec<(Option<usize>, Option<usize>, &Value)> {
+    let mut out = Vec::new();
+    let (mut prev, mut clips, mut waiting) = (None, 0usize, Vec::new());
+    for c in children {
+        match schema_name(c) {
+            "Transition" => {
+                waiting.push(out.len());
+                out.push((prev, None, c));
+            }
+            "Clip" => {
+                for &w in &waiting {
+                    out[w].1 = Some(clips);
+                }
+                waiting.clear();
+                prev = Some(clips);
+                clips += 1;
+            }
+            _ => {
+                waiting.clear();
+                prev = None;
+            }
+        }
+    }
+    out
+}
+
+/// A track's transitions as the file says them (files/989, "Simple ones only"): each of Film's simple kinds, at the cut between the clips
+/// either side of it (`items`, the track's clips as reconciled), its window the file's offsets, its effect, align and reverse Film's own
+/// shape; one Film held at the same cut (`old`) keeps its id. Any other, or one Film cannot place, is refused, named.
+fn read_transitions(
+    p: &mut Project,
+    kind: TrackKind,
+    name: &str,
+    children: &[Value],
+    items: &[TrackItem],
+    old: &[Transition],
+) -> Result<Vec<Transition>, String> {
+    let mut list = Vec::new();
+    for (from, to, c) in transitions_in(children) {
+        let named = |what: &str| format!("had a transition on its track \"{name}\" {what}");
+        let (from, to) = (from.and_then(|i| items.get(i)), to.and_then(|i| items.get(i)));
+        let cut = match (from, to) {
+            (Some(f), _) => f.end(),
+            (None, Some(t)) => t.start,
+            (None, None) => return Err(named("with no clip on either side")),
+        };
+        if let (Some(f), Some(t)) = (from, to)
+            && f.end() != t.start
+        {
+            return Err(named("between clips that do not meet"));
+        }
+        let fc = c.pointer("/metadata/filmcraft").ok_or_else(|| named("that is not Film's"))?;
+        let effect = fc
+            .get("effect")
+            .and_then(|e| super::effects_from(Some(&Value::Array(vec![e.clone()]))))
+            .and_then(|mut v| v.pop())
+            .ok_or_else(|| named("whose effect Film cannot read"))?;
+        if !simple_transition(kind, &effect.effect) {
+            return Err(named(&format!("made {} outside Film, which Cut does not edit", effect.effect)));
+        }
+        let (inn, out) = match (c.get("in_offset").and_then(read_rt), c.get("out_offset").and_then(read_rt)) {
+            (Some(i), Some(o)) if i >= Tick::ZERO && o >= Tick::ZERO && i + o > Tick::ZERO => (i, o),
+            _ => return Err(named("whose window Film cannot read")),
+        };
+        let align: TransitionAlign = fc.get("align").and_then(|a| serde_json::from_value(a.clone()).ok()).unwrap_or(if inn == Tick::ZERO {
+            TransitionAlign::StartAtCut
+        } else if out == Tick::ZERO {
+            TransitionAlign::EndAtCut
+        } else {
+            TransitionAlign::CenterAtCut
+        });
+        let reverse = fc.get("reverse").and_then(Value::as_bool).unwrap_or(false);
+        let (from, to) = (from.map(|i| i.id), to.map(|i| i.id));
+        let id = old.iter().find(|x| x.from == from && x.to == to).map(|x| x.id).unwrap_or_else(|| TransitionId(p.alloc_id()));
+        list.push(Transition { id, effect, start: cut - inn, duration: inn + out, from, to, align, reverse });
+    }
+    Ok(list)
 }
 
 /// The longest common subsequence of `a` and `b` under `eq`, as index pairs in order.
@@ -410,8 +501,10 @@ fn reconcile(p: &mut Project, seq_id: ItemId, tl: &Value) -> Result<(), String> 
         if same_value(&Value::Array(oc.clone()), &Value::Array(ec.clone())) {
             continue;
         }
-        if !track.transitions.is_empty() {
-            return Err(format!("had the track \"{}\", which holds transitions, changed outside Film", track.name));
+        // Cut edits Film's simple transitions (files/989, "Simple ones only") and locks a track holding any other, so such a track changed
+        // outside Film is not Cut's edit.
+        if let Some(x) = track.transitions.iter().find(|x| !simple_transition(kind, &x.effect.effect)) {
+            return Err(format!("had the track \"{}\", which holds Film's {} transition, changed outside Film", track.name, transition_name(&x.effect)));
         }
         // The file's own clips (with every key: Film reads its mirrors from them), against Film's.
         let raw_children = tl.pointer(&format!("/tracks/children/{ko}/children")).and_then(Value::as_array).unwrap_or(&empty);
@@ -515,6 +608,9 @@ fn reconcile(p: &mut Project, seq_id: ItemId, tl: &Value) -> Result<(), String> 
                 return Err(format!("had clips on its track \"{}\" made to overlap outside Film", track.name));
             }
         }
+        // The track's transitions are the file's (files/989, "Simple ones only").
+        let old_transitions = std::mem::take(&mut track.transitions);
+        track.transitions = read_transitions(p, kind, &track.name, raw_children, &items, &old_transitions)?;
         track.items = items;
         track.sort();
     }

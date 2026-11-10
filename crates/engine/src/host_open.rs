@@ -1271,4 +1271,54 @@ mod tests {
         let mut s2 = session();
         open_host_file(&mut s2, "Speed.otio", &serde_json::to_vec(&out).unwrap()).expect("Film reopens its own save");
     }
+
+    /// files/989 (Mona 2026-11-10: "Simple ones only"): Cut's edit of Film's simple transitions (`cut-transitions-film.otio`, written by the
+    /// OpenCut fork's `film-transitions.test.ts` from Film's `film-transitions.otio`) opens in Film as Film's own transitions, nothing
+    /// locked; the tracks holding kinds Cut does not edit come back as Film wrote them; unedited, Film's save is the file value for value.
+    #[test]
+    fn a_cut_edit_of_film_s_transitions_opens_in_film_as_film_s_own() {
+        use filmcraft_project::TransitionAlign;
+        let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-transitions-film.otio");
+        let file: Value = serde_json::from_slice(bytes).unwrap();
+        let mut s = session();
+        open_host_file(&mut s, "Transitions.otio", bytes).unwrap_or_else(|e| panic!("Film refused Cut's transition edits: {e}"));
+        let edit = s.project.items.values().find(|i| i.name == "Edit" && i.as_sequence().is_some()).unwrap().id;
+        let q = s.project.sequence(edit).unwrap();
+        let f = |n: i64| q.settings.frame_rate.tick_of(n);
+        let on = |k: TrackKind, name: &str| {
+            let t = q.tracks(k).iter().find(|t| t.items.iter().any(|i| i.name == name)).unwrap();
+            let named = |c: Option<filmcraft_project::ClipId>| c.and_then(|c| t.item(c)).map(|i| i.name.clone());
+            t.transitions.iter().map(|x| (x.effect.effect.clone(), named(x.from), named(x.to), x.start, x.duration, x.align)).collect::<Vec<_>>()
+        };
+        let n = |s: &str| Some(s.to_string());
+        assert_eq!(
+            on(TrackKind::Video, "A"),
+            [("dip_to_white".into(), n("A"), n("B"), f(42), f(12), TransitionAlign::CenterAtCut)],
+            "Cut's dip to white, the dip to black gone"
+        );
+        assert_eq!(
+            on(TrackKind::Video, "D"),
+            [
+                ("dip_to_white".into(), None, n("D"), f(24), f(12), TransitionAlign::StartAtCut),
+                ("cross_dissolve".into(), n("D"), None, f(66), f(6), TransitionAlign::EndAtCut)
+            ]
+        );
+        assert_eq!(on(TrackKind::Audio, "S1")[0], ("constant_gain".into(), n("S1"), n("S2"), f(45), f(6), TransitionAlign::CenterAtCut));
+        assert_eq!(on(TrackKind::Video, "E")[0].0, "iris_round", "the iris Cut carried");
+        assert_eq!(on(TrackKind::Audio, "S3")[0].0, "exponential_fade", "the exponential fade Cut carried");
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
+        assert_eq!(first_difference(&file, &saved, ""), None, "unedited: Cut's file comes back value for value");
+        {
+            let p = std::sync::Arc::make_mut(&mut s.project);
+            let q = p.sequence_mut(edit).unwrap();
+            let t = q.video_tracks.iter_mut().find(|t| t.items.iter().any(|i| i.name == "A")).unwrap();
+            t.transitions[0].effect = filmcraft_project::find_effect("cross_dissolve").unwrap().instance();
+        }
+        let out: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap_or_else(|e| panic!("Film refused the save: {e}"))).unwrap();
+        let tl = out["children"].as_array().unwrap().iter().find(|t| t["name"] == "Edit").unwrap();
+        let x = tl["tracks"]["children"][0]["children"].as_array().unwrap().iter().find(|c| c["OTIO_SCHEMA"] == "Transition.1").unwrap();
+        assert_eq!((x["name"].as_str(), x["metadata"]["filmcraft"]["effect"]["effect"].as_str()), (Some("Cross Dissolve"), Some("cross_dissolve")));
+        let mut s2 = session();
+        open_host_file(&mut s2, "Transitions.otio", &serde_json::to_vec(&out).unwrap()).expect("Film reopens its own save");
+    }
 }

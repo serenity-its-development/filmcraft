@@ -1139,3 +1139,72 @@ fn oneos_film_writes_its_speed_for_cut() {
     let golden = std::fs::read(path).expect("the golden Film speed file (FILMCRAFT_BLESS=1 writes it)");
     assert_eq!(serde_json::from_slice::<Value>(&golden).unwrap(), doc, "Film writes its speeds as pinned");
 }
+
+/// files/989 (Mona 2026-11-10: "Simple ones only"): the transitions Film writes for Cut, in Film's own shape: its simple kinds (Cross
+/// Dissolve, Dip to Black, Dip to White; Constant Power, Constant Gain), centred on a cut and at a clip's edge, which Cut edits; and kinds
+/// Cut does not edit (Iris Round, Exponential Fade), whose tracks Cut keeps locked and carries untouched.
+#[test]
+fn oneos_film_writes_its_transitions_for_cut() {
+    use serde_json::Value;
+    let r = FrameRate::FPS_24;
+    let mut p = Project::new("Transitions");
+    let file = |n: u8| format!("oneos:file/01jabcdefghjkmnpqrstvwxy{n:02}?version=01jabcdefghjkmnpqrstvwxyz1");
+    let pic = media(&mut p, &file(10), true, false, r);
+    let snd = media(&mut p, &file(11), false, true, r);
+    let s = sequence(&mut p, "Edit", r, false);
+    let (v, a) = (TrackKind::Video, TrackKind::Audio);
+    let name = |p: &mut Project, k: TrackKind, t: usize, id, n: &str| {
+        let ti = p.sequence_mut(s).unwrap().tracks_mut(k)[t].items.iter_mut().find(|i| i.id == id).unwrap();
+        ti.name = n.into();
+    };
+    let (ca, cb, cc) = (clip(&mut p, s, v, 0, pic, 0..48, 24), clip(&mut p, s, v, 0, pic, 48..96, 96), clip(&mut p, s, v, 0, pic, 96..144, 168));
+    for (id, n) in [(ca, "A"), (cb, "B"), (cc, "C")] {
+        name(&mut p, v, 0, id, n);
+    }
+    transition(&mut p, s, (v, 0), "cross_dissolve", (Some(ca), Some(cb)), 44..52, TransitionAlign::CenterAtCut);
+    transition(&mut p, s, (v, 0), "dip_to_black", (Some(cb), Some(cc)), 90..102, TransitionAlign::CenterAtCut);
+    let cd = clip(&mut p, s, v, 1, pic, 24..72, 240);
+    name(&mut p, v, 1, cd, "D");
+    transition(&mut p, s, (v, 1), "dip_to_white", (None, Some(cd)), 24..36, TransitionAlign::StartAtCut);
+    transition(&mut p, s, (v, 1), "cross_dissolve", (Some(cd), None), 60..72, TransitionAlign::EndAtCut);
+    let (ce, cf) = (clip(&mut p, s, v, 2, pic, 0..48, 24), clip(&mut p, s, v, 2, pic, 48..96, 96));
+    name(&mut p, v, 2, ce, "E");
+    name(&mut p, v, 2, cf, "F");
+    transition(&mut p, s, (v, 2), "iris_round", (Some(ce), Some(cf)), 40..56, TransitionAlign::CenterAtCut);
+    let (s1, s2) = (clip(&mut p, s, a, 0, snd, 0..48, 24), clip(&mut p, s, a, 0, snd, 48..96, 96));
+    name(&mut p, a, 0, s1, "S1");
+    name(&mut p, a, 0, s2, "S2");
+    transition(&mut p, s, (a, 0), "constant_power", (Some(s1), Some(s2)), 44..52, TransitionAlign::CenterAtCut);
+    transition(&mut p, s, (a, 0), "constant_gain", (Some(s2), None), 84..96, TransitionAlign::EndAtCut);
+    let (s3, s4) = (clip(&mut p, s, a, 1, snd, 0..48, 24), clip(&mut p, s, a, 1, snd, 48..96, 96));
+    name(&mut p, a, 1, s3, "S3");
+    name(&mut p, a, 1, s4, "S4");
+    transition(&mut p, s, (a, 1), "exponential_fade", (Some(s3), Some(s4)), 44..52, TransitionAlign::CenterAtCut);
+    let (bytes, _) = filmcraft_interchange::export_project(&p, &ExportOptions::default()).expect("Film writes the whole project");
+    let doc: Value = serde_json::from_slice(&bytes).unwrap();
+    let edit = doc["children"].as_array().unwrap().iter().find(|t| t["name"] == "Edit").expect("the Edit timeline");
+    let kids = |k: usize| -> Vec<Value> { edit["tracks"]["children"][k]["children"].as_array().unwrap().clone() };
+    let schemas = |k: usize| kids(k).iter().map(|c| c["OTIO_SCHEMA"].as_str().unwrap().to_string()).collect::<Vec<_>>();
+    assert_eq!(schemas(0), ["Clip.2", "Transition.1", "Clip.2", "Transition.1", "Clip.2"], "each transition between the clips at its cut");
+    assert_eq!(schemas(1), ["Gap.1", "Transition.1", "Clip.2", "Transition.1"], "a fade in before its clip, a fade out after it");
+    let x = &kids(0)[1];
+    assert_eq!((x["name"].as_str(), x["transition_type"].as_str()), (Some("Cross Dissolve"), Some("SMPTE_Dissolve")));
+    assert_eq!(x["metadata"]["filmcraft"]["effect"]["effect"], "cross_dissolve");
+    assert_eq!(kids(0)[3]["transition_type"], "Custom_Transition", "a dip is Film's custom transition");
+    let (back, _) = import(&bytes, Format::Otio, None).expect("Film reads its file");
+    let tracks = |q: &Project| {
+        let seq = q.sequence(q.items.values().find(|i| i.name == "Edit").unwrap().id).unwrap();
+        seq.video_tracks
+            .iter()
+            .chain(&seq.audio_tracks)
+            .map(|t| t.transitions.iter().map(|x| (x.effect.effect.clone(), x.start, x.duration, x.align)).collect::<Vec<_>>())
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(tracks(&back.project), tracks(&p), "Film reads its transitions back whole");
+    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/it/oneos/film-transitions.otio");
+    if std::env::var_os("FILMCRAFT_BLESS").is_some() {
+        std::fs::write(path, &bytes).unwrap();
+    }
+    let golden = std::fs::read(path).expect("the golden Film transitions file (FILMCRAFT_BLESS=1 writes it)");
+    assert_eq!(serde_json::from_slice::<Value>(&golden).unwrap(), doc, "Film writes its transitions as pinned");
+}
