@@ -835,6 +835,52 @@ fn volume_field() -> Field {
     )
 }
 
+/// Cut's retime (OpenCut `RetimeConfig`: rate 0.01 to 5, `maintainPitch`, and `reverse` when set) as Film's speed, reverse and Maintain
+/// Audio Pitch (files/989, 2c). No retime is Film's 100% forwards. A speed outside Cut's range, or a frame hold, has no place in Cut: named.
+fn retime_field() -> Field {
+    field(
+        "/retime",
+        Value::Null,
+        |_, ti, origin| {
+            if ti.frame_hold.is_some() {
+                return Err("hold-not-in-cut: a frame hold, which Cut has no hold for".into());
+            }
+            // Cut writes `maintainPitch` with every retime it builds; a file without it (or with `reverse: false`) keeps its own shape.
+            let had = |k: &str| origin.pointer(&format!("{ELEMENT}/retime/{k}")).is_some();
+            let s = ti.speed.abs();
+            if s == 1.0 && !ti.reverse && !ti.maintain_pitch {
+                return Ok(Value::Null);
+            }
+            if !(CUT_RATE.0..=CUT_RATE.1).contains(&s) {
+                return Err(format!(
+                    "speed-not-in-cut: a speed of {}%, where Cut's speed holds {}% to {}%",
+                    num(s * 100.0),
+                    CUT_RATE.0 * 100.0,
+                    CUT_RATE.1 * 100.0
+                ));
+            }
+            let mut r = json!({"rate": num(s)});
+            if ti.maintain_pitch || had("maintainPitch") {
+                r["maintainPitch"] = json!(ti.maintain_pitch);
+            }
+            if ti.reverse || had("reverse") {
+                r["reverse"] = json!(ti.reverse);
+            }
+            Ok(r)
+        },
+        |_, ti, v| {
+            let rate = v.get("rate").and_then(Value::as_f64).filter(|r| r.is_finite() && *r > 0.0).ok_or("its rate is not a speed")?;
+            ti.speed = rate;
+            ti.reverse = v.get("reverse").map(|r| r.as_bool().ok_or("reverse is not a switch")).transpose()?.unwrap_or(false);
+            ti.maintain_pitch = v.get("maintainPitch").map(|r| r.as_bool().ok_or("maintainPitch is not a switch")).transpose()?.unwrap_or(false);
+            Ok(())
+        },
+    )
+}
+
+/// Cut's speed range (OpenCut `retime/rate.ts`: `MIN_RETIME_RATE`, `MAX_RETIME_RATE`).
+const CUT_RATE: (f64, f64) = (0.01, 5.0);
+
 fn audio_fields() -> Vec<Field> {
     vec![
         volume_field(),
@@ -863,6 +909,10 @@ fn sounding_stub() -> Value {
 
 fn fields_for(kind: Kind, origin: &Value) -> Vec<Field> {
     let mut v = Vec::new();
+    // Cut's speed, reverse and pitch (files/989, 2c) on its video and audio elements.
+    if matches!(kind, Kind::Audio | Kind::Video) {
+        v.push(retime_field());
+    }
     match kind {
         Kind::Audio => v.extend(audio_fields()),
         Kind::Effect => v.push(scaled("/params/intensity", 15.0, "gaussian_blur", "blurriness", blur_k)),
@@ -1609,6 +1659,8 @@ fn read_sound(p: &mut Project, c: &Value, pic: &TrackItem, f: Frame, rate: Frame
     ti.duration = pic.duration;
     ti.source_in = pic.source_in;
     ti.link = pic.link;
+    // The element's one retime is its picture's and its sound's (files/989, 2c).
+    (ti.speed, ti.reverse, ti.maintain_pitch) = (pic.speed, pic.reverse, pic.maintain_pitch);
     for x in audio_fields() {
         let v = c.pointer(&x.ptr).cloned().filter(|v| !v.is_null()).unwrap_or_else(|| x.default.clone());
         (x.set)(f, &mut ti, &v).map_err(|e| format!("holds \"{}\" whose sound's {} Film cannot show: {e}", pic.name, x.ptr.trim_start_matches(ELEMENT)))?;

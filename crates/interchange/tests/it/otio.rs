@@ -1094,3 +1094,48 @@ fn oneos_film_writes_its_captions_for_cut() {
     let golden = std::fs::read(path).expect("the golden Film captions file (FILMCRAFT_BLESS=1 writes it)");
     assert_eq!(serde_json::from_slice::<Value>(&golden).unwrap(), doc, "Film writes its captions as pinned");
 }
+
+/// files/989 (2c, speed and reverse): Film's SPEED as Film writes it, the file the OpenCut fork's `oneos-tests/film-speed.test.ts` opens in
+/// Cut (pinned there as `fixtures/film-speed.otio`). On "Edit"'s first video track "Fast" plays at 200% and "Back" at 50% reversed with
+/// Maintain Audio Pitch; on its second "Held" holds a frame. Each clip's speed is its one `LinearTimeWarp.1` (a negative scalar is reverse),
+/// Maintain Audio Pitch is `metadata.filmcraft.maintain_pitch` (written only when set), a hold is a `FreezeFrame.1`. `FILMCRAFT_BLESS=1`
+/// writes the golden file; otherwise the writer must give it again, value for value, and Film reads it back whole.
+#[test]
+fn oneos_film_writes_its_speed_for_cut() {
+    use serde_json::{Value, json};
+    let r = FrameRate::FPS_24;
+    let mut p = Project::new("Speed");
+    let a = media(&mut p, "oneos:file/01jabcdefghjkmnpqrstvwxyz0?version=01jabcdefghjkmnpqrstvwxyz1", true, true, r);
+    let s = sequence(&mut p, "Edit", r, false);
+    let fast = clip(&mut p, s, TrackKind::Video, 0, a, 0..48, 24);
+    let back = clip(&mut p, s, TrackKind::Video, 0, a, 48..96, 200);
+    let held = clip(&mut p, s, TrackKind::Video, 1, a, 0..24, 0);
+    {
+        let q = p.sequence_mut(s).unwrap();
+        for (id, name, speed, reverse, pitch) in [(fast, "Fast", 2.0, false, false), (back, "Back", 0.5, true, true)] {
+            let ti = q.video_tracks[0].items.iter_mut().find(|i| i.id == id).unwrap();
+            (ti.name, ti.speed, ti.reverse, ti.maintain_pitch) = (name.into(), speed, reverse, pitch);
+        }
+        let ti = q.video_tracks[1].items.iter_mut().find(|i| i.id == held).unwrap();
+        ti.name = "Held".into();
+        ti.frame_hold = Some(r.tick_of(10));
+    }
+    let (bytes, _) = filmcraft_interchange::export_project(&p, &ExportOptions::default()).expect("Film writes the whole project");
+    let doc: Value = serde_json::from_slice(&bytes).unwrap();
+    let edit = doc["children"].as_array().unwrap().iter().find(|t| t["name"] == "Edit").expect("the Edit timeline");
+    let v1: Vec<&Value> = edit["tracks"]["children"][0]["children"].as_array().unwrap().iter().filter(|c| c["OTIO_SCHEMA"] == "Clip.2").collect();
+    let warp = |s: f64| json!([{"OTIO_SCHEMA": "LinearTimeWarp.1", "name": "", "effect_name": "LinearTimeWarp", "time_scalar": s, "metadata": {}}]);
+    assert_eq!((&v1[0]["effects"], &v1[1]["effects"]), (&warp(2.0), &warp(-0.5)), "each clip's speed is its one time warp, reverse negative");
+    assert_eq!(v1[0]["metadata"]["filmcraft"].get("maintain_pitch"), None, "Maintain Audio Pitch written only when set");
+    assert_eq!(v1[1]["metadata"]["filmcraft"]["maintain_pitch"], json!(true));
+    let v2 = edit["tracks"]["children"][1]["children"].as_array().unwrap().iter().find(|c| c["OTIO_SCHEMA"] == "Clip.2").unwrap();
+    assert_eq!(v2["effects"][0]["OTIO_SCHEMA"], "FreezeFrame.1", "a hold is a freeze frame");
+    let (back_p, _) = import(&bytes, Format::Otio, None).expect("Film reads its file");
+    assert_eq!(serde_json::to_value(&back_p.project).unwrap(), serde_json::to_value(&p).unwrap(), "Film reads its speeds back whole");
+    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/it/oneos/film-speed.otio");
+    if std::env::var_os("FILMCRAFT_BLESS").is_some() {
+        std::fs::write(path, &bytes).unwrap();
+    }
+    let golden = std::fs::read(path).expect("the golden Film speed file (FILMCRAFT_BLESS=1 writes it)");
+    assert_eq!(serde_json::from_slice::<Value>(&golden).unwrap(), doc, "Film writes its speeds as pinned");
+}

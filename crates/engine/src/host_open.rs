@@ -1235,4 +1235,40 @@ mod tests {
         assert!(names[2].as_str().is_some_and(|i| i.starts_with("film-")) && names[2] != ids[2], "a new name: {names:?}");
         assert_eq!(third.pointer("/metadata/filmcraft"), None, "still nothing of Film's own");
     }
+
+    /// files/989 (2c, speed and reverse): Cut's speed edits on Film's clips (the OpenCut fork's `oneos-tests/film-speed.test.ts` writes
+    /// `cut-speed.otio` from Film's `film-speed.otio`: "Fast" reversed at 150%, "Back" at 100% forwards without Maintain Audio Pitch and moved
+    /// after it) open in Film as its own speed, reverse and pitch switch; the held clip keeps its hold; an unedited save is the file value for
+    /// value, and a speed Film then changes is written as its own time warp.
+    #[test]
+    fn cut_s_speed_and_reverse_open_in_film_as_its_own() {
+        let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-speed.otio");
+        let file: Value = serde_json::from_slice(bytes).unwrap();
+        let mut s = session();
+        open_host_file(&mut s, "Speed.otio", bytes).unwrap_or_else(|e| panic!("Film refused Cut's speed edits: {e}"));
+        let edit = s.project.items.values().find(|i| i.name == "Edit" && i.as_sequence().is_some()).unwrap().id;
+        let q = s.project.sequence(edit).unwrap();
+        let by = |n: &str| q.video_tracks.iter().flat_map(|t| &t.items).find(|i| i.name == n).unwrap().clone();
+        let (fast, back, held) = (by("Fast"), by("Back"), by("Held"));
+        assert_eq!((fast.speed, fast.reverse, fast.maintain_pitch), (1.5, true, false), "Fast: reversed at 150%");
+        assert_eq!((back.speed, back.reverse, back.maintain_pitch), (1.0, false, false), "Back: 100% forwards, pitch switch off");
+        assert_eq!(back.start, fast.end(), "Back moved after Fast");
+        assert!(held.frame_hold.is_some(), "the held clip keeps its hold");
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
+        assert_eq!(first_difference(&file, &saved, ""), None, "unedited: Cut's file comes back value for value");
+        {
+            let p = std::sync::Arc::make_mut(&mut s.project);
+            let q = p.sequence_mut(edit).unwrap();
+            let ti = q.video_tracks.iter_mut().flat_map(|t| t.items.iter_mut()).find(|i| i.name == "Back").unwrap();
+            (ti.speed, ti.maintain_pitch) = (2.0, true);
+            ti.duration = filmcraft_time::Tick(ti.duration.0 / 2);
+        }
+        let out: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap_or_else(|e| panic!("Film refused the save: {e}"))).unwrap();
+        let tl = out["children"].as_array().unwrap().iter().find(|t| t["name"] == "Edit").unwrap();
+        let b = tl["tracks"]["children"][0]["children"].as_array().unwrap().iter().find(|c| c["name"] == "Back").unwrap();
+        assert_eq!(b["effects"][0]["time_scalar"], serde_json::json!(2.0));
+        assert_eq!(b["metadata"]["filmcraft"]["maintain_pitch"], serde_json::json!(true));
+        let mut s2 = session();
+        open_host_file(&mut s2, "Speed.otio", &serde_json::to_vec(&out).unwrap()).expect("Film reopens its own save");
+    }
 }

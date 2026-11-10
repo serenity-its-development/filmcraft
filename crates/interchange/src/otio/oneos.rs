@@ -243,7 +243,7 @@ pub(super) fn film_view(v: &Value) -> Value {
 }
 
 /// The fields of Film's clip Cut edits in Film's own shape (files/989 step 2): read back from the file's clip by `reconcile`.
-const CUT_EDITS_OF_A_CLIP: &[&str] = &["gain_db", "effects"];
+const CUT_EDITS_OF_A_CLIP: &[&str] = &["gain_db", "effects", "maintain_pitch"];
 
 /// What identifies one of Film's clips across another editor's edit: everything Film reads of it but its place, its trim and its name.
 fn clip_signature(c: &Value) -> Value {
@@ -251,6 +251,10 @@ fn clip_signature(c: &Value) -> Value {
     if let Value::Object(m) = &mut s {
         m.remove("source_range");
         m.remove("name");
+        // Its speed and reverse, which Cut edits as Film's own time warp (files/989, 2c).
+        if let Some(Value::Array(e)) = m.get_mut("effects") {
+            e.retain(|x| schema_name(x) != "LinearTimeWarp");
+        }
         if let Some(Value::Object(f)) = m.get_mut("metadata").and_then(|x| x.get_mut("filmcraft")) {
             f.remove("source_in_ticks");
             f.remove("duration_ticks");
@@ -462,6 +466,25 @@ fn reconcile(p: &mut Project, seq_id: ItemId, tl: &Value) -> Result<(), String> 
                 it.effects = super::effects_from(Some(e))
                     .ok_or_else(|| format!("had the effects of \"{}\" on its track \"{}\" changed so Film cannot read them", it.name, track.name))?;
             }
+            // Its speed and reverse are the file's time warp, and Maintain Audio Pitch the file's (files/989, 2c). A frame hold Cut does not
+            // edit (it locks the track), so a held clip keeps Film's hold.
+            if it.frame_hold.is_none() {
+                let warps: Vec<&Value> =
+                    c.get("effects").and_then(Value::as_array).map(|e| e.iter().filter(|x| schema_name(x) == "LinearTimeWarp").collect()).unwrap_or_default();
+                match warps.as_slice() {
+                    [] => (it.speed, it.reverse) = (1.0, false),
+                    [w] => {
+                        let s = w
+                            .get("time_scalar")
+                            .and_then(Value::as_f64)
+                            .filter(|s| s.is_finite() && *s != 0.0)
+                            .ok_or_else(|| format!("had the speed of \"{}\" on its track \"{}\" made something Film cannot read", it.name, track.name))?;
+                        (it.speed, it.reverse) = (s.abs(), s < 0.0);
+                    }
+                    _ => return Err(format!("had \"{}\" on its track \"{}\" given more than one speed outside Film", it.name, track.name)),
+                }
+            }
+            it.maintain_pitch = fc.and_then(|m| m.get("maintain_pitch")).and_then(Value::as_bool).unwrap_or(false);
             // Film's own data on a clip Cut wrote in Film's shape (a copy of Film's clip: a split's right half, a duplicate, a paste; or a link
             // Cut made): its link, label, colour, group and fit are the file's (files/989, measured 2026-11-10).
             if let Some(m) = fc {

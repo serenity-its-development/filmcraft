@@ -302,6 +302,11 @@ impl Exp<'_, '_> {
             "gain_db": it.gain_db, "scale_to_frame": it.scale_to_frame, "source_in_ticks": it.source_in.0,
             "duration_ticks": it.duration.0,
         }});
+        // OneOS (files/989, 2c): Maintain Audio Pitch, written only when set (so no other file changes), as Cut's `maintainPitch`.
+        let mut meta = meta;
+        if it.maintain_pitch {
+            meta["filmcraft"]["maintain_pitch"] = json!(true);
+        }
         let markers: Vec<Value> = it.markers.iter().map(|m| marker_json(m, rate)).collect();
         let _ = kind;
         if matches!(self.p.item(base).map(|i| &i.kind), Some(ItemKind::Sequence(_))) {
@@ -908,6 +913,7 @@ impl Imp<'_, '_> {
             ti.group = Some(*self.groups.entry(g).or_insert(next));
         }
         ti.gain_db = m.get("gain_db").and_then(Value::as_f64).unwrap_or(0.0);
+        ti.maintain_pitch = m.get("maintain_pitch").and_then(Value::as_bool).unwrap_or(false);
         ti.scale_to_frame = m.get("scale_to_frame").and_then(Value::as_bool).unwrap_or(false);
         // Exact ticks for sub-frame values (audio) when the rational values were rounded.
         if let Some(s) = m.get("source_in_ticks").and_then(Value::as_i64)
