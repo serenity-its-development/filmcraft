@@ -1322,8 +1322,9 @@ mod tests {
         open_host_file(&mut s2, "Transitions.otio", &serde_json::to_vec(&out).unwrap()).expect("Film reopens its own save");
     }
 
-    /// OneOS (files/989, 2c clip markers): Cut carries a Film clip's markers untouched on the clip it moved or trimmed, and a copy it made
-    /// (a split's right half, a duplicate) carries none, so Film opens Cut's edit with every marker on the clip it was on.
+    /// OneOS (files/989, 2c clip markers; Mona 2026-11-10: "Teach Film, then move"): Cut carries a Film clip's markers untouched on the clip
+    /// it moved or trimmed, a split moves each to the half whose span holds it, and a duplicate carries none; Film reads each clip's markers
+    /// from the file, so it opens Cut's edit with every marker where it is in the picture.
     #[test]
     fn a_cut_edit_of_film_s_marked_clips_keeps_their_markers_in_film() {
         let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-markers-film.otio");
@@ -1344,8 +1345,8 @@ mod tests {
         let (early, late) = (("Early".to_string(), f(30), f(0)), ("Late".to_string(), f(90), f(6)));
         assert_eq!(
             on(TrackKind::Video, "A"),
-            [(f(0), f(24), vec![early, late]), (f(48), f(72), vec![])],
-            "the left half keeps every marker; the right half none"
+            [(f(0), f(24), vec![early]), (f(48), f(72), vec![late])],
+            "a split moves each marker to the half that holds it (Mona 2026-11-10: \"Teach Film, then move\")"
         );
         assert_eq!(on(TrackKind::Video, "B"), [(f(48), f(200), vec![("Bee".to_string(), f(210), f(0))])], "moved, its marker kept");
         assert_eq!(

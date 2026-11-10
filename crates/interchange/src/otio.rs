@@ -425,6 +425,44 @@ fn caption_style_json(s: &filmcraft_project::CaptionStyle) -> Value {
 }
 
 /// Whether an OTIO track is a caption track (its `metadata.filmcraft.caption_track`).
+/// The markers OTIO holds on `v` (a clip, a stack), Film's data read back from `metadata.filmcraft`; each a new id from `alloc`. OneOS
+/// (files/989, Mona 2026-11-10: "Teach Film, then move"): also read by the reconcile of a timeline another tool changed.
+pub(crate) fn read_markers(v: &Value, mut alloc: impl FnMut() -> u64) -> Vec<Marker> {
+    let mut out = Vec::new();
+    for m in v.get("markers").and_then(Value::as_array).into_iter().flatten() {
+        let (mut start, mut duration) = m.get("marked_range").and_then(read_tr).unwrap_or((Tick::ZERO, Tick::ZERO));
+        let meta = fc(m);
+        if let Some(s) = meta.and_then(|x| x.get("start_ticks")).and_then(Value::as_i64)
+            && (Tick(s) - start).abs() < Tick(TICKS_PER_SECOND / 1000)
+        {
+            start = Tick(s);
+        }
+        if let Some(d) = meta.and_then(|x| x.get("duration_ticks")).and_then(Value::as_i64)
+            && (Tick(d) - duration).abs() < Tick(TICKS_PER_SECOND / 1000)
+        {
+            duration = Tick(d);
+        }
+        let color = meta
+            .and_then(|x| x.get("label"))
+            .and_then(|l| serde_json::from_value::<Label>(l.clone()).ok())
+            .unwrap_or_else(|| color_label(m.get("color").and_then(Value::as_str).unwrap_or("")));
+        out.push(Marker {
+            url: meta.and_then(|x| x.get("url")).and_then(Value::as_str).unwrap_or("").to_string(),
+            author: meta.and_then(|x| x.get("author")).and_then(Value::as_str).unwrap_or("").to_string(),
+            custom_color: meta.and_then(|x| x.get("custom_color")).and_then(|c| c.as_str()).and_then(filmcraft_project::HexColor::parse),
+            id: MarkerId(alloc()),
+            start,
+            duration,
+            name: name_of(m),
+            comment: m.get("comment").and_then(Value::as_str).unwrap_or("").to_string(),
+            kind: meta.and_then(|x| x.get("kind")).and_then(|k| serde_json::from_value::<MarkerKind>(k.clone()).ok()).unwrap_or_default(),
+            color,
+        });
+    }
+    out.sort_by_key(|m| m.start);
+    out
+}
+
 pub(crate) fn is_caption_track(t: &Value) -> bool {
     schema_name(t) == "Track" && t.pointer("/metadata/filmcraft/caption_track").is_some_and(Value::is_object)
 }
@@ -1090,39 +1128,7 @@ impl Imp<'_, '_> {
     }
 
     fn markers(&mut self, v: &Value) -> Vec<Marker> {
-        let mut out = Vec::new();
-        for m in v.get("markers").and_then(Value::as_array).into_iter().flatten() {
-            let (mut start, mut duration) = m.get("marked_range").and_then(read_tr).unwrap_or((Tick::ZERO, Tick::ZERO));
-            let meta = fc(m);
-            if let Some(s) = meta.and_then(|x| x.get("start_ticks")).and_then(Value::as_i64)
-                && (Tick(s) - start).abs() < Tick(TICKS_PER_SECOND / 1000)
-            {
-                start = Tick(s);
-            }
-            if let Some(d) = meta.and_then(|x| x.get("duration_ticks")).and_then(Value::as_i64)
-                && (Tick(d) - duration).abs() < Tick(TICKS_PER_SECOND / 1000)
-            {
-                duration = Tick(d);
-            }
-            let color = meta
-                .and_then(|x| x.get("label"))
-                .and_then(|l| serde_json::from_value::<Label>(l.clone()).ok())
-                .unwrap_or_else(|| color_label(m.get("color").and_then(Value::as_str).unwrap_or("")));
-            out.push(Marker {
-                url: meta.and_then(|x| x.get("url")).and_then(Value::as_str).unwrap_or("").to_string(),
-                author: meta.and_then(|x| x.get("author")).and_then(Value::as_str).unwrap_or("").to_string(),
-                custom_color: meta.and_then(|x| x.get("custom_color")).and_then(|c| c.as_str()).and_then(filmcraft_project::HexColor::parse),
-                id: MarkerId(self.b.alloc()),
-                start,
-                duration,
-                name: name_of(m),
-                comment: m.get("comment").and_then(Value::as_str).unwrap_or("").to_string(),
-                kind: meta.and_then(|x| x.get("kind")).and_then(|k| serde_json::from_value::<MarkerKind>(k.clone()).ok()).unwrap_or_default(),
-                color,
-            });
-        }
-        out.sort_by_key(|m| m.start);
-        out
+        read_markers(v, || self.b.alloc())
     }
 }
 

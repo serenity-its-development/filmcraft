@@ -87,36 +87,6 @@
                                             }
                                         },
                                         "name": "Early"
-                                    },
-                                    {
-                                        "OTIO_SCHEMA": "Marker.2",
-                                        "color": "BLUE",
-                                        "comment": "Late comment",
-                                        "marked_range": {
-                                            "OTIO_SCHEMA": "TimeRange.1",
-                                            "duration": {
-                                                "OTIO_SCHEMA": "RationalTime.1",
-                                                "rate": 24,
-                                                "value": 6
-                                            },
-                                            "start_time": {
-                                                "OTIO_SCHEMA": "RationalTime.1",
-                                                "rate": 24,
-                                                "value": 90
-                                            }
-                                        },
-                                        "metadata": {
-                                            "filmcraft": {
-                                                "author": "",
-                                                "custom_color": null,
-                                                "duration_ticks": 63504000000,
-                                                "kind": "Chapter",
-                                                "label": "Cerulean",
-                                                "start_ticks": 952560000000,
-                                                "url": ""
-                                            }
-                                        },
-                                        "name": "Late"
                                     }
                                 ],
                                 "media_references": {
@@ -290,7 +260,38 @@
                                 "active_media_reference_key": "DEFAULT_MEDIA",
                                 "effects": [],
                                 "enabled": true,
-                                "markers": [],
+                                "markers": [
+                                    {
+                                        "OTIO_SCHEMA": "Marker.2",
+                                        "color": "BLUE",
+                                        "comment": "Late comment",
+                                        "marked_range": {
+                                            "OTIO_SCHEMA": "TimeRange.1",
+                                            "duration": {
+                                                "OTIO_SCHEMA": "RationalTime.1",
+                                                "rate": 24,
+                                                "value": 6
+                                            },
+                                            "start_time": {
+                                                "OTIO_SCHEMA": "RationalTime.1",
+                                                "rate": 24,
+                                                "value": 90
+                                            }
+                                        },
+                                        "metadata": {
+                                            "filmcraft": {
+                                                "author": "",
+                                                "custom_color": null,
+                                                "duration_ticks": 63504000000,
+                                                "kind": "Chapter",
+                                                "label": "Cerulean",
+                                                "start_ticks": 952560000000,
+                                                "url": ""
+                                            }
+                                        },
+                                        "name": "Late"
+                                    }
+                                ],
                                 "media_references": {
                                     "DEFAULT_MEDIA": {
                                         "OTIO_SCHEMA": "ExternalReference.1",

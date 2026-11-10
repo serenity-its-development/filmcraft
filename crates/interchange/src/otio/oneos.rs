@@ -251,6 +251,9 @@ fn clip_signature(c: &Value) -> Value {
     if let Value::Object(m) = &mut s {
         m.remove("source_range");
         m.remove("name");
+        // Its markers, which Cut moves to the half of a split that holds each (files/989, Mona 2026-11-10: "Teach Film, then move"): read
+        // back from the file by `reconcile`.
+        m.remove("markers");
         // Its speed and reverse, which Cut edits as Film's own time warp (files/989, 2c).
         if let Some(Value::Array(e)) = m.get_mut("effects") {
             e.retain(|x| schema_name(x) != "LinearTimeWarp");
@@ -578,6 +581,15 @@ fn reconcile(p: &mut Project, seq_id: ItemId, tl: &Value) -> Result<(), String> 
                 }
             }
             it.maintain_pitch = fc.and_then(|m| m.get("maintain_pitch")).and_then(Value::as_bool).unwrap_or(false);
+            // Its markers are the file's, at the medium's time (files/989, "Teach Film, then move"); one Film already held keeps its id.
+            let was_markers = std::mem::take(&mut it.markers);
+            it.markers = super::read_markers(c, || p.alloc_id());
+            for m in &mut it.markers {
+                m.start -= origin;
+                if let Some(w) = was_markers.iter().find(|w| w.start == m.start && w.duration == m.duration && w.name == m.name && w.comment == m.comment) {
+                    m.id = w.id;
+                }
+            }
             // Film's own data on a clip Cut wrote in Film's shape (a copy of Film's clip: a split's right half, a duplicate, a paste; or a link
             // Cut made): its link, label, colour, group and fit are the file's (files/989, measured 2026-11-10).
             if let Some(m) = fc {
