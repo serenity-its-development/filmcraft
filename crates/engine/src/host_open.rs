@@ -1321,4 +1321,39 @@ mod tests {
         let mut s2 = session();
         open_host_file(&mut s2, "Transitions.otio", &serde_json::to_vec(&out).unwrap()).expect("Film reopens its own save");
     }
+
+    /// OneOS (files/989, 2c clip markers): Cut carries a Film clip's markers untouched on the clip it moved or trimmed, and a copy it made
+    /// (a split's right half, a duplicate) carries none, so Film opens Cut's edit with every marker on the clip it was on.
+    #[test]
+    fn a_cut_edit_of_film_s_marked_clips_keeps_their_markers_in_film() {
+        let bytes = include_bytes!("../../interchange/tests/it/oneos/cut-markers-film.otio");
+        let file: Value = serde_json::from_slice(bytes).unwrap();
+        let mut s = session();
+        open_host_file(&mut s, "Markers.otio", bytes).unwrap_or_else(|e| panic!("Film refused Cut's edit of its marked clips: {e}"));
+        let edit = s.project.items.values().find(|i| i.name == "Edit" && i.as_sequence().is_some()).unwrap().id;
+        let q = s.project.sequence(edit).unwrap();
+        let f = |n: i64| q.settings.frame_rate.tick_of(n);
+        let on = |k: TrackKind, name: &str| {
+            q.tracks(k)
+                .iter()
+                .flat_map(|t| t.items.iter())
+                .filter(|i| i.name == name)
+                .map(|i| (i.start, i.source_in, i.markers.iter().map(|m| (m.name.clone(), m.start, m.duration)).collect::<Vec<_>>()))
+                .collect::<Vec<_>>()
+        };
+        let (early, late) = (("Early".to_string(), f(30), f(0)), ("Late".to_string(), f(90), f(6)));
+        assert_eq!(
+            on(TrackKind::Video, "A"),
+            [(f(0), f(24), vec![early, late]), (f(48), f(72), vec![])],
+            "the left half keeps every marker; the right half none"
+        );
+        assert_eq!(on(TrackKind::Video, "B"), [(f(48), f(200), vec![("Bee".to_string(), f(210), f(0))])], "moved, its marker kept");
+        assert_eq!(
+            on(TrackKind::Audio, "S"),
+            [(f(12), f(36), vec![("Beat".to_string(), f(60), f(0))]), (f(96), f(36), vec![])],
+            "trimmed, its marker kept; the duplicate carries none"
+        );
+        let saved: Value = serde_json::from_slice(&save_host_file(&mut s).unwrap()).unwrap();
+        assert_eq!(first_difference(&file, &saved, ""), None, "unedited: Cut's file comes back value for value");
+    }
 }

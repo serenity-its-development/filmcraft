@@ -1208,3 +1208,68 @@ fn oneos_film_writes_its_transitions_for_cut() {
     let golden = std::fs::read(path).expect("the golden Film transitions file (FILMCRAFT_BLESS=1 writes it)");
     assert_eq!(serde_json::from_slice::<Value>(&golden).unwrap(), doc, "Film writes its transitions as pinned");
 }
+
+/// OneOS (files/989, 2c clip markers; Mona 2026-11-10's rule of thumb): Film writes a clip's markers in the clip's own OTIO `markers`, at
+/// the medium's time. `FILMCRAFT_BLESS=1` writes `film-markers.otio`, which the OpenCut fork opens (its `oneos-tests/film-markers.test.ts`).
+#[test]
+fn oneos_film_writes_its_clip_markers_for_cut() {
+    use serde_json::Value;
+    let r = FrameRate::FPS_24;
+    let mut p = Project::new("Markers");
+    let file = |n: u8| format!("oneos:file/01jabcdefghjkmnpqrstvwxy{n:02}?version=01jabcdefghjkmnpqrstvwxyz1");
+    let pic = media(&mut p, &file(10), true, false, r);
+    let snd = media(&mut p, &file(11), false, true, r);
+    let s = sequence(&mut p, "Edit", r, false);
+    let (v, a) = (TrackKind::Video, TrackKind::Audio);
+    let ca = clip(&mut p, s, v, 0, pic, 0..96, 24);
+    let cb = clip(&mut p, s, v, 1, pic, 24..72, 200);
+    let cs = clip(&mut p, s, a, 0, snd, 0..96, 24);
+    let mark = |id: u64, at: i64, len: i64, name: &str, kind: MarkerKind, color: Label| Marker {
+        url: String::new(),
+        author: String::new(),
+        custom_color: None,
+        id: MarkerId(id),
+        start: r.tick_of(at),
+        duration: r.tick_of(len),
+        name: name.into(),
+        comment: format!("{name} comment"),
+        kind,
+        color,
+    };
+    {
+        let q = p.sequence_mut(s).unwrap();
+        let (_, it) = q.find_item_mut(ca).unwrap();
+        it.name = "A".into();
+        it.markers = vec![mark(901, 30, 0, "Early", MarkerKind::Comment, Label::Yellow), mark(902, 90, 6, "Late", MarkerKind::Chapter, Label::Cerulean)];
+        let (_, it) = q.find_item_mut(cb).unwrap();
+        it.name = "B".into();
+        it.markers = vec![mark(903, 210, 0, "Bee", MarkerKind::Comment, Label::Mango)];
+        let (_, it) = q.find_item_mut(cs).unwrap();
+        it.name = "S".into();
+        it.markers = vec![mark(904, 60, 0, "Beat", MarkerKind::Comment, Label::Forest)];
+    }
+    let (bytes, _) = filmcraft_interchange::export_project(&p, &ExportOptions::default()).expect("Film writes the whole project");
+    let doc: Value = serde_json::from_slice(&bytes).unwrap();
+    let edit = doc["children"].as_array().unwrap().iter().find(|t| t["name"] == "Edit").expect("the Edit timeline");
+    let a_clip = edit["tracks"]["children"][0]["children"].as_array().unwrap().iter().find(|c| c["name"] == "A").unwrap().clone();
+    let names = a_clip["markers"].as_array().unwrap().iter().map(|m| m["name"].as_str().unwrap().to_string()).collect::<Vec<_>>();
+    assert_eq!(names, ["Early", "Late"], "the clip's markers on the clip");
+    assert_eq!(a_clip["markers"][1]["marked_range"]["start_time"]["value"], 90.0, "at the medium's time");
+    let (back, _) = import(&bytes, Format::Otio, None).expect("Film reads its file");
+    let marks = |q: &Project| {
+        let seq = q.sequence(q.items.values().find(|i| i.name == "Edit").unwrap().id).unwrap();
+        seq.video_tracks
+            .iter()
+            .chain(&seq.audio_tracks)
+            .flat_map(|t| t.items.iter())
+            .map(|i| (i.name.clone(), i.markers.iter().map(|m| (m.name.clone(), m.start, m.duration, m.kind, m.color)).collect::<Vec<_>>()))
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(marks(&back.project), marks(&p), "Film reads its clip markers back whole");
+    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/it/oneos/film-markers.otio");
+    if std::env::var_os("FILMCRAFT_BLESS").is_some() {
+        std::fs::write(path, &bytes).unwrap();
+    }
+    let golden = std::fs::read(path).expect("the golden Film clip-markers file (FILMCRAFT_BLESS=1 writes it)");
+    assert_eq!(serde_json::from_slice::<Value>(&golden).unwrap(), doc, "Film writes its clip markers as pinned");
+}
